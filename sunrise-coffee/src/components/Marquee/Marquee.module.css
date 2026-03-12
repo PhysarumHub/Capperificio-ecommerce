@@ -1,0 +1,107 @@
+.marquee {
+  width: 100%;
+  overflow: hidden;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  padding: 14px 0;
+  background: var(--color-white);
+}
+
+.track {
+  display: flex;
+  white-space: nowrap;
+  will-change: transform;
+  animation: marquee-scroll 20s linear infinite;
+}
+
+.track span {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-4xl);
+  font-weight: 500;
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+
+.dark { color: var(--color-dark); }
+.red  { color: var(--color-red); }
+
+/* Products marquee variant */
+.productsMarquee {
+  overflow: hidden;
+  border-top: 1px solid rgba(216, 64, 50, 0.2);
+  border-bottom: 1px solid rgba(216, 64, 50, 0.2);
+  padding: 11px 0;
+  background: var(--color-white);
+}
+
+.productsTrack {
+  display: flex;
+  white-space: nowrap;
+  animation: marquee-scroll 24s linear infinite;
+}
+
+.productsTrack a {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-lg);
+  color: var(--color-red);
+  padding: 0 8px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+.productsTrack a:hover { text-decoration: underline; }
+
+.sep {
+  color: rgba(216, 64, 50, 0.35);
+  font-size: var(--text-sm);
+  padding: 0 4px;
+  font-style: normal;
+}
+
+/* Red marquee variant */
+.redMarquee {
+  background: var(--color-red);
+  overflow: hidden;
+  padding: 10px 0;
+}
+
+.redTrack {
+  display: flex;
+  white-space: nowrap;
+  animation: marquee-scroll 18s linear infinite;
+}
+
+.redTrack span {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--color-white);
+  padding: 0 10px;
+}
+
+.redSep {
+  color: rgba(255,255,255,.45);
+  font-style: normal;
+  font-size: var(--text-sm);
+  padding: 0 6px;
+}
+
+@media (max-width: 768px) {
+  .track span {
+    font-size: var(--text-3xl);
+    padding: 0 16px;
+  }
+  .marquee { padding: 10px 0; }
+  .productsMarquee { padding: 8px 0; }
+  .redMarquee { padding: 8px 0; }
+}
+
+@media (max-width: 480px) {
+  .track span {
+    font-size: 22px;
+    padding: 0 12px;
+  }
+  .redTrack span { font-size: 14px; }
+}

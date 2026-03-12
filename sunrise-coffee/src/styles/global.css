@@ -1,0 +1,183 @@
+/* ═══════════════════════════════════════════════════════════
+   SUNRISE COFFEE CO — STYLE GUIDE & DESIGN TOKENS
+   ═══════════════════════════════════════════════════════════
+
+   BRAND IDENTITY
+   ─────────────
+   Sunrise Coffee Co is a specialty coffee e-commerce with a
+   warm, editorial design language. The aesthetic is minimal,
+   typography-driven, with a bold red accent color.
+
+   TYPOGRAPHY
+   ──────────
+   Heading / Display : Playfair Display (serif, italic)
+   Body / UI         : Inter (sans-serif)
+
+   COLOR PALETTE
+   ─────────────
+   Primary Red   : #D84032 — brand accent, CTAs, headings
+   Dark          : #1A1A1A — body text, primary contrast
+   Mid Grey      : #6B6B6B — secondary text, descriptions
+   Light         : #F5F3F0 — subtle backgrounds
+   Cream         : #EEEBE5 — warm neutral backgrounds
+   White         : #FFFFFF — base background
+   Border        : #E0DDD8 — dividers and separators
+   Card border   : rgba(216,64,50,0.25) — tinted red borders on cards
+
+   SPACING SCALE
+   ─────────────
+   4px, 6px, 8px, 10px, 12px, 14px, 16px, 20px, 24px,
+   28px, 32px, 40px, 48px, 60px, 72px
+
+   BORDER RADIUS
+   ─────────────
+   Pill    : 100px (buttons, badges, filter tags)
+   Card-img: 8-10px (product image containers)
+   Bag     : 6px 6px 16px 16px (coffee bag shapes)
+   Full    : 50% (dots, social icons)
+
+   GRID PATTERNS
+   ─────────────
+   • Product cards: border-collapse grid (margin-right: -1px)
+   • Card padding: 10px all sides, images with border-radius inside
+   • 3-column (blends, merch, blog) or 4-column (also-like)
+   • 2-column split layouts (editorial, product detail)
+   • Product page: 3-column sticky (1fr 1.4fr 1fr)
+
+   COMPONENT PATTERNS
+   ──────────────────
+   Marquee    : overflow-hidden + translateX(-50%) infinite loop
+   Cards      : border: 1px solid rgba(216,64,50,0.25), margin-right: -1px
+   Buttons    : pill-shaped, outline or fill variants
+   Section    : dot-label + Playfair italic heading
+   Accordion  : + icon rotates 45deg on open
+
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── RESET ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── CSS CUSTOM PROPERTIES (DESIGN TOKENS) ─────────── */
+:root {
+  /* Colors */
+  --color-red:        #D84032;
+  --color-red-hover:  #C23928;
+  --color-dark:       #1A1A1A;
+  --color-mid:        #6B6B6B;
+  --color-light:      #F5F3F0;
+  --color-cream:      #EEEBE5;
+  --color-white:      #FFFFFF;
+  --color-border:     #E0DDD8;
+  --color-card-border: rgba(216, 64, 50, 0.25);
+
+  /* Typography */
+  --font-serif:       'Playfair Display', serif;
+  --font-sans:        'Inter', sans-serif;
+
+  /* Font sizes */
+  --text-xs:    11px;
+  --text-sm:    13px;
+  --text-base:  14px;
+  --text-md:    15px;
+  --text-lg:    16px;
+  --text-xl:    19px;
+  --text-2xl:   22px;
+  --text-3xl:   42px;
+  --text-4xl:   48px;
+  --text-5xl:   60px;
+  --text-6xl:   72px;
+
+  /* Spacing */
+  --space-1:  4px;
+  --space-2:  6px;
+  --space-3:  8px;
+  --space-4:  10px;
+  --space-5:  12px;
+  --space-6:  14px;
+  --space-7:  16px;
+  --space-8:  20px;
+  --space-9:  24px;
+  --space-10: 28px;
+  --space-11: 32px;
+  --space-12: 40px;
+  --space-13: 48px;
+  --space-14: 60px;
+  --space-15: 72px;
+
+  /* Borders */
+  --radius-pill: 100px;
+  --radius-card: 8px;
+  --radius-card-lg: 10px;
+  --radius-full: 50%;
+
+  /* Transitions */
+  --ease-default: cubic-bezier(.4, 0, .2, 1);
+  --duration-fast: .15s;
+  --duration-base: .18s;
+  --duration-slow: .35s;
+
+  /* Layout */
+  --header-height: 56px;
+}
+
+/* ─── BASE STYLES ───────────────────────────────────── */
+body {
+  font-family: var(--font-sans);
+  color: var(--color-dark);
+  background: var(--color-white);
+  font-size: var(--text-lg);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+/* ─── SCROLLBAR HIDE (for sticky columns) ───────────── */
+.hide-scrollbar::-webkit-scrollbar {
+  width: 0;
+}
+
+/* ─── MARQUEE ANIMATION ────────────────────────────── */
+@keyframes marquee-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ─── RESPONSIVE: TABLET ────────────────────────────── */
+@media (max-width: 768px) {
+  :root {
+    --text-3xl:   32px;
+    --text-4xl:   36px;
+    --text-5xl:   42px;
+    --text-6xl:   52px;
+    --header-height: 50px;
+  }
+}
+
+/* ─── RESPONSIVE: MOBILE ────────────────────────────── */
+@media (max-width: 480px) {
+  :root {
+    --text-3xl:   26px;
+    --text-4xl:   30px;
+    --text-5xl:   34px;
+    --text-6xl:   40px;
+  }
+}

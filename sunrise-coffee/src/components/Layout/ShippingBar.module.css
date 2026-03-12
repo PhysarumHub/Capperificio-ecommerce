@@ -1,0 +1,28 @@
+.shipping-bar {
+  overflow: hidden;
+  background: var(--color-white);
+  border-bottom: 1.5px solid var(--color-red);
+  padding: 7px 0;
+}
+
+.shipping-bar__track {
+  display: flex;
+  white-space: nowrap;
+  animation: marquee-scroll 18s linear infinite;
+}
+
+.shipping-bar__track span {
+  font-size: var(--text-base);
+  font-weight: 400;
+  color: var(--color-red);
+  padding: 0 28px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .shipping-bar { padding: 5px 0; }
+  .shipping-bar__track span {
+    font-size: var(--text-sm);
+    padding: 0 16px;
+  }
+}
