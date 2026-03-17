@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { SunLogo } from '../Icons';
+import { useCartContext, useCustomerContext } from '../../context/ShopwareContext';
 import styles from './Header.module.css';
 
 const MEGA_LINKS = [
@@ -14,6 +15,8 @@ const MEGA_LINKS = [
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { itemCount } = useCartContext();
+  const { isLoggedIn } = useCustomerContext();
 
   const openMenu = useCallback(() => {
     setMenuOpen(true);
@@ -56,7 +59,12 @@ export default function Header() {
 
         <nav className={styles.navRight}>
           <Link to="/" className={styles.navLink}>Search</Link>
-          <Link to="/" className={styles.navLink}>Cart (0)</Link>
+          <Link to="/account" className={styles.navLink}>
+            {isLoggedIn ? 'Account' : 'Login'}
+          </Link>
+          <Link to="/cart" className={styles.navLink}>
+            Cart ({itemCount})
+          </Link>
         </nav>
       </header>
 

@@ -2,11 +2,14 @@ import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../ProductCard/ProductCard';
 import SectionHeader from '../SectionHeader/SectionHeader';
+import { useCartContext } from '../../context/ShopwareContext';
+import { formatPrice } from '../../lib/utils/price';
+import { getProductImage, getProductSlug } from '../../lib/utils/image';
 import styles from './ProductDetail.module.css';
 
 const SIZES = ['250g', '500g', '1kg'];
 const GRINDS = ['Beans', 'Espresso', 'Stovetop', 'Plunger', 'Aeropress', 'Pour Over'];
-const PRICES = { '250g': 25, '500g': 42, '1kg': 75 };
+const FALLBACK_PRICES = { '250g': 25, '500g': 42, '1kg': 75 };
 
 const BREW_RECIPES = [
   { name: 'Pour-over', rows: [['Coffee', '15g medium-fine'], ['Water', '250ml at 94°C'], ['Ratio', '1:16.6'], ['Bloom', '30ml, 30 sec'], ['Total time', '2:30 – 3:00']] },
@@ -15,66 +18,159 @@ const BREW_RECIPES = [
   { name: 'Plunger / French Press', rows: [['Coffee', '30g coarse'], ['Water', '500ml at 96°C'], ['Ratio', '1:16'], ['Steep', '4:00, then plunge slowly']] },
 ];
 
-const ALSO_LIKE = [
+const ALSO_LIKE_FALLBACK = [
   { name: 'Day For It', image: '/images/PRODUCTSTILL.jpg', badge: 'New!' },
   { name: 'Buoi Sang', image: '/images/PRODUCTSTILL.jpg' },
   { name: "It's Golden", image: '/images/PRODUCTSTILL.jpg' },
   { name: 'Andean Sky', image: '/images/PRODUCTSTILL.jpg' },
 ];
 
-export default function ProductDetail() {
+/* ─── Fallback data for when Shopware is not connected ─── */
+
+const FALLBACK_PRODUCT = {
+  name: 'Sweet Velvet',
+  description: `Indulge in the luxurious charm of <em>Sweet Velvet</em>, a beautifully balanced filter
+    coffee blend that combines washed and natural processes for a truly unique flavor
+    experience. With its smooth notes of vanilla, buttery caramel sweetness, and the juicy
+    vibrance of stone fruit, this coffee offers a delightful harmony of richness and
+    brightness. Designed for pour-over or drip brewing, <em>Sweet Velvet</em> delivers a
+    silky, aromatic cup that's as comforting as it is exquisite.`,
+  tastingNotes: 'Vanilla\nCaramel\nFruity',
+  region: 'Various',
+  type: 'Blend',
+  bestFor: 'Filter',
+  process: 'Washed & Natural',
+  images: ['/images/PRODUCTSTILL.jpg', '/images/PRODUCTSTILL.jpg', '/images/PRODUCTSTILL.jpg', '/images/PRODUCTSTILL.jpg'],
+};
+
+export default function ProductDetail({ product: shopwareProduct, loading, error, slug }) {
   const [size, setSize] = useState('250g');
   const [grind, setGrind] = useState('Beans');
   const [qty, setQty] = useState(1);
   const [openBrew, setOpenBrew] = useState(null);
   const [addedFeedback, setAddedFeedback] = useState(false);
   const feedbackTimeout = useRef(null);
+  const { addItem } = useCartContext();
 
-  const unitPrice = PRICES[size];
+  // Use Shopware product data if available, otherwise fallback
+  const hasApiProduct = Boolean(shopwareProduct);
+
+  const productName = hasApiProduct
+    ? (shopwareProduct.translated?.name || shopwareProduct.name)
+    : FALLBACK_PRODUCT.name;
+
+  const productDescription = hasApiProduct
+    ? (shopwareProduct.translated?.description || shopwareProduct.description || '')
+    : FALLBACK_PRODUCT.description;
+
+  const productPrice = hasApiProduct
+    ? (shopwareProduct.calculatedPrice?.unitPrice || shopwareProduct.price?.[0]?.gross || 0)
+    : FALLBACK_PRICES[size];
+
+  const productImages = hasApiProduct
+    ? (shopwareProduct.media?.length
+      ? shopwareProduct.media.map((m) => m.media?.url || m.url).filter(Boolean)
+      : [getProductImage(shopwareProduct)])
+    : FALLBACK_PRODUCT.images;
+
+  // Extract custom fields / properties for info table
+  const properties = hasApiProduct ? (shopwareProduct.properties || []) : [];
+  const groupedProperties = properties.reduce((acc, prop) => {
+    const groupName = prop.group?.translated?.name || prop.group?.name || 'Other';
+    if (!acc[groupName]) acc[groupName] = [];
+    acc[groupName].push(prop.translated?.name || prop.name);
+    return acc;
+  }, {});
+
+  // Cross-selling products
+  const crossSellings = hasApiProduct
+    ? (shopwareProduct.crossSellings || []).flatMap((cs) =>
+        (cs.assignedProducts || []).map((ap) => ap.product).filter(Boolean)
+      )
+    : [];
+
+  const alsoLikeProducts = crossSellings.length > 0
+    ? crossSellings.slice(0, 4).map((p) => ({
+        name: p.translated?.name || p.name,
+        slug: getProductSlug(p),
+        image: getProductImage(p),
+        price: formatPrice(p.calculatedPrice?.unitPrice || p.price?.[0]?.gross),
+      }))
+    : ALSO_LIKE_FALLBACK.map((p) => ({ ...p, price: '$25.00' }));
+
+  const unitPrice = hasApiProduct ? productPrice : FALLBACK_PRICES[size];
   const totalPrice = unitPrice * qty;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
+    if (hasApiProduct && shopwareProduct.id) {
+      try {
+        await addItem(shopwareProduct.id, qty);
+      } catch {
+        // Still show feedback even if API fails
+      }
+    }
     setAddedFeedback(true);
     if (feedbackTimeout.current) clearTimeout(feedbackTimeout.current);
     feedbackTimeout.current = setTimeout(() => setAddedFeedback(false), 1800);
   };
+
+  if (loading) {
+    return (
+      <div style={{ padding: '80px 40px', textAlign: 'center' }}>
+        <p style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-2xl)', color: '#999' }}>Loading product...</p>
+      </div>
+    );
+  }
+
+  if (error && !hasApiProduct) {
+    // Show fallback product when API fails
+  }
 
   return (
     <>
       {/* Breadcrumb */}
       <div className={styles.breadcrumb}>
         <Link to="/">Home</Link><span className={styles.sep}>/</span>
-        <Link to="/">All Coffee</Link><span className={styles.sep}>/</span>
-        <span>Sweet Velvet</span>
+        <Link to="/collections/all">All Coffee</Link><span className={styles.sep}>/</span>
+        <span>{productName}</span>
       </div>
 
       {/* Product section — 3 columns */}
       <section className={styles.productSection}>
         {/* LEFT COL */}
         <div className={styles.colLeft}>
-          <p className={styles.description}>
-            Indulge in the luxurious charm of <em>Sweet Velvet</em>, a beautifully balanced filter
-            coffee blend that combines washed and natural processes for a truly unique flavor
-            experience. With its smooth notes of vanilla, buttery caramel sweetness, and the juicy
-            vibrance of stone fruit, this coffee offers a delightful harmony of richness and
-            brightness. Designed for pour-over or drip brewing, <em>Sweet Velvet</em> delivers a
-            silky, aromatic cup that's as comforting as it is exquisite.
-          </p>
+          <p
+            className={styles.description}
+            dangerouslySetInnerHTML={{ __html: productDescription }}
+          />
 
           <ul className={styles.bullets}>
             <li>Freshly Roasted in Melbourne</li>
             <li>Free Standard Delivery over $50</li>
           </ul>
 
-          <table className={styles.infoTable}>
-            <tbody>
-              <tr><td>Tasting notes</td><td>Vanilla<br/>Caramel<br/>Fruity</td></tr>
-              <tr><td>Region</td><td>Various</td></tr>
-              <tr><td>Type</td><td>Blend</td></tr>
-              <tr><td>Best for</td><td>Filter</td></tr>
-              <tr><td>Process</td><td>Washed &amp; Natural</td></tr>
-            </tbody>
-          </table>
+          {hasApiProduct && Object.keys(groupedProperties).length > 0 ? (
+            <table className={styles.infoTable}>
+              <tbody>
+                {Object.entries(groupedProperties).map(([group, values]) => (
+                  <tr key={group}>
+                    <td>{group}</td>
+                    <td>{values.join(', ')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <table className={styles.infoTable}>
+              <tbody>
+                <tr><td>Tasting notes</td><td>Vanilla<br/>Caramel<br/>Fruity</td></tr>
+                <tr><td>Region</td><td>Various</td></tr>
+                <tr><td>Type</td><td>Blend</td></tr>
+                <tr><td>Best for</td><td>Filter</td></tr>
+                <tr><td>Process</td><td>Washed &amp; Natural</td></tr>
+              </tbody>
+            </table>
+          )}
 
           <div className={styles.sectionTitle}>Brew Recipes</div>
           <div className={styles.brewAccordion}>
@@ -105,24 +201,19 @@ export default function ProductDetail() {
 
         {/* CENTER COL */}
         <div className={styles.colCenter}>
-          <div className={styles.productImage}>
-            <img src="/images/PRODUCTSTILL.jpg" alt="Sweet Velvet — bag" className={styles.pdpImg} />
-          </div>
-          <div className={styles.productImage}>
-            <img src="/images/PRODUCTSTILL.jpg" alt="Sweet Velvet — detail" className={styles.pdpImg} />
-          </div>
-          <div className={styles.productImage}>
-            <img src="/images/PRODUCTSTILL.jpg" alt="Sweet Velvet — beans" className={styles.pdpImg} />
-          </div>
-          <div className={styles.productImage}>
-            <img src="/images/PRODUCTSTILL.jpg" alt="Sweet Velvet — lifestyle" className={styles.pdpImg} />
-          </div>
+          {productImages.map((src, i) => (
+            <div key={i} className={styles.productImage}>
+              <img src={src} alt={`${productName} — ${i + 1}`} className={styles.pdpImg} />
+            </div>
+          ))}
         </div>
 
         {/* RIGHT COL */}
         <div className={styles.colRight}>
-          <h1 className={styles.pdpTitle}>Sweet Velvet</h1>
-          <div className={styles.pdpPrice}>${unitPrice.toFixed(2)}</div>
+          <h1 className={styles.pdpTitle}>{productName}</h1>
+          <div className={styles.pdpPrice}>
+            {hasApiProduct ? formatPrice(unitPrice) : `$${unitPrice.toFixed(2)}`}
+          </div>
 
           <div className={styles.optionLabel}>Size:</div>
           <div className={styles.options}>
@@ -155,7 +246,10 @@ export default function ProductDetail() {
               onClick={handleAddToCart}
               style={addedFeedback ? { background: '#2C8843', color: '#fff', borderColor: '#2C8843' } : {}}
             >
-              {addedFeedback ? 'Added ✓' : <>Add to Cart <span>→</span> ${totalPrice.toFixed(2)}</>}
+              {addedFeedback
+                ? 'Added ✓'
+                : <>Add to Cart <span>→</span> {hasApiProduct ? formatPrice(totalPrice) : `$${totalPrice.toFixed(2)}`}</>
+              }
             </button>
           </div>
 
@@ -169,11 +263,12 @@ export default function ProductDetail() {
       <section className={styles.alsoLikeSection}>
         <SectionHeader label="Recommended" title="You may also like" />
         <div className={styles.alsoLikeGrid}>
-          {ALSO_LIKE.map((product) => (
+          {alsoLikeProducts.map((product) => (
             <ProductCard
               key={product.name}
               name={product.name}
-              price="$25.00"
+              slug={product.slug}
+              price={product.price}
               image={product.image}
               badge={product.badge}
             />

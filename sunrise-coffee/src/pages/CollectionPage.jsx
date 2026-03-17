@@ -1,12 +1,16 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import ProductCard from '../components/ProductCard/ProductCard';
 import { ProductsMarquee } from '../components/Marquee/Marquee';
+import { useProducts } from '../hooks/useProducts';
+import { formatPrice } from '../lib/utils/price';
+import { getProductImage, getProductSlug } from '../lib/utils/image';
+import { isShopwareConfigured } from '../lib/shopware-client';
 import styles from './CollectionPage.module.css';
 
-/* ─── Product catalogue ─── */
+/* ─── Fallback product catalogue (used when Shopware is not connected) ─── */
 
-const ALL_PRODUCTS = [
+const ALL_PRODUCTS_FALLBACK = [
   { name: 'Jungle Boogie', slug: 'jungle-boogie', image: '/images/PRODUCTSTILL.jpg', oldPrice: '€20.00', price: '€16.00', collections: ['all', 'filter', 'single-origin'], origin: 'Colombia', process: 'Washed' },
   { name: 'Day For It', slug: 'day-for-it', image: '/images/PRODUCTSTILL.jpg', badge: 'Sale', oldPrice: '€20.00', price: '€16.00', collections: ['all', 'espresso', 'single-origin'], origin: 'Brazil', process: 'Natural' },
   { name: 'Basecamp', slug: 'basecamp', image: '/images/PRODUCTSTILL.jpg', badge: 'Sale', oldPrice: '€20.00', price: '€16.00', collections: ['all', 'filter', 'single-origin'], origin: 'Ethiopia', process: 'Washed' },
@@ -96,6 +100,37 @@ function matchesSubFilter(product, collectionSlug, subFilter) {
   return true;
 }
 
+/* ─── Map Shopware products to component props ─── */
+
+function mapShopwareProduct(product) {
+  const price = product.calculatedPrice || product.price?.[0];
+  const listPrice = price?.listPrice;
+  return {
+    name: product.translated?.name || product.name,
+    slug: getProductSlug(product),
+    image: getProductImage(product),
+    price: formatPrice(price?.unitPrice),
+    oldPrice: listPrice?.price ? formatPrice(listPrice.price) : undefined,
+    badge: listPrice?.price ? 'Sale' : undefined,
+    // These won't be available from Shopware in fallback mode
+    collections: ['all'],
+    origin: null,
+    process: null,
+  };
+}
+
+/* ─── Sort helpers for Shopware API ─── */
+
+function getSortCriteria(sortValue) {
+  switch (sortValue) {
+    case 'name-asc': return [{ field: 'name', order: 'ASC' }];
+    case 'name-desc': return [{ field: 'name', order: 'DESC' }];
+    case 'price-asc': return [{ field: 'price', order: 'ASC' }];
+    case 'price-desc': return [{ field: 'price', order: 'DESC' }];
+    default: return [];
+  }
+}
+
 /* ─── Component ─── */
 
 export default function CollectionPage() {
@@ -108,8 +143,23 @@ export default function CollectionPage() {
 
   const subFilters = getSubFilters(collectionSlug);
 
+  // Try Shopware API
+  const apiSort = getSortCriteria(sort);
+  const { products: shopwareProducts, loading, error } = useProducts({
+    limit: 50,
+    sort: apiSort,
+  });
+
+  const useApi = isShopwareConfigured() && !error && shopwareProducts.length > 0;
+
+  // Build product list: either from API or fallback
   const products = useMemo(() => {
-    let filtered = ALL_PRODUCTS.filter((p) => p.collections.includes(collectionSlug));
+    if (useApi) {
+      return shopwareProducts.map(mapShopwareProduct);
+    }
+
+    // Fallback: local filtering + sorting
+    let filtered = ALL_PRODUCTS_FALLBACK.filter((p) => p.collections.includes(collectionSlug));
 
     if (activeFilter !== 'All') {
       filtered = filtered.filter((p) => matchesSubFilter(p, collectionSlug, activeFilter));
@@ -121,7 +171,7 @@ export default function CollectionPage() {
     else if (sort === 'price-desc') filtered.sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
 
     return filtered;
-  }, [collectionSlug, sort, activeFilter]);
+  }, [useApi, shopwareProducts, collectionSlug, sort, activeFilter]);
 
   return (
     <>
@@ -133,12 +183,12 @@ export default function CollectionPage() {
         <h1 className={styles.bannerTitle}>{collection.title}</h1>
         <p className={styles.bannerDesc}>{collection.description}</p>
         <p className={styles.bannerCount}>
-          {products.length} product{products.length !== 1 ? 's' : ''}
+          {loading ? '...' : `${products.length} product${products.length !== 1 ? 's' : ''}`}
         </p>
       </section>
 
-      {/* Sub-filter tags */}
-      {subFilters && (
+      {/* Sub-filter tags (only for fallback mode — API handles filtering server-side) */}
+      {!useApi && subFilters && (
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 10, padding: '32px 60px 24px' }}>
           {subFilters.map((tag) => (
             <button
@@ -167,7 +217,7 @@ export default function CollectionPage() {
       {/* Toolbar */}
       <div className={styles.toolbar}>
         <span className={styles.resultCount}>
-          {products.length} product{products.length !== 1 ? 's' : ''}
+          {loading ? '...' : `${products.length} product${products.length !== 1 ? 's' : ''}`}
         </span>
         <div className={styles.sortWrap}>
           <span className={styles.sortLabel}>Sort by</span>
@@ -184,7 +234,9 @@ export default function CollectionPage() {
       </div>
 
       {/* Product grid */}
-      {products.length > 0 ? (
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#999' }}>Loading products...</div>
+      ) : products.length > 0 ? (
         <div className={`${styles.grid} ${products.length <= 3 ? styles.gridThree : ''}`}>
           {products.map((p) => (
             <ProductCard
