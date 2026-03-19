@@ -40,6 +40,7 @@ export async function updateCartItem(lineItemId, quantity) {
  * Remove a line item from the cart.
  */
 export async function removeCartItem(lineItemId) {
+  // Shopware Store API accepts line-item IDs as query params for DELETE
   return storeApiDelete(`/checkout/cart/line-item?ids[]=${lineItemId}`);
 }
 

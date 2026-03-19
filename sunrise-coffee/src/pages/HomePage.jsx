@@ -70,7 +70,7 @@ export default function HomePage() {
 
       <SectionHeader label="Bestsellers" title="Hot off the Roaster" count={sliderProducts.length} viewAllHref="/collections/all" />
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>Loading products...</div>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>Caricamento prodotti...</div>
       ) : (
         <ProductSlider>
           {sliderProducts.map((p) => (

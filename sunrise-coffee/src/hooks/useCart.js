@@ -2,10 +2,6 @@ import { useState, useCallback } from 'react';
 import * as cartApi from '../lib/api/cart';
 import { isShopwareConfigured } from '../lib/shopware-client';
 
-/**
- * Hook for cart state management.
- * Returns cart data and methods to manipulate it.
- */
 export function useCart() {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -13,6 +9,7 @@ export function useCart() {
 
   const configured = isShopwareConfigured();
 
+  // ── Fetch current cart ──────────────────────────────────
   const fetchCart = useCallback(async () => {
     if (!configured) return;
     setLoading(true);
@@ -27,47 +24,39 @@ export function useCart() {
     }
   }, [configured]);
 
-  const addItem = useCallback(async (productId, quantity = 1) => {
+  // ── Helper: run an API call then refresh the cart ───────
+  const mutateCart = useCallback(async (apiFn) => {
     if (!configured) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await cartApi.addToCart(productId, quantity);
-      setCart(data);
+      await apiFn();
+      // Always re-fetch so the UI reflects the real server state
+      const fresh = await cartApi.getCart();
+      setCart(fresh);
     } catch (err) {
-      setError(err.message || 'Failed to add item');
+      setError(err.message || 'Cart operation failed');
+      // Still try to refresh so we show the current real state
+      try {
+        const fresh = await cartApi.getCart();
+        setCart(fresh);
+      } catch {}
     } finally {
       setLoading(false);
     }
   }, [configured]);
 
-  const updateQuantity = useCallback(async (lineItemId, quantity) => {
-    if (!configured) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await cartApi.updateCartItem(lineItemId, quantity);
-      setCart(data);
-    } catch (err) {
-      setError(err.message || 'Failed to update item');
-    } finally {
-      setLoading(false);
-    }
-  }, [configured]);
+  const addItem = useCallback((productId, quantity = 1) =>
+    mutateCart(() => cartApi.addToCart(productId, quantity)),
+  [mutateCart]);
 
-  const removeItem = useCallback(async (lineItemId) => {
-    if (!configured) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await cartApi.removeCartItem(lineItemId);
-      setCart(data);
-    } catch (err) {
-      setError(err.message || 'Failed to remove item');
-    } finally {
-      setLoading(false);
-    }
-  }, [configured]);
+  const updateQuantity = useCallback((lineItemId, quantity) =>
+    mutateCart(() => cartApi.updateCartItem(lineItemId, quantity)),
+  [mutateCart]);
+
+  const removeItem = useCallback((lineItemId) =>
+    mutateCart(() => cartApi.removeCartItem(lineItemId)),
+  [mutateCart]);
 
   const clearCart = useCallback(async () => {
     if (!configured) return;
@@ -75,7 +64,9 @@ export function useCart() {
     setError(null);
     try {
       await cartApi.deleteCart();
-      setCart(null);
+      // After delete Shopware creates a fresh empty cart on next GET
+      const fresh = await cartApi.getCart();
+      setCart(fresh);
     } catch (err) {
       setError(err.message || 'Failed to clear cart');
     } finally {
@@ -83,8 +74,8 @@ export function useCart() {
     }
   }, [configured]);
 
-  const itemCount = cart?.lineItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
-  const totalPrice = cart?.price?.totalPrice || 0;
+  const itemCount = cart?.lineItems?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  const totalPrice = cart?.price?.totalPrice ?? 0;
 
   return {
     cart,

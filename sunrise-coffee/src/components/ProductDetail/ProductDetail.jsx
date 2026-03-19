@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../ProductCard/ProductCard';
 import SectionHeader from '../SectionHeader/SectionHeader';
@@ -11,11 +11,19 @@ const SIZES = ['250g', '500g', '1kg'];
 const GRINDS = ['Beans', 'Espresso', 'Stovetop', 'Plunger', 'Aeropress', 'Pour Over'];
 const FALLBACK_PRICES = { '250g': 25, '500g': 42, '1kg': 75 };
 
-const BREW_RECIPES = [
+const BREW_RECIPES_FALLBACK = [
   { name: 'Pour-over', rows: [['Coffee', '15g medium-fine'], ['Water', '250ml at 94°C'], ['Ratio', '1:16.6'], ['Bloom', '30ml, 30 sec'], ['Total time', '2:30 – 3:00']] },
   { name: 'Drip', rows: [['Coffee', '60g medium'], ['Water', '1L at 92–96°C'], ['Ratio', '1:16'], ['Total time', '4:00 – 5:00']] },
   { name: 'AeroPress', rows: [['Coffee', '14g fine-medium'], ['Water', '200ml at 92°C'], ['Ratio', '1:14'], ['Steep', '1:30, then press 30 sec']] },
   { name: 'Plunger / French Press', rows: [['Coffee', '30g coarse'], ['Water', '500ml at 96°C'], ['Ratio', '1:16'], ['Steep', '4:00, then plunge slowly']] },
+];
+
+// Mapping custom field name → label accordion
+const BREW_CUSTOM_FIELDS = [
+  { key: 'capperificio_brew_pour_over', name: 'Pour-over' },
+  { key: 'capperificio_brew_drip',      name: 'Drip' },
+  { key: 'capperificio_brew_aeropress', name: 'AeroPress' },
+  { key: 'capperificio_brew_plunger',   name: 'Plunger / French Press' },
 ];
 
 const ALSO_LIKE_FALLBACK = [
@@ -44,6 +52,7 @@ const FALLBACK_PRODUCT = {
 };
 
 export default function ProductDetail({ product: shopwareProduct, loading, error, slug }) {
+  const [selectedOptions, setSelectedOptions] = useState({});
   const [size, setSize] = useState('250g');
   const [grind, setGrind] = useState('Beans');
   const [qty, setQty] = useState(1);
@@ -51,6 +60,32 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const [addedFeedback, setAddedFeedback] = useState(false);
   const feedbackTimeout = useRef(null);
   const { addItem } = useCartContext();
+
+  // Parse Shopware configurator settings into grouped options { 'Size': [{id, name}], 'Grind': [...] }
+  const configuratorGroups = {};
+  if (shopwareProduct?.configuratorSettings?.length) {
+    shopwareProduct.configuratorSettings.forEach((setting) => {
+      const group = setting.option?.group;
+      const option = setting.option;
+      if (!group || !option) return;
+      const groupName = group.translated?.name || group.name;
+      const optionName = option.translated?.name || option.name;
+      if (!configuratorGroups[groupName]) configuratorGroups[groupName] = [];
+      configuratorGroups[groupName].push({ id: option.id, name: optionName });
+    });
+  }
+  const hasConfigurator = Object.keys(configuratorGroups).length > 0;
+
+  // Initialize selected options to the first value of each group when the product loads
+  useEffect(() => {
+    if (!hasConfigurator) return;
+    const defaults = {};
+    Object.entries(configuratorGroups).forEach(([group, options]) => {
+      if (options.length > 0) defaults[group] = options[0].id;
+    });
+    setSelectedOptions(defaults);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shopwareProduct?.id]);
 
   // Use Shopware product data if available, otherwise fallback
   const hasApiProduct = Boolean(shopwareProduct);
@@ -73,7 +108,8 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
       : [getProductImage(shopwareProduct)])
     : FALLBACK_PRODUCT.images;
 
-  // Extract custom fields / properties for info table
+  // Extract properties for info table, in canonical display order
+  const PROPERTY_ORDER = ['Tasting notes', 'Region', 'Type', 'Best for', 'Process'];
   const properties = hasApiProduct ? (shopwareProduct.properties || []) : [];
   const groupedProperties = properties.reduce((acc, prop) => {
     const groupName = prop.group?.translated?.name || prop.group?.name || 'Other';
@@ -81,6 +117,10 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     acc[groupName].push(prop.translated?.name || prop.name);
     return acc;
   }, {});
+  const sortedProperties = [
+    ...PROPERTY_ORDER.filter((g) => groupedProperties[g]),
+    ...Object.keys(groupedProperties).filter((g) => !PROPERTY_ORDER.includes(g)),
+  ].map((g) => [g, groupedProperties[g]]);
 
   // Cross-selling products
   const crossSellings = hasApiProduct
@@ -117,7 +157,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   if (loading) {
     return (
       <div style={{ padding: '80px 40px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-2xl)', color: '#999' }}>Loading product...</p>
+        <p style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-2xl)', color: '#999' }}>Caricamento prodotto...</p>
       </div>
     );
   }
@@ -144,18 +184,30 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
             dangerouslySetInnerHTML={{ __html: productDescription }}
           />
 
-          <ul className={styles.bullets}>
-            <li>Freshly Roasted in Melbourne</li>
-            <li>Free Standard Delivery over $50</li>
-          </ul>
+          {(() => {
+            const cf = shopwareProduct?.customFields || {};
+            const bullets = [cf.capperificio_bullet_1, cf.capperificio_bullet_2, cf.capperificio_bullet_3].filter(Boolean);
+            const fallbackBullets = ['Freshly Roasted in Melbourne', 'Free Standard Delivery over $50'];
+            return (
+              <ul className={styles.bullets}>
+                {(bullets.length > 0 ? bullets : fallbackBullets).map((b) => (
+                  <li key={b}>{b}</li>
+                ))}
+              </ul>
+            );
+          })()}
 
-          {hasApiProduct && Object.keys(groupedProperties).length > 0 ? (
+          {hasApiProduct && sortedProperties.length > 0 ? (
             <table className={styles.infoTable}>
               <tbody>
-                {Object.entries(groupedProperties).map(([group, values]) => (
+                {sortedProperties.map(([group, values]) => (
                   <tr key={group}>
                     <td>{group}</td>
-                    <td>{values.join(', ')}</td>
+                    <td>
+                      {group === 'Tasting notes'
+                        ? values.map((v, i) => <span key={i}>{v}{i < values.length - 1 && <br />}</span>)
+                        : values.join(', ')}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -174,28 +226,52 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
 
           <div className={styles.sectionTitle}>Brew Recipes</div>
           <div className={styles.brewAccordion}>
-            {BREW_RECIPES.map((recipe) => {
-              const isOpen = openBrew === recipe.name;
-              return (
-                <div key={recipe.name} className={styles.brewItem}>
-                  <button className={styles.brewToggle} onClick={() => setOpenBrew(isOpen ? null : recipe.name)}>
-                    <span>{recipe.name}</span>
-                    <span className={`${styles.brewIcon} ${isOpen ? styles.brewIconOpen : ''}`}>+</span>
-                  </button>
-                  {isOpen && (
-                    <div className={styles.brewContent}>
-                      <table>
-                        <tbody>
-                          {recipe.rows.map(([label, value]) => (
-                            <tr key={label}><td>{label}</td><td>{value}</td></tr>
-                          ))}
-                        </tbody>
-                      </table>
+            {(() => {
+              const cf = shopwareProduct?.customFields || {};
+              const hasBrewCustomFields = BREW_CUSTOM_FIELDS.some(({ key }) => cf[key]);
+
+              if (hasBrewCustomFields) {
+                return BREW_CUSTOM_FIELDS.filter(({ key }) => cf[key]).map(({ key, name }) => {
+                  const isOpen = openBrew === name;
+                  return (
+                    <div key={key} className={styles.brewItem}>
+                      <button className={styles.brewToggle} onClick={() => setOpenBrew(isOpen ? null : name)}>
+                        <span>{name}</span>
+                        <span className={`${styles.brewIcon} ${isOpen ? styles.brewIconOpen : ''}`}>+</span>
+                      </button>
+                      {isOpen && (
+                        <div className={styles.brewContent}>
+                          <p dangerouslySetInnerHTML={{ __html: cf[key] }} />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                });
+              }
+
+              return BREW_RECIPES_FALLBACK.map((recipe) => {
+                const isOpen = openBrew === recipe.name;
+                return (
+                  <div key={recipe.name} className={styles.brewItem}>
+                    <button className={styles.brewToggle} onClick={() => setOpenBrew(isOpen ? null : recipe.name)}>
+                      <span>{recipe.name}</span>
+                      <span className={`${styles.brewIcon} ${isOpen ? styles.brewIconOpen : ''}`}>+</span>
+                    </button>
+                    {isOpen && (
+                      <div className={styles.brewContent}>
+                        <table>
+                          <tbody>
+                            {recipe.rows.map(([label, value]) => (
+                              <tr key={label}><td>{label}</td><td>{value}</td></tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
 
@@ -211,29 +287,57 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         {/* RIGHT COL */}
         <div className={styles.colRight}>
           <h1 className={styles.pdpTitle}>{productName}</h1>
+          {shopwareProduct?.customFields?.capperificio_calibro && (
+            <span className={styles.calibroTag}>
+              {shopwareProduct.customFields.capperificio_calibro}
+            </span>
+          )}
           <div className={styles.pdpPrice}>
             {hasApiProduct ? formatPrice(unitPrice) : `$${unitPrice.toFixed(2)}`}
           </div>
 
-          <div className={styles.optionLabel}>Size:</div>
-          <div className={styles.options}>
-            {SIZES.map((s) => (
-              <label key={s} className={styles.option}>
-                <input type="radio" name="size" value={s} checked={size === s} onChange={() => setSize(s)} />
-                <span>{s}</span>
-              </label>
-            ))}
-          </div>
-
-          <div className={styles.optionLabel}>Grind:</div>
-          <div className={styles.options}>
-            {GRINDS.map((g) => (
-              <label key={g} className={styles.option}>
-                <input type="radio" name="grind" value={g} checked={grind === g} onChange={() => setGrind(g)} />
-                <span>{g}</span>
-              </label>
-            ))}
-          </div>
+          {hasApiProduct && hasConfigurator ? (
+            Object.entries(configuratorGroups).map(([groupName, options]) => (
+              <div key={groupName}>
+                <div className={styles.optionLabel}>{groupName}:</div>
+                <div className={styles.options}>
+                  {options.map((opt) => (
+                    <label key={opt.id} className={styles.option}>
+                      <input
+                        type="radio"
+                        name={groupName}
+                        value={opt.id}
+                        checked={selectedOptions[groupName] === opt.id}
+                        onChange={() => setSelectedOptions((prev) => ({ ...prev, [groupName]: opt.id }))}
+                      />
+                      <span>{opt.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : !hasApiProduct ? (
+            <>
+              <div className={styles.optionLabel}>Size:</div>
+              <div className={styles.options}>
+                {SIZES.map((s) => (
+                  <label key={s} className={styles.option}>
+                    <input type="radio" name="size" value={s} checked={size === s} onChange={() => setSize(s)} />
+                    <span>{s}</span>
+                  </label>
+                ))}
+              </div>
+              <div className={styles.optionLabel}>Grind:</div>
+              <div className={styles.options}>
+                {GRINDS.map((g) => (
+                  <label key={g} className={styles.option}>
+                    <input type="radio" name="grind" value={g} checked={grind === g} onChange={() => setGrind(g)} />
+                    <span>{g}</span>
+                  </label>
+                ))}
+              </div>
+            </>
+          ) : null}
 
           <div className={styles.qtyRow}>
             <div className={styles.qty}>
@@ -252,10 +356,6 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
               }
             </button>
           </div>
-
-          <button className={styles.btnBuyNow}>
-            Buy It Now <span>→</span>
-          </button>
         </div>
       </section>
 

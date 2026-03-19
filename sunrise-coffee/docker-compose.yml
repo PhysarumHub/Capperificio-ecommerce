@@ -1,0 +1,41 @@
+# ============================================================
+#  Shopware 6 - Ambiente di sviluppo locale
+#  Immagine: dockware/dev (Shopware preinstallato + MySQL)
+#
+#  Avvio:  docker compose up -d
+#  Stop:   docker compose down
+#
+#  URL Admin:   http://localhost:8080/admin
+#  Utente:      admin
+#  Password:    shopware
+#
+#  Adminer DB:  http://localhost:8888
+#  DB Host:     mysql (dentro la rete Docker)
+#  DB User:     root / Password: root
+# ============================================================
+
+services:
+  shopware:
+    image: dockware/dev:latest
+    container_name: capperificio-shopware
+    ports:
+      - "8080:80"    # Shopware HTTP
+      - "8443:443"   # Shopware HTTPS
+      - "8888:8888"  # Adminer (gestore DB)
+      - "9999:9999"  # Mailcatcher (email di test)
+    environment:
+      - SHOP_DOMAIN=localhost:8080
+      - APP_ENV=dev
+    volumes:
+      - shopware_data:/var/www/html
+    networks:
+      - shopware_net
+    restart: unless-stopped
+
+networks:
+  shopware_net:
+    driver: bridge
+
+volumes:
+  shopware_data:
+    driver: local

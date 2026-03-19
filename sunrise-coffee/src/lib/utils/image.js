@@ -50,10 +50,8 @@ export function getProductImage(product, size = 'medium') {
 export function getProductSlug(product) {
   if (product?.seoUrls?.length) {
     const seo = product.seoUrls.find((u) => u.isCanonical) || product.seoUrls[0];
-    // Remove leading slashes and 'detail/' prefix
     return seo.seoPathInfo?.replace(/^\/?(detail\/)?/, '') || product.id;
   }
-  // Fallback: slugify the name
-  const name = product?.translated?.name || product?.name || '';
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || product?.id;
+  // Use the product ID as slug — always findable, no dependency on seoUrls
+  return product?.id || '';
 }

@@ -1,4 +1,4 @@
-import { storeApiPost, storeApiGet, storeApiDelete } from '../shopware-client';
+import { storeApiPost, storeApiGet } from '../shopware-client';
 
 /**
  * Login with email and password.
@@ -15,7 +15,8 @@ export async function logout() {
 }
 
 /**
- * Register a new customer.
+ * Register a new customer (or guest).
+ * Pass { guest: true } for guest checkout.
  */
 export async function register(data) {
   return storeApiPost('/account/register', data);
@@ -25,12 +26,7 @@ export async function register(data) {
  * Get the currently logged-in customer profile.
  */
 export async function getCustomer() {
-  return storeApiPost('/account/customer', {
-    associations: {
-      defaultBillingAddress: {},
-      defaultShippingAddress: {},
-    },
-  });
+  return storeApiGet('/account/customer');
 }
 
 /**
@@ -42,11 +38,31 @@ export async function getOrders({ page = 1, limit = 10 } = {}) {
     limit,
     sort: [{ field: 'createdAt', order: 'DESC' }],
     associations: {
-      lineItems: {
-        associations: {
-          cover: {},
-        },
-      },
+      lineItems: { associations: { cover: {} } },
     },
   });
+}
+
+/**
+ * Get list of active countries for address forms.
+ * Paginates because Store API max limit is 100 per request.
+ */
+export async function getCountries() {
+  const pageSize = 100;
+  const pages = await Promise.all([1, 2, 3].map((page) =>
+    storeApiPost('/country', {
+      sort: [{ field: 'name', order: 'ASC' }],
+      limit: pageSize,
+      page,
+    }).catch(() => null)
+  ));
+  return pages.flatMap((r) => r?.elements || []);
+}
+
+/**
+ * Get available salutations (required for registration/address).
+ */
+export async function getSalutations() {
+  const result = await storeApiGet('/salutation');
+  return result?.elements || [];
 }

@@ -235,7 +235,7 @@ export default function CollectionPage() {
 
       {/* Product grid */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#999' }}>Loading products...</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#999' }}>Caricamento prodotti...</div>
       ) : products.length > 0 ? (
         <div className={`${styles.grid} ${products.length <= 3 ? styles.gridThree : ''}`}>
           {products.map((p) => (
@@ -253,7 +253,7 @@ export default function CollectionPage() {
           ))}
         </div>
       ) : (
-        <div className={styles.empty}>No products found in this collection.</div>
+        <div className={styles.empty}>Nessun prodotto trovato in questa collezione.</div>
       )}
 
       <ProductsMarquee />

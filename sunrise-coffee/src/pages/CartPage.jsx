@@ -9,7 +9,7 @@ export default function CartPage() {
   if (loading && !cart) {
     return (
       <div style={{ padding: '80px 40px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-2xl)' }}>Loading cart...</p>
+        <p style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-2xl)' }}>Caricamento carrello...</p>
       </div>
     );
   }
@@ -18,7 +18,7 @@ export default function CartPage() {
     return (
       <div style={{ padding: '80px 40px', textAlign: 'center' }}>
         <p style={{ color: 'var(--color-red)' }}>{error}</p>
-        <Link to="/" style={{ color: 'var(--color-red)', textDecoration: 'underline' }}>Continue Shopping</Link>
+        <Link to="/" style={{ color: 'var(--color-red)', textDecoration: 'underline' }}>Continua lo shopping</Link>
       </div>
     );
   }
@@ -28,8 +28,8 @@ export default function CartPage() {
   if (lineItems.length === 0) {
     return (
       <div style={{ padding: '80px 40px', textAlign: 'center' }}>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-4xl)', marginBottom: 16 }}>Your Cart is Empty</h1>
-        <p style={{ marginBottom: 24, color: '#666' }}>Looks like you haven't added any items yet.</p>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-4xl)', marginBottom: 16 }}>Il carrello è vuoto</h1>
+        <p style={{ marginBottom: 24, color: '#666' }}>Non hai ancora aggiunto nessun prodotto.</p>
         <Link
           to="/collections/all"
           style={{
@@ -42,7 +42,7 @@ export default function CartPage() {
             fontWeight: 600,
           }}
         >
-          Shop Coffee
+          Vai allo shop
         </Link>
       </div>
     );
@@ -51,7 +51,7 @@ export default function CartPage() {
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 20px' }}>
       <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-4xl)', marginBottom: 32 }}>
-        Your Cart ({itemCount})
+        Il tuo carrello ({itemCount})
       </h1>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -113,10 +113,10 @@ export default function CartPage() {
           onClick={clearCart}
           style={{ background: 'none', border: '1px solid #ccc', padding: '10px 20px', borderRadius: 'var(--radius-pill)', cursor: 'pointer' }}
         >
-          Clear Cart
+          Svuota carrello
         </button>
         <div style={{ textAlign: 'right' }}>
-          <p style={{ fontSize: 14, color: '#666', marginBottom: 4 }}>Subtotal</p>
+          <p style={{ fontSize: 14, color: '#666', marginBottom: 4 }}>Subtotale</p>
           <p style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-2xl)', fontWeight: 700 }}>
             {formatPrice(totalPrice)}
           </p>
@@ -135,7 +135,7 @@ export default function CartPage() {
             fontWeight: 600,
           }}
         >
-          Continue Shopping
+          Continua lo shopping
         </Link>
         <Link
           to="/checkout"
@@ -148,7 +148,7 @@ export default function CartPage() {
             fontWeight: 600,
           }}
         >
-          Checkout &rarr;
+          Checkout →
         </Link>
       </div>
     </div>
