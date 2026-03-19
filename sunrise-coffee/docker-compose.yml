@@ -1,20 +1,21 @@
 # ============================================================
-#  Shopware 6 - Ambiente di sviluppo locale
-#  Immagine: dockware/dev (Shopware preinstallato + MySQL)
+#  Capperificio E-commerce — Stack completo
 #
-#  Avvio:  docker compose up -d
+#  Servizi:
+#    shopware   → Shopware 6 CMS/backend  http://localhost:8080
+#    frontend   → React + Express          http://localhost:3000
+#
+#  Avvio:  docker compose up -d --build
 #  Stop:   docker compose down
 #
-#  URL Admin:   http://localhost:8080/admin
-#  Utente:      admin
-#  Password:    shopware
-#
-#  Adminer DB:  http://localhost:8888
-#  DB Host:     mysql (dentro la rete Docker)
-#  DB User:     root / Password: root
+#  Admin Shopware:  http://localhost:8080/admin  (admin / shopware)
+#  Adminer DB:      http://localhost:8888
+#  Mailcatcher:     http://localhost:9999
 # ============================================================
 
 services:
+
+  # ── Shopware 6 ───────────────────────────────────────────
   shopware:
     image: dockware/dev:latest
     container_name: capperificio-shopware
@@ -29,11 +30,36 @@ services:
     volumes:
       - shopware_data:/var/www/html
     networks:
-      - shopware_net
+      - capperificio_net
+    restart: unless-stopped
+
+  # ── Frontend React + Backend Express ─────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Le variabili VITE_* vengono embedded nel bundle al momento del build
+        - VITE_SHOPWARE_API_URL=${VITE_SHOPWARE_API_URL:-http://localhost:3000/store-api}
+        - VITE_SHOPWARE_ACCESS_KEY=${VITE_SHOPWARE_ACCESS_KEY}
+        - VITE_SHOPWARE_STOREFRONT_URL=${VITE_SHOPWARE_STOREFRONT_URL:-default.headless0}
+        - VITE_STRIPE_PUBLIC_KEY=${VITE_STRIPE_PUBLIC_KEY}
+        - VITE_PAYPAL_CLIENT_ID=${VITE_PAYPAL_CLIENT_ID}
+    container_name: capperificio-frontend
+    ports:
+      - "3000:80"    # Frontend (nginx)
+    environment:
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - NODE_ENV=${NODE_ENV:-production}
+    depends_on:
+      - shopware
+    networks:
+      - capperificio_net
     restart: unless-stopped
 
 networks:
-  shopware_net:
+  capperificio_net:
     driver: bridge
 
 volumes:
