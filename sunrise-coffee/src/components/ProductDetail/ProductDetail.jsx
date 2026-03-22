@@ -146,10 +146,11 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     ? (shopwareProduct.calculatedPrice?.unitPrice || shopwareProduct.price?.[0]?.gross || 0)
     : FALLBACK_PRICES[size];
 
+  const rawMediaImages = (shopwareProduct?.media || [])
+    .map((m) => proxyUrl(m.media?.url || m.url))
+    .filter(Boolean);
   const productImages = hasApiProduct
-    ? (shopwareProduct.media?.length
-      ? shopwareProduct.media.map((m) => proxyUrl(m.media?.url || m.url)).filter(Boolean)
-      : [getProductImage(shopwareProduct)])
+    ? (rawMediaImages.length ? rawMediaImages : [getProductImage(shopwareProduct)])
     : FALLBACK_PRODUCT.images;
 
   const PROPERTY_ORDER = ['Tasting notes', 'Region', 'Type', 'Best for', 'Process'];
