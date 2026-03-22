@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import ProductCard from '../ProductCard/ProductCard';
 import SectionHeader from '../SectionHeader/SectionHeader';
 import { useCartContext } from '../../context/ShopwareContext';
+import { useProducts } from '../../hooks/useProducts';
 import { formatPrice } from '../../lib/utils/price';
 import { getProductImage, getProductSlug, proxyUrl } from '../../lib/utils/image';
 import styles from './ProductDetail.module.css';
@@ -172,6 +173,8 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
       )
     : [];
 
+  const { products: shopwareRelated } = useProducts({ limit: 5 });
+
   const alsoLikeProducts = crossSellings.length > 0
     ? crossSellings.slice(0, 4).map((p) => ({
         name: p.translated?.name || p.name,
@@ -179,7 +182,15 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         image: getProductImage(p),
         price: formatPrice(p.calculatedPrice?.unitPrice || p.price?.[0]?.gross),
       }))
-    : ALSO_LIKE_FALLBACK.map((p) => ({ ...p, price: '$25.00' }));
+    : shopwareRelated
+        .filter((p) => p.id !== shopwareProduct?.id)
+        .slice(0, 4)
+        .map((p) => ({
+          name: p.translated?.name || p.name,
+          slug: getProductSlug(p),
+          image: getProductImage(p),
+          price: formatPrice(p.calculatedPrice?.unitPrice || p.price?.[0]?.gross),
+        }));
 
   const unitPrice = hasApiProduct ? productPrice : FALLBACK_PRICES[size];
 
@@ -279,10 +290,10 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
           {(() => {
             const cf = shopwareProduct?.customFields || {};
             const bullets = [cf.capperificio_bullet_1, cf.capperificio_bullet_2, cf.capperificio_bullet_3].filter(Boolean);
-            const fallbackBullets = ['Freshly Roasted in Melbourne', 'Free Standard Delivery over $50'];
+            if (!bullets.length) return null;
             return (
               <ul className={styles.bullets}>
-                {(bullets.length > 0 ? bullets : fallbackBullets).map((b) => (
+                {bullets.map((b) => (
                   <li key={b}>{b}</li>
                 ))}
               </ul>
