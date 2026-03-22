@@ -22,6 +22,7 @@
   top: 56px;
   height: calc(100vh - 56px);
   overflow-y: auto;
+  align-self: start;
 }
 .colLeft::-webkit-scrollbar,
 .colRight::-webkit-scrollbar { width: 0; }
