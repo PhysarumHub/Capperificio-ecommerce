@@ -246,33 +246,10 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
       )}
 
       <ul className={styles.trustList}>
-        <li>
-          <span className={styles.trustIcon}>✓</span>
-          <span>Tostato fresco a Racale, Puglia</span>
-        </li>
-        <li>
-          <span className={styles.trustIcon}>✓</span>
-          <span>Spedizione gratuita sopra i €50</span>
-        </li>
-        <li>
-          <span className={styles.trustIcon}>✓</span>
-          <span>Consegna in 24–48h su tutto il territorio italiano</span>
-        </li>
-        <li>
-          <span className={styles.trustIcon}>✓</span>
-          <span>Soddisfatti o rimborsati entro 30 giorni</span>
-        </li>
-        <li>
-          <span className={styles.trustIcon}>✓</span>
-          <span>Pagamento sicuro — Stripe, PayPal, carta di credito</span>
-        </li>
+        <li>Lavorato Artigianalmente</li>
+        <li>Spedizione Gratuita sopra i €50</li>
+        <li>Consegna in 24–48h</li>
       </ul>
-
-      <div className={styles.trustBadges}>
-        <div className={styles.badge}>🌿 100% Artigianale</div>
-        <div className={styles.badge}>📦 Imballaggio sostenibile</div>
-        <div className={styles.badge}>⭐ Specialty Grade</div>
-      </div>
     </>
   );
 
