@@ -105,18 +105,22 @@ function StepBar({ step, isMobile }) {
 }
 
 // ── Campo con validazione ──────────────────────────────────────────
-function Field({ label, error, children, full }) {
+function Field({ label, error, children, full, required }) {
   return (
-    <div style={{ gridColumn: full ? '1 / -1' : undefined }}>
+    <div data-error={error ? 'true' : undefined} style={{ gridColumn: full ? '1 / -1' : undefined }}>
       <label style={{
         display: 'block', fontSize: 11, fontWeight: 600,
         color: error ? 'var(--color-red)' : '#777',
         marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em',
       }}>
-        {label}
+        {label}{required && <span style={{ color: 'var(--color-red)', marginLeft: 2 }}>*</span>}
       </label>
       {children}
-      {error && <p style={{ fontSize: 12, color: 'var(--color-red)', marginTop: 4 }}>{error}</p>}
+      {error && (
+        <p style={{ fontSize: 12, color: 'var(--color-red)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+          ⚠ {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -346,6 +350,9 @@ export default function CheckoutPage() {
     [countryList, address.countryIso]
   );
 
+  const [formError, setFormError] = useState('');
+  const [shake, setShake] = useState(false);
+
   const validateStep = (fields) => {
     const t = {};
     fields.forEach((f) => { t[f] = true; });
@@ -353,9 +360,34 @@ export default function CheckoutPage() {
     return fields.every((f) => !err(f, address[f]));
   };
 
+  const triggerShake = () => {
+    setShake(true);
+    setTimeout(() => setShake(false), 500);
+  };
+
   const goNext = () => {
-    if (step === 0 && !validateStep(['email'])) return;
-    if (step === 1 && !validateStep(['firstName', 'lastName', 'street', 'zipcode', 'city'])) return;
+    setFormError('');
+    if (step === 0) {
+      if (!validateStep(['email'])) {
+        setFormError('Inserisci un indirizzo email valido per continuare.');
+        triggerShake();
+        setTimeout(() => document.querySelector('input[type="email"]')?.focus(), 50);
+        return;
+      }
+    }
+    if (step === 1) {
+      if (!validateStep(['firstName', 'lastName', 'street', 'zipcode', 'city'])) {
+        setFormError('Compila tutti i campi obbligatori prima di continuare.');
+        triggerShake();
+        setTimeout(() => {
+          const firstError = document.querySelector('[data-error="true"]');
+          firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          firstError?.querySelector('input')?.focus();
+        }, 50);
+        return;
+      }
+    }
+    setFormError('');
     setStep((s) => s + 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -468,7 +500,7 @@ export default function CheckoutPage() {
                 Informazioni di contatto
               </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <Field label="Email" error={err('email')}>
+                <Field label="Email" error={err('email')} required>
                   <input
                     type="email" inputMode="email" autoComplete="email"
                     value={address.email} onChange={setField('email')} onBlur={blur('email')}
@@ -480,7 +512,9 @@ export default function CheckoutPage() {
                   <Link to="/account/login" style={{ color: 'var(--color-red)' }}>Accedi</Link>
                 </p>
               </div>
-              <button onClick={goNext} style={primaryBtn(isMobile)}>Continua →</button>
+              <style>{`@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}`}</style>
+              <button onClick={goNext} style={{ ...primaryBtn(isMobile), animation: shake ? 'shake 0.5s ease' : 'none' }}>Continua →</button>
+              {formError && <p style={{ color: 'var(--color-red)', fontSize: 13, marginTop: 10, textAlign: 'center' }}>⚠ {formError}</p>}
             </div>
           )}
 
@@ -491,19 +525,19 @@ export default function CheckoutPage() {
                 Indirizzo di spedizione
               </h2>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
-                <Field label="Nome" error={err('firstName')}>
+                <Field label="Nome" error={err('firstName')} required>
                   <input autoComplete="given-name" value={address.firstName} onChange={setField('firstName')} onBlur={blur('firstName')} style={is('firstName')} />
                 </Field>
-                <Field label="Cognome" error={err('lastName')}>
+                <Field label="Cognome" error={err('lastName')} required>
                   <input autoComplete="family-name" value={address.lastName} onChange={setField('lastName')} onBlur={blur('lastName')} style={is('lastName')} />
                 </Field>
-                <Field label="Via e numero civico" error={err('street')} full>
+                <Field label="Via e numero civico" error={err('street')} full required>
                   <input autoComplete="street-address" value={address.street} onChange={setField('street')} onBlur={blur('street')} placeholder="Via Roma 1" style={is('street')} />
                 </Field>
-                <Field label="CAP" error={err('zipcode')}>
+                <Field label="CAP" error={err('zipcode')} required>
                   <input autoComplete="postal-code" inputMode="numeric" value={address.zipcode} onChange={setField('zipcode')} onBlur={blur('zipcode')} placeholder="00100" style={is('zipcode')} />
                 </Field>
-                <Field label="Città" error={err('city')}>
+                <Field label="Città" error={err('city')} required>
                   <input autoComplete="address-level2" value={address.city} onChange={setField('city')} onBlur={blur('city')} placeholder="Roma" style={is('city')} />
                 </Field>
 
@@ -563,8 +597,9 @@ export default function CheckoutPage() {
                 {!isLoggedIn && (
                   <button onClick={() => setStep(0)} style={secondaryBtn(isMobile)}>← Indietro</button>
                 )}
-                <button onClick={goNext} style={{ ...primaryBtn(isMobile), flex: 1 }}>Continua →</button>
+                <button onClick={goNext} style={{ ...primaryBtn(isMobile), flex: 1, animation: shake ? 'shake 0.5s ease' : 'none' }}>Continua →</button>
               </div>
+              {formError && <p style={{ color: 'var(--color-red)', fontSize: 13, marginTop: 10, textAlign: 'center' }}>⚠ {formError}</p>}
             </div>
           )}
 
