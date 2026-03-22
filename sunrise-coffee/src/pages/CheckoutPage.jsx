@@ -128,7 +128,7 @@ function Field({ label, error, children, full, required }) {
 const inputStyle = (hasError, isMobile) => ({
   width: '100%',
   padding: isMobile ? '13px 14px' : '11px 14px',
-  border: `1.5px solid ${hasError ? 'var(--color-red)' : '#ddd'}`,
+  border: `1.5px solid ${hasError ? 'var(--color-red)' : 'var(--color-border)'}`,
   borderRadius: 8,
   fontSize: isMobile ? 16 : 15, // 16px evita lo zoom automatico su iOS
   boxSizing: 'border-box',
@@ -144,7 +144,7 @@ function MethodCard({ method, selected, onSelect, name, isMobile }) {
     <label style={{
       display: 'flex', alignItems: 'center', gap: 14,
       padding: isMobile ? '16px 14px' : '14px 18px',
-      border: `1.5px solid ${selected ? 'var(--color-red)' : '#e0e0e0'}`,
+      border: `1.5px solid ${selected ? 'var(--color-red)' : 'var(--color-border)'}`,
       borderRadius: 10, cursor: 'pointer',
       background: selected ? 'rgba(216,64,50,0.04)' : '#fff',
       transition: 'all .2s',
@@ -564,7 +564,7 @@ export default function CheckoutPage() {
                     {countrySearch !== '' && (
                       <div style={{
                         position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200,
-                        background: '#fff', border: '1.5px solid #e0e0e0', borderRadius: 8,
+                        background: '#fff', border: '1.5px solid var(--color-border)', borderRadius: 8,
                         maxHeight: 200, overflowY: 'auto',
                         boxShadow: '0 8px 24px rgba(0,0,0,.12)',
                       }}>
@@ -578,7 +578,7 @@ export default function CheckoutPage() {
                                 padding: '12px 14px', cursor: 'pointer', fontSize: 15,
                                 background: c.iso === address.countryIso ? 'rgba(216,64,50,0.06)' : '#fff',
                                 fontWeight: c.iso === address.countryIso ? 600 : 400,
-                                borderBottom: '1px solid #f0f0f0',
+                                borderBottom: '1px solid var(--color-border)',
                                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                               }}
                             >
@@ -648,7 +648,7 @@ export default function CheckoutPage() {
                           key={key}
                           onClick={() => setPaymentTab(key)}
                           style={{
-                            flex: 1, padding: '10px 0', border: `1.5px solid ${paymentTab === key ? 'var(--color-red)' : '#e0e0e0'}`,
+                            flex: 1, padding: '10px 0', border: `1.5px solid ${paymentTab === key ? 'var(--color-red)' : 'var(--color-border)'}`,
                             borderRadius: 8, background: paymentTab === key ? 'rgba(216,64,50,0.05)' : '#fff',
                             fontWeight: paymentTab === key ? 700 : 400, fontSize: 14,
                             cursor: 'pointer', fontFamily: 'var(--font-sans)',
@@ -758,7 +758,7 @@ function primaryBtn(isMobile) {
 function secondaryBtn(isMobile) {
   return {
     padding: isMobile ? '14px 20px' : '12px 22px',
-    background: '#fff', color: '#444', border: '1.5px solid #ddd',
+    background: '#fff', color: '#444', border: '1.5px solid var(--color-border)',
     borderRadius: 'var(--radius-pill)', fontSize: 14, fontWeight: 600,
     cursor: 'pointer', fontFamily: 'var(--font-sans)',
   };

@@ -8,7 +8,7 @@ function inputStyle(hasError) {
   return {
     width: '100%',
     padding: '11px 14px',
-    border: `1.5px solid ${hasError ? 'var(--color-red)' : '#ddd'}`,
+    border: `1.5px solid ${hasError ? 'var(--color-red)' : 'var(--color-border)'}`,
     borderRadius: 8,
     fontSize: 15,
     boxSizing: 'border-box',
@@ -279,7 +279,7 @@ function RegisterForm({ onSuccess }) {
 
   const outlineBtn = {
     padding: '13px 0', background: '#fff', color: '#555',
-    border: '1.5px solid #ddd', borderRadius: 'var(--radius-pill)',
+    border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-pill)',
     fontSize: 15, fontWeight: 600, cursor: 'pointer',
     fontFamily: 'var(--font-sans)', flex: '0 0 auto', minWidth: 100,
   };

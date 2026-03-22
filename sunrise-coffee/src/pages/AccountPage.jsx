@@ -34,7 +34,7 @@ function AccountDashboard({ customer, logout }) {
           onClick={logout}
           style={{
             padding: '10px 24px',
-            border: '1px solid #ddd',
+            border: '1px solid var(--color-border)',
             background: '#fff',
             borderRadius: 'var(--radius-pill)',
             cursor: 'pointer',

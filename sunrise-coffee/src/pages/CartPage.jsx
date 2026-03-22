@@ -83,7 +83,7 @@ export default function CartPage() {
               display: 'flex',
               gap: 20,
               padding: '20px 0',
-              borderBottom: '1px solid #eee',
+              borderBottom: '1px solid var(--color-border)',
               alignItems: 'center',
             }}
           >
@@ -103,14 +103,14 @@ export default function CartPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <button
                 onClick={() => handleUpdateQty(item, Math.max(1, item.quantity - 1))}
-                style={{ width: 32, height: 32, border: '1px solid #ccc', background: '#fff', cursor: 'pointer', borderRadius: 4 }}
+                style={{ width: 32, height: 32, border: '1px solid var(--color-border)', background: '#fff', cursor: 'pointer', borderRadius: 4 }}
               >
                 &minus;
               </button>
               <span style={{ minWidth: 24, textAlign: 'center' }}>{item.quantity}</span>
               <button
                 onClick={() => handleUpdateQty(item, item.quantity + 1)}
-                style={{ width: 32, height: 32, border: '1px solid #ccc', background: '#fff', cursor: 'pointer', borderRadius: 4 }}
+                style={{ width: 32, height: 32, border: '1px solid var(--color-border)', background: '#fff', cursor: 'pointer', borderRadius: 4 }}
               >
                 +
               </button>
@@ -132,7 +132,7 @@ export default function CartPage() {
       <div style={{ marginTop: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button
           onClick={clearCart}
-          style={{ background: 'none', border: '1px solid #ccc', padding: '10px 20px', borderRadius: 'var(--radius-pill)', cursor: 'pointer' }}
+          style={{ background: 'none', border: '1px solid var(--color-border)', padding: '10px 20px', borderRadius: 'var(--radius-pill)', cursor: 'pointer' }}
         >
           Svuota carrello
         </button>

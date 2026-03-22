@@ -71,7 +71,7 @@
   --color-light:      #F5F3F0;
   --color-cream:      #EEEBE5;
   --color-white:      #FFFFFF;
-  --color-border:     #E0DDD8;
+  --color-border:     rgba(216, 64, 50, 0.22);
   --color-card-border: rgba(216, 64, 50, 0.25);
 
   /* Typography */
