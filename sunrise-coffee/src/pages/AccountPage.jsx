@@ -154,26 +154,24 @@ function LoginForm({ login, loading, error }) {
         Bentornato
       </h1>
 
-      <div>
-        <label style={labelStyle}>Email</label>
+      <Field label="Email" required>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={inputStyle}
+          style={inputStyle(false)}
         />
-      </div>
-      <div>
-        <label style={labelStyle}>Password</label>
+      </Field>
+      <Field label="Password" required>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={inputStyle}
+          style={inputStyle(false)}
         />
-      </div>
+      </Field>
 
       {(formError || error) && (
         <p style={{ color: 'var(--color-red)', fontSize: 14 }}>{formError || error}</p>
