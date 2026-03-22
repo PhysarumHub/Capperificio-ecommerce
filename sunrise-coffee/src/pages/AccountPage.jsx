@@ -12,88 +12,113 @@ export default function AccountPage() {
   return <AccountDashboard customer={customer} logout={logout} />;
 }
 
-// ── Stato badge ────────────────────────────────────────────
+// ── Solo due varianti: arancione (attivo/in corso) e nero (concluso/neutro) ──
+const BADGE = {
+  orange: { color: 'var(--color-red)',  bg: 'rgba(216,64,50,0.1)' },
+  dark:   { color: 'var(--color-dark)', bg: '#f0eeeb' },
+};
+
 const ORDER_STATES = {
-  open:        { label: 'Ricevuto',       color: '#f59e0b', bg: '#fef3c7' },
-  in_progress: { label: 'In lavorazione', color: '#3b82f6', bg: '#eff6ff' },
-  completed:   { label: 'Completato',     color: '#16a34a', bg: '#dcfce7' },
-  cancelled:   { label: 'Annullato',      color: '#dc2626', bg: '#fee2e2' },
+  open:        { label: 'Ricevuto',       variant: 'orange' },
+  in_progress: { label: 'In lavorazione', variant: 'orange' },
+  completed:   { label: 'Completato',     variant: 'dark'   },
+  cancelled:   { label: 'Annullato',      variant: 'dark'   },
 };
 
 const DELIVERY_STATES = {
-  open:               { label: 'Da spedire',  color: '#f59e0b', bg: '#fef3c7' },
-  shipped:            { label: 'Spedito',      color: '#3b82f6', bg: '#eff6ff' },
-  delivered:          { label: 'Consegnato',   color: '#16a34a', bg: '#dcfce7' },
-  returned:           { label: 'Reso',         color: '#dc2626', bg: '#fee2e2' },
-  returned_partially: { label: 'Reso parz.',   color: '#f59e0b', bg: '#fef3c7' },
-  cancelled:          { label: 'Annullato',    color: '#dc2626', bg: '#fee2e2' },
+  open:               { label: 'Da spedire',  variant: 'orange' },
+  shipped:            { label: 'Spedito',      variant: 'orange' },
+  delivered:          { label: 'Consegnato',   variant: 'dark'   },
+  returned:           { label: 'Reso',         variant: 'dark'   },
+  returned_partially: { label: 'Reso parz.',   variant: 'dark'   },
+  cancelled:          { label: 'Annullato',    variant: 'dark'   },
 };
 
 const PAYMENT_STATES = {
-  open:       { label: 'In attesa',  color: '#f59e0b', bg: '#fef3c7' },
-  paid:       { label: 'Pagato',     color: '#16a34a', bg: '#dcfce7' },
-  cancelled:  { label: 'Annullato',  color: '#dc2626', bg: '#fee2e2' },
-  refunded:   { label: 'Rimborsato', color: '#6366f1', bg: '#eef2ff' },
-  authorized: { label: 'Autorizzato',color: '#3b82f6', bg: '#eff6ff' },
+  open:       { label: 'In attesa',   variant: 'orange' },
+  paid:       { label: 'Pagato',      variant: 'dark'   },
+  authorized: { label: 'Autorizzato', variant: 'orange' },
+  cancelled:  { label: 'Annullato',   variant: 'dark'   },
+  refunded:   { label: 'Rimborsato',  variant: 'dark'   },
 };
 
 function Badge({ stateKey, map }) {
-  const s = map[stateKey] || { label: stateKey || '—', color: '#888', bg: '#f3f4f6' };
+  const s = map[stateKey] || { label: stateKey || '—', variant: 'dark' };
+  const b = BADGE[s.variant] || BADGE.dark;
   return (
     <span style={{
       display: 'inline-block', padding: '3px 10px', borderRadius: 100,
       fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase',
-      color: s.color, background: s.bg,
+      color: b.color, background: b.bg,
     }}>
       {s.label}
     </span>
   );
 }
 
+// ── Raggruppa i lineItems per referencedId ──────────────────
+function groupItems(lineItems) {
+  const map = {};
+  (lineItems || []).filter(i => i.type === 'product').forEach(item => {
+    const key = item.referencedId || item.id;
+    if (!map[key]) {
+      map[key] = { ...item, _qty: item.quantity, _total: item.price?.totalPrice ?? 0 };
+    } else {
+      map[key]._qty   += item.quantity;
+      map[key]._total += item.price?.totalPrice ?? 0;
+    }
+  });
+  return Object.values(map);
+}
+
 // ── Riga prodotto ──────────────────────────────────────────
 function OrderItem({ item }) {
   const img = item.cover?.url ? proxyUrl(item.cover.url) : null;
   return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--color-border)' }}>
+    <div style={{
+      display: 'flex', gap: 12, alignItems: 'center',
+      padding: '10px 0', borderBottom: '1px solid var(--color-border)',
+    }}>
       <div style={{
-        width: 52, height: 52, borderRadius: 6, flexShrink: 0, overflow: 'hidden',
-        background: '#f5f3f0', border: '1px solid var(--color-border)',
+        width: 52, height: 52, borderRadius: 6, flexShrink: 0,
+        overflow: 'hidden', background: 'var(--color-light)',
+        border: '1px solid var(--color-border)',
       }}>
         {img && <img src={img} alt={item.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--color-dark)' }}>
           {item.label}
         </div>
-        <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>Qtà: {item.quantity}</div>
+        <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 2 }}>
+          Qtà: {item._qty}
+        </div>
       </div>
-      <div style={{ fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
-        {formatPrice(item.price?.totalPrice)}
+      <div style={{ fontWeight: 700, fontSize: 14, flexShrink: 0, color: 'var(--color-dark)' }}>
+        {formatPrice(item._total)}
       </div>
     </div>
   );
 }
 
-// ── Shipping step tracker ──────────────────────────────────
+// ── Tracker spedizione ──────────────────────────────────────
 function ShippingTracker({ stateKey }) {
-  const steps = [
-    { key: 'open',      label: 'Ricevuto' },
-    { key: 'shipped',   label: 'In spedizione' },
-    { key: 'delivered', label: 'Consegnato' },
-  ];
+  const steps = ['open', 'shipped', 'delivered'];
+  const labels = ['Ricevuto', 'In spedizione', 'Consegnato'];
   const activeIdx = stateKey === 'delivered' ? 2 : stateKey === 'shipped' ? 1 : 0;
+
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', margin: '12px 0 4px' }}>
-      {steps.map((s, i) => {
-        const done = i <= activeIdx;
+      {steps.map((_, i) => {
+        const done   = i <= activeIdx;
         const active = i === activeIdx;
         return (
-          <div key={s.key} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 'none' }}>
+          <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 'none' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
               <div style={{
                 width: 22, height: 22, borderRadius: '50%',
-                background: done ? 'var(--color-red)' : '#e8e8e8',
-                color: done ? '#fff' : '#aaa',
+                background: done ? 'var(--color-red)' : 'var(--color-border)',
+                color: done ? '#fff' : 'var(--color-mid)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 10, fontWeight: 700,
               }}>
@@ -102,15 +127,15 @@ function ShippingTracker({ stateKey }) {
               <span style={{
                 fontSize: 9, textTransform: 'uppercase', letterSpacing: '.04em',
                 fontWeight: active ? 700 : 400,
-                color: active ? 'var(--color-red)' : done ? '#555' : '#aaa',
+                color: active ? 'var(--color-red)' : done ? 'var(--color-dark)' : 'var(--color-mid)',
               }}>
-                {s.label}
+                {labels[i]}
               </span>
             </div>
             {i < steps.length - 1 && (
               <div style={{
-                flex: 1, height: 2, marginBottom: 16, margin: '0 6px 16px',
-                background: i < activeIdx ? 'var(--color-red)' : '#e8e8e8',
+                flex: 1, height: 2, margin: '0 6px 16px',
+                background: i < activeIdx ? 'var(--color-red)' : 'var(--color-border)',
                 transition: 'background .3s',
               }} />
             )}
@@ -125,12 +150,12 @@ function ShippingTracker({ stateKey }) {
 function OrderCard({ order }) {
   const [open, setOpen] = useState(false);
 
-  const products = (order.lineItems || []).filter(i => i.type === 'product');
-  const delivery = order.deliveries?.[0];
+  const grouped   = groupItems(order.lineItems);
+  const delivery  = order.deliveries?.[0];
   const transaction = order.transactions?.[0];
   const deliveryState = delivery?.stateMachineState?.technicalName;
-  const paymentState = transaction?.stateMachineState?.technicalName;
-  const orderState = order.stateMachineState?.technicalName;
+  const paymentState  = transaction?.stateMachineState?.technicalName;
+  const orderState    = order.stateMachineState?.technicalName;
   const trackingCodes = delivery?.trackingCodes || [];
   const shippingMethod = delivery?.shippingMethod?.translated?.name || delivery?.shippingMethod?.name;
   const date = new Date(order.orderDateTime || order.createdAt).toLocaleDateString('it-IT', {
@@ -139,7 +164,8 @@ function OrderCard({ order }) {
 
   return (
     <div style={{ border: '1px solid var(--color-border)', borderRadius: 12, overflow: 'hidden' }}>
-      {/* Header card */}
+
+      {/* Header */}
       <button
         onClick={() => setOpen(o => !o)}
         style={{
@@ -149,60 +175,57 @@ function OrderCard({ order }) {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, color: 'var(--color-dark)' }}>
               Ordine #{order.orderNumber}
             </div>
-            <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>
-              {date} · {products.length} prodotto{products.length !== 1 ? 'i' : ''}
+            <div style={{ fontSize: 12, color: 'var(--color-mid)', marginBottom: 8 }}>
+              {date} · {grouped.length} prodotto{grouped.length !== 1 ? 'i' : ''}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {orderState && <Badge stateKey={orderState} map={ORDER_STATES} />}
+              {orderState    && <Badge stateKey={orderState}    map={ORDER_STATES}    />}
               {deliveryState && <Badge stateKey={deliveryState} map={DELIVERY_STATES} />}
-              {paymentState && <Badge stateKey={paymentState} map={PAYMENT_STATES} />}
+              {paymentState  && <Badge stateKey={paymentState}  map={PAYMENT_STATES}  />}
             </div>
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
             <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--color-red)' }}>
               {formatPrice(order.amountTotal)}
             </div>
-            <div style={{ fontSize: 18, color: '#aaa', marginTop: 8 }}>{open ? '▲' : '▾'}</div>
+            <div style={{ fontSize: 16, color: 'var(--color-mid)', marginTop: 8 }}>{open ? '▲' : '▾'}</div>
           </div>
         </div>
       </button>
 
-      {/* Dettaglio espandibile */}
+      {/* Dettaglio */}
       {open && (
-        <div style={{ borderTop: '1px solid var(--color-border)', padding: '16px 20px', background: '#faf9f7' }}>
+        <div style={{ borderTop: '1px solid var(--color-border)', padding: '16px 20px', background: 'var(--color-light)' }}>
 
-          {/* Prodotti */}
-          {products.length > 0 && (
+          {/* Prodotti raggruppati */}
+          {grouped.length > 0 && (
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: '#888', marginBottom: 8 }}>
-                Prodotti
+              <div style={sectionLabel}>Prodotti</div>
+              {grouped.map(item => <OrderItem key={item.id} item={item} />)}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 10, fontWeight: 700, fontSize: 14, color: 'var(--color-dark)' }}>
+                Totale: {formatPrice(order.amountTotal)}
               </div>
-              {products.map(item => <OrderItem key={item.id} item={item} />)}
             </div>
           )}
 
           {/* Spedizione */}
           {delivery && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: '#888', marginBottom: 8 }}>
-                Spedizione
-              </div>
+              <div style={sectionLabel}>Spedizione</div>
               {shippingMethod && (
-                <div style={{ fontSize: 13, color: '#555', marginBottom: 6 }}>
-                  📦 {shippingMethod}
+                <div style={{ fontSize: 13, color: 'var(--color-mid)', marginBottom: 6 }}>
+                  {shippingMethod}
                 </div>
               )}
               <ShippingTracker stateKey={deliveryState} />
               {trackingCodes.length > 0 && (
-                <div style={{ marginTop: 10, padding: '8px 12px', background: '#fff', borderRadius: 8, border: '1px solid var(--color-border)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color: '#888', marginBottom: 4 }}>
-                    Tracking
-                  </div>
+                <div style={{ marginTop: 10, padding: '10px 14px', background: '#fff', borderRadius: 8, border: '1px solid var(--color-border)' }}>
+                  <div style={sectionLabel}>Codice tracking</div>
                   {trackingCodes.map((code, i) => (
-                    <div key={i} style={{ fontFamily: 'monospace', fontSize: 14, fontWeight: 600, color: 'var(--color-red)' }}>
+                    <div key={i} style={{ fontFamily: 'monospace', fontSize: 14, fontWeight: 700, color: 'var(--color-red)', marginTop: 2 }}>
                       {code}
                     </div>
                   ))}
@@ -216,10 +239,8 @@ function OrderCard({ order }) {
             const a = delivery.shippingOrderAddress;
             return (
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: '#888', marginBottom: 6 }}>
-                  Indirizzo di consegna
-                </div>
-                <div style={{ fontSize: 13, color: '#555', lineHeight: 1.7 }}>
+                <div style={sectionLabel}>Indirizzo di consegna</div>
+                <div style={{ fontSize: 13, color: 'var(--color-mid)', lineHeight: 1.8 }}>
                   <div>{a.firstName} {a.lastName}</div>
                   <div>{a.street}</div>
                   <div>{a.zipcode} {a.city}</div>
@@ -231,20 +252,24 @@ function OrderCard({ order }) {
           {/* Pagamento */}
           {transaction && (
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: '#888', marginBottom: 6 }}>
-                Pagamento
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#555' }}>
-                {transaction.paymentMethod?.translated?.name || transaction.paymentMethod?.name || 'Metodo di pagamento'}
+              <div style={sectionLabel}>Pagamento</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--color-mid)' }}>
+                {transaction.paymentMethod?.translated?.name || transaction.paymentMethod?.name || '—'}
                 {paymentState && <Badge stateKey={paymentState} map={PAYMENT_STATES} />}
               </div>
             </div>
           )}
+
         </div>
       )}
     </div>
   );
 }
+
+const sectionLabel = {
+  fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+  letterSpacing: '.07em', color: 'var(--color-mid)', marginBottom: 8,
+};
 
 // ── Dashboard ──────────────────────────────────────────────
 function AccountDashboard({ customer, logout }) {
@@ -253,7 +278,7 @@ function AccountDashboard({ customer, logout }) {
 
   useEffect(() => {
     getOrders()
-      .then((data) => setOrders(data?.elements || data?.orders?.elements || []))
+      .then(data => setOrders(data?.elements || data?.orders?.elements || []))
       .catch(() => {})
       .finally(() => setOrdersLoading(false));
   }, []);
@@ -267,13 +292,16 @@ function AccountDashboard({ customer, logout }) {
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-4xl)' }}>Il mio account</h1>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-4xl)', color: 'var(--color-dark)' }}>
+          Il mio account
+        </h1>
         <button
           onClick={logout}
           style={{
             padding: '10px 22px', border: '1px solid var(--color-border)',
             background: '#fff', borderRadius: 'var(--radius-pill)',
-            cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14,
+            cursor: 'pointer', fontFamily: 'var(--font-sans)',
+            fontWeight: 600, fontSize: 14, color: 'var(--color-dark)',
           }}
         >
           Esci
@@ -282,41 +310,42 @@ function AccountDashboard({ customer, logout }) {
 
       {/* Profilo */}
       <div style={{
-        background: '#faf9f7', border: '1px solid var(--color-border)',
+        background: 'var(--color-light)', border: '1px solid var(--color-border)',
         borderRadius: 14, padding: '20px 24px', marginBottom: 36,
         display: 'flex', alignItems: 'center', gap: 18,
       }}>
         <div style={{
           width: 52, height: 52, borderRadius: '50%',
-          background: 'var(--color-red)', color: '#fff',
+          background: 'var(--color-red)', color: '#fff', flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700, flexShrink: 0,
+          fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700,
         }}>
           {(customer?.firstName?.[0] || '?').toUpperCase()}
         </div>
         <div>
-          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 2 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 2, color: 'var(--color-dark)' }}>
             {customer?.firstName} {customer?.lastName}
           </div>
-          <div style={{ fontSize: 13, color: '#888' }}>{customer?.email}</div>
+          <div style={{ fontSize: 13, color: 'var(--color-mid)' }}>{customer?.email}</div>
           {memberSince && (
-            <div style={{ fontSize: 12, color: '#aaa', marginTop: 2 }}>Cliente dal {memberSince}</div>
+            <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 2 }}>
+              Cliente dal {memberSince}
+            </div>
           )}
         </div>
       </div>
 
       {/* Ordini */}
-      <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 16 }}>
+      <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 16, color: 'var(--color-dark)' }}>
         Storico ordini
       </h2>
 
       {ordersLoading ? (
-        <div style={{ color: '#aaa', padding: '32px 0', textAlign: 'center', fontSize: 14 }}>
+        <div style={{ color: 'var(--color-mid)', padding: '32px 0', textAlign: 'center', fontSize: 14 }}>
           Caricamento ordini...
         </div>
       ) : orders.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px 0', color: '#999' }}>
-          <div style={{ fontSize: 36, marginBottom: 12 }}>🛒</div>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--color-mid)' }}>
           <p style={{ marginBottom: 20, fontSize: 15 }}>Non hai ancora effettuato ordini.</p>
           <Link
             to="/collections/all"
