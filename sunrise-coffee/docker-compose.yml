@@ -2,15 +2,15 @@
 #  Capperificio E-commerce — Stack completo
 #
 #  Servizi:
-#    shopware   → Shopware 6 CMS/backend  http://localhost:8080
-#    frontend   → React + Express          http://localhost:3000
+#    shopware   → Shopware 6 CMS/backend  http://localhost:8090
+#    frontend   → React + Express          http://localhost:3001
 #
 #  Avvio:  docker compose up -d --build
 #  Stop:   docker compose down
 #
-#  Admin Shopware:  http://localhost:8080/admin  (admin / shopware)
-#  Adminer DB:      http://localhost:8888
-#  Mailcatcher:     http://localhost:9999
+#  Admin Shopware:  http://localhost:8090/admin  (admin / shopware)
+#  Adminer DB:      http://localhost:8891
+#  Mailcatcher:     http://localhost:9998
 # ============================================================
 
 services:
@@ -20,12 +20,12 @@ services:
     image: dockware/dev:latest
     container_name: capperificio-shopware
     ports:
-      - "8080:80"    # Shopware HTTP
-      - "8443:443"   # Shopware HTTPS
-      - "8888:8888"  # Adminer (gestore DB)
-      - "9999:9999"  # Mailcatcher (email di test)
+      - "8090:80"    # Shopware HTTP
+      - "8453:443"   # Shopware HTTPS
+      - "8891:8888"  # Adminer (gestore DB)
+      - "9998:9999"  # Mailcatcher (email di test)
     environment:
-      - SHOP_DOMAIN=localhost:8080
+      - SHOP_DOMAIN=localhost:8090
       - APP_ENV=dev
     volumes:
       - shopware_data:/var/www/html
@@ -47,7 +47,7 @@ services:
         - VITE_PAYPAL_CLIENT_ID=${VITE_PAYPAL_CLIENT_ID}
     container_name: capperificio-frontend
     ports:
-      - "3000:80"    # Frontend (nginx)
+      - "3001:80"    # Frontend (nginx)
     environment:
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
