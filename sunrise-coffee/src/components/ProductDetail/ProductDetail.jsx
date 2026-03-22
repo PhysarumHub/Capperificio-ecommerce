@@ -4,7 +4,7 @@ import ProductCard from '../ProductCard/ProductCard';
 import SectionHeader from '../SectionHeader/SectionHeader';
 import { useCartContext } from '../../context/ShopwareContext';
 import { formatPrice } from '../../lib/utils/price';
-import { getProductImage, getProductSlug } from '../../lib/utils/image';
+import { getProductImage, getProductSlug, proxyUrl } from '../../lib/utils/image';
 import styles from './ProductDetail.module.css';
 
 const SIZES = ['250g', '500g', '1kg'];
@@ -148,7 +148,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
 
   const productImages = hasApiProduct
     ? (shopwareProduct.media?.length
-      ? shopwareProduct.media.map((m) => m.media?.url || m.url).filter(Boolean)
+      ? shopwareProduct.media.map((m) => proxyUrl(m.media?.url || m.url)).filter(Boolean)
       : [getProductImage(shopwareProduct)])
     : FALLBACK_PRODUCT.images;
 

@@ -2,7 +2,7 @@
  * Rewrite Shopware absolute URLs to relative paths so they go through the Vite proxy.
  * e.g. "https://localhost/media/..." → "/media/..."
  */
-function proxyUrl(url) {
+export function proxyUrl(url) {
   if (!url) return url;
   try {
     const u = new URL(url);

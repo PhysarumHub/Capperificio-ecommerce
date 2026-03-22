@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useCartContext } from '../context/ShopwareContext';
 import { formatPrice } from '../lib/utils/price';
-import { getProductImage } from '../lib/utils/image';
+import { getProductImage, proxyUrl } from '../lib/utils/image';
 
 export default function CartPage() {
   const { cart, loading, error, updateQuantity, removeItem, mergeUpdate, removeItems, clearCart, itemCount, totalPrice } = useCartContext();
@@ -88,7 +88,7 @@ export default function CartPage() {
             }}
           >
             <img
-              src={item.cover?.url || getProductImage(item)}
+              src={proxyUrl(item.cover?.url) || getProductImage(item)}
               alt={item.label}
               style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 8 }}
             />
