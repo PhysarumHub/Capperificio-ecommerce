@@ -24,19 +24,23 @@ export function useCart() {
     }
   }, [configured]);
 
-  // ── Helper: run an API call then refresh the cart ───────
+  // ── Helper: run API call and use its response as new cart state ──
+  // Shopware returns the updated cart on every mutation — no need for a second getCart()
   const mutateCart = useCallback(async (apiFn) => {
     if (!configured) return;
     setLoading(true);
     setError(null);
     try {
-      await apiFn();
-      // Always re-fetch so the UI reflects the real server state
-      const fresh = await cartApi.getCart();
-      setCart(fresh);
+      const updated = await apiFn();
+      if (updated?.lineItems !== undefined) {
+        setCart(updated);
+      } else {
+        // Fallback: only fetch if the response isn't a cart object
+        const fresh = await cartApi.getCart();
+        setCart(fresh);
+      }
     } catch (err) {
       setError(err.message || 'Cart operation failed');
-      // Still try to refresh so we show the current real state
       try {
         const fresh = await cartApi.getCart();
         setCart(fresh);
@@ -58,16 +62,23 @@ export function useCart() {
     mutateCart(() => cartApi.removeCartItem(lineItemId)),
   [mutateCart]);
 
-  // Update primary item + remove duplicates in one single cart refresh
+  // Update primary item + remove duplicates, use last response as cart
   const mergeUpdate = useCallback(async (primaryId, newQty, duplicateIds = []) => {
     if (!configured) return;
     setLoading(true);
     setError(null);
     try {
-      await cartApi.updateCartItem(primaryId, newQty);
-      for (const id of duplicateIds) await cartApi.removeCartItem(id);
-      const fresh = await cartApi.getCart();
-      setCart(fresh);
+      const updated = await cartApi.updateCartItem(primaryId, newQty);
+      let last = updated;
+      for (const id of duplicateIds) {
+        last = await cartApi.removeCartItem(id);
+      }
+      if (last?.lineItems !== undefined) {
+        setCart(last);
+      } else {
+        const fresh = await cartApi.getCart();
+        setCart(fresh);
+      }
     } catch (err) {
       setError(err.message || 'Cart operation failed');
       try { const fresh = await cartApi.getCart(); setCart(fresh); } catch {}
@@ -76,15 +87,22 @@ export function useCart() {
     }
   }, [configured]);
 
-  // Remove multiple items in one single cart refresh
+  // Remove multiple items, use last response as cart
   const removeItems = useCallback(async (ids) => {
     if (!configured) return;
     setLoading(true);
     setError(null);
     try {
-      for (const id of ids) await cartApi.removeCartItem(id);
-      const fresh = await cartApi.getCart();
-      setCart(fresh);
+      let last;
+      for (const id of ids) {
+        last = await cartApi.removeCartItem(id);
+      }
+      if (last?.lineItems !== undefined) {
+        setCart(last);
+      } else {
+        const fresh = await cartApi.getCart();
+        setCart(fresh);
+      }
     } catch (err) {
       setError(err.message || 'Cart operation failed');
       try { const fresh = await cartApi.getCart(); setCart(fresh); } catch {}
@@ -99,7 +117,6 @@ export function useCart() {
     setError(null);
     try {
       await cartApi.deleteCart();
-      // After delete Shopware creates a fresh empty cart on next GET
       const fresh = await cartApi.getCart();
       setCart(fresh);
     } catch (err) {
