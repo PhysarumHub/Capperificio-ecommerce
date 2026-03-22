@@ -654,7 +654,7 @@ export default function CheckoutPage() {
                                 actions.order.create({
                                   purchase_units: [{
                                     amount: {
-                                      value: (totalPrice / 100).toFixed(2),
+                                      value: totalPrice.toFixed(2),
                                       currency_code: 'EUR',
                                     },
                                   }],
