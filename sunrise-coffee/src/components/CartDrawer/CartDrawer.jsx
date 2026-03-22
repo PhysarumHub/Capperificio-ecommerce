@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useCartContext } from '../../context/ShopwareContext';
 import { formatPrice } from '../../lib/utils/price';
@@ -8,7 +8,7 @@ import styles from './CartDrawer.module.css';
 const FREE_SHIPPING_THRESHOLD = 50;
 
 export default function CartDrawer({ open, onClose }) {
-  const { cart, loading, updateQuantity, removeItem, mergeUpdate, removeItems, itemCount, totalPrice } = useCartContext();
+  const { cart, loading, updateQuantity, removeItem, optimisticMerge, mergeUpdate, removeItems, itemCount, totalPrice } = useCartContext();
 
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden';
@@ -37,9 +37,25 @@ export default function CartDrawer({ open, onClose }) {
   });
   const lineItems = Object.values(groupedMap);
 
+  // Optimistic update instantly, debounce API call to coalesce rapid clicks
+  const apiTimers = useRef({});
+  const latestQty = useRef({});
+
   const handleUpdateQty = (group, newQty) => {
     const [firstId, ...duplicates] = group._allIds;
-    mergeUpdate(firstId, newQty, duplicates);
+    latestQty.current[firstId] = { newQty, duplicates };
+
+    // Instant visual feedback — no waiting for API
+    optimisticMerge(firstId, newQty, duplicates);
+
+    // Debounce: only fire API once user stops clicking for 350ms
+    clearTimeout(apiTimers.current[firstId]);
+    apiTimers.current[firstId] = setTimeout(() => {
+      const { newQty: qty, duplicates: dups } = latestQty.current[firstId];
+      mergeUpdate(firstId, qty, dups);
+      delete apiTimers.current[firstId];
+      delete latestQty.current[firstId];
+    }, 350);
   };
   const handleRemove = (group) => removeItems(group._allIds);
 

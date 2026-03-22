@@ -62,52 +62,60 @@ export function useCart() {
     mutateCart(() => cartApi.removeCartItem(lineItemId)),
   [mutateCart]);
 
-  // Update primary item + remove duplicates, use last response as cart
+  // Optimistic-only update: instant UI, no API call (used before debounced sync)
+  const optimisticMerge = useCallback((primaryId, newQty, duplicateIds = []) => {
+    setCart(prev => {
+      if (!prev?.lineItems) return prev;
+      const updatedItems = prev.lineItems
+        .filter(item => !duplicateIds.includes(item.id))
+        .map(item => {
+          if (item.id !== primaryId) return item;
+          const unit = item.price?.unitPrice ?? 0;
+          return { ...item, quantity: newQty, price: { ...item.price, totalPrice: unit * newQty } };
+        });
+      const newTotal = updatedItems.reduce((s, i) => s + (i.price?.totalPrice ?? 0), 0);
+      return { ...prev, lineItems: updatedItems, price: { ...prev.price, totalPrice: newTotal } };
+    });
+  }, []);
+
+  // API sync — reconcile with server (shipping/tax/promotions)
   const mergeUpdate = useCallback(async (primaryId, newQty, duplicateIds = []) => {
     if (!configured) return;
-    setLoading(true);
-    setError(null);
     try {
       const updated = await cartApi.updateCartItem(primaryId, newQty);
       let last = updated;
       for (const id of duplicateIds) {
         last = await cartApi.removeCartItem(id);
       }
-      if (last?.lineItems !== undefined) {
-        setCart(last);
-      } else {
-        const fresh = await cartApi.getCart();
-        setCart(fresh);
-      }
+      if (last?.lineItems !== undefined) setCart(last);
+      else { const fresh = await cartApi.getCart(); setCart(fresh); }
     } catch (err) {
       setError(err.message || 'Cart operation failed');
       try { const fresh = await cartApi.getCart(); setCart(fresh); } catch {}
-    } finally {
-      setLoading(false);
     }
   }, [configured]);
 
-  // Remove multiple items, use last response as cart
+  // Remove multiple items — optimistic UI, background sync
   const removeItems = useCallback(async (ids) => {
     if (!configured) return;
-    setLoading(true);
-    setError(null);
+
+    // Optimistic: remove immediately
+    setCart(prev => {
+      if (!prev?.lineItems) return prev;
+      const updatedItems = prev.lineItems.filter(item => !ids.includes(item.id));
+      const newTotal = updatedItems.reduce((s, i) => s + (i.price?.totalPrice ?? 0), 0);
+      return { ...prev, lineItems: updatedItems, price: { ...prev.price, totalPrice: newTotal } };
+    });
+
+    // Background sync
     try {
       let last;
-      for (const id of ids) {
-        last = await cartApi.removeCartItem(id);
-      }
-      if (last?.lineItems !== undefined) {
-        setCart(last);
-      } else {
-        const fresh = await cartApi.getCart();
-        setCart(fresh);
-      }
+      for (const id of ids) last = await cartApi.removeCartItem(id);
+      if (last?.lineItems !== undefined) setCart(last);
+      else { const fresh = await cartApi.getCart(); setCart(fresh); }
     } catch (err) {
       setError(err.message || 'Cart operation failed');
       try { const fresh = await cartApi.getCart(); setCart(fresh); } catch {}
-    } finally {
-      setLoading(false);
     }
   }, [configured]);
 
@@ -139,6 +147,7 @@ export function useCart() {
     addItem,
     updateQuantity,
     removeItem,
+    optimisticMerge,
     mergeUpdate,
     removeItems,
     clearCart,
