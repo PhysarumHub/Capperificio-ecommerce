@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useCartContext, useCustomerContext } from '../context/ShopwareContext';
-import { getShippingMethods, updateContext, placeOrder } from '../lib/api/checkout';
+import { getShippingMethods, getPaymentMethods, updateContext, placeOrder } from '../lib/api/checkout';
 import { getCountries, getSalutations, register } from '../lib/api/customer';
 import { formatPrice } from '../lib/utils/price';
 import { isShopwareConfigured } from '../lib/shopware-client';
@@ -278,6 +278,8 @@ export default function CheckoutPage() {
   const [orderNumber, setOrderNumber] = useState(null);
   const [countrySearch, setCountrySearch] = useState('');
   const [paymentTab, setPaymentTab] = useState('stripe'); // 'stripe' | 'paypal'
+  const [stripePaymentMethodId, setStripePaymentMethodId] = useState('');
+  const [paypalPaymentMethodId, setPaypalPaymentMethodId] = useState('');
   const [stripeClientSecret, setStripeClientSecret] = useState(null);
   const [stripeLoading, setStripeLoading] = useState(false);
 
@@ -302,6 +304,14 @@ export default function CheckoutPage() {
     getShippingMethods().then((sm) => { setShippingMethods(sm); if (sm.length) setSelectedShipping(sm[0].id); }).catch(() => {}).finally(() => setLoadingMethods(false));
     getCountries().then((co) => setSwCountries(co)).catch(() => {});
     getSalutations().then((sa) => { if (sa.length) setSalutationId(sa[0].id); }).catch(() => {});
+    getPaymentMethods().then((methods) => {
+      const isStripe = (m) => /stripe/i.test(m.handlerIdentifier || '') || /stripe/i.test(m.name || '') || /stripe/i.test(m.translated?.name || '');
+      const isPaypal = (m) => /paypal/i.test(m.handlerIdentifier || '') || /paypal/i.test(m.name || '') || /paypal/i.test(m.translated?.name || '');
+      const stripePm = methods.find(isStripe);
+      const paypalPm = methods.find(isPaypal);
+      if (stripePm) setStripePaymentMethodId(stripePm.id);
+      if (paypalPm) setPaypalPaymentMethodId(paypalPm.id);
+    }).catch(() => {});
   }, []);
 
   // Crea PaymentIntent Stripe quando si arriva allo step 2 con tab stripe
@@ -427,7 +437,11 @@ export default function CheckoutPage() {
           },
         });
       }
-      await updateContext({ shippingMethodId: selectedShipping });
+      const paymentMethodId = paymentTab === 'paypal' ? paypalPaymentMethodId : stripePaymentMethodId;
+      await updateContext({
+        shippingMethodId: selectedShipping,
+        ...(paymentMethodId ? { paymentMethodId } : {}),
+      });
       const order = await placeOrder();
       setOrderNumber(order?.orderNumber || order?.id || '—');
       await fetchCart();
