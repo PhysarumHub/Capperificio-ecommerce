@@ -208,7 +208,14 @@ function OrderSummary({ cart, totalPrice, address, step, selectedCountryName, pl
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
-            {cart?.lineItems?.map((item) => (
+            {Object.values(
+              (cart?.lineItems?.filter(i => i.type === 'product') ?? []).reduce((acc, item) => {
+                const key = item.referencedId || item.id;
+                if (!acc[key]) acc[key] = { ...item, _total: item.price?.totalPrice ?? 0 };
+                else { acc[key].quantity += item.quantity; acc[key]._total += item.price?.totalPrice ?? 0; }
+                return acc;
+              }, {})
+            ).map((item) => (
               <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, gap: 12 }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontWeight: 600, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -216,7 +223,7 @@ function OrderSummary({ cart, totalPrice, address, step, selectedCountryName, pl
                   </div>
                   <div style={{ color: '#aaa', fontSize: 12 }}>Qtà: {item.quantity}</div>
                 </div>
-                <span style={{ fontWeight: 700, flexShrink: 0 }}>{formatPrice(item.price?.totalPrice)}</span>
+                <span style={{ fontWeight: 700, flexShrink: 0 }}>{formatPrice(item._total)}</span>
               </div>
             ))}
           </div>
