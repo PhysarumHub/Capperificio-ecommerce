@@ -26,12 +26,12 @@ const ORDER_STATES = {
 };
 
 const DELIVERY_STATES = {
-  open:               { label: 'Da spedire',  variant: 'orange' },
-  shipped:            { label: 'Spedito',      variant: 'orange' },
-  delivered:          { label: 'Consegnato',   variant: 'dark'   },
-  returned:           { label: 'Reso',         variant: 'dark'   },
-  returned_partially: { label: 'Reso parz.',   variant: 'dark'   },
-  cancelled:          { label: 'Annullato',    variant: 'dark'   },
+  open:               { label: 'In preparazione', variant: 'orange' },
+  shipped:            { label: 'Spedito',          variant: 'dark'   },
+  shipped_partially:  { label: 'Parz. spedito',    variant: 'orange' },
+  returned:           { label: 'Reso',             variant: 'dark'   },
+  returned_partially: { label: 'Reso parz.',       variant: 'dark'   },
+  cancelled:          { label: 'Annullato',        variant: 'dark'   },
 };
 
 const PAYMENT_STATES = {
@@ -103,9 +103,9 @@ function OrderItem({ item }) {
 
 // ── Tracker spedizione ──────────────────────────────────────
 function ShippingTracker({ stateKey }) {
-  const steps = ['open', 'shipped', 'delivered'];
-  const labels = ['Ricevuto', 'In spedizione', 'Consegnato'];
-  const activeIdx = stateKey === 'delivered' ? 2 : stateKey === 'shipped' ? 1 : 0;
+  const steps = ['open', 'shipped'];
+  const labels = ['In preparazione', 'Spedito'];
+  const activeIdx = stateKey === 'shipped' || stateKey === 'shipped_partially' ? 1 : 0;
 
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', margin: '12px 0 4px' }}>
