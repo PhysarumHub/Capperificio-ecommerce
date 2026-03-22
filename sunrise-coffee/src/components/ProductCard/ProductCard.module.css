@@ -23,9 +23,9 @@
 }
 
 .productImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: 85%;
+  height: 85%;
+  object-fit: contain;
 }
 
 .imgPlaceholder {
@@ -34,10 +34,11 @@
   background: #E8E4DC;
 }
 
+/* Badge — top left */
 .badge {
   position: absolute;
   top: 12px;
-  right: 12px;
+  left: 12px;
   background: var(--color-red);
   color: var(--color-white);
   font-size: var(--text-xs);
@@ -46,17 +47,113 @@
   letter-spacing: .06em;
   padding: 4px 12px;
   border-radius: var(--radius-pill);
+  z-index: 1;
 }
 
 .badgeBlue {
   background: #3B5BDB;
 }
 
+/* Add to cart — bottom right */
+.addToCart {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--color-red);
+  color: var(--color-white);
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+  transition: opacity .2s;
+}
+.addToCart:hover { opacity: .8; }
+
+/* In-cart tag (shown after debounce) */
+.cartTag {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: #2C8843;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  z-index: 1;
+  animation: tagIn .2s ease;
+}
+.cartTag:hover { opacity: .85; }
+
+@keyframes tagIn {
+  from { opacity: 0; transform: scale(.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Quantity control (replaces + after first add) */
+.qtyControl {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  background: var(--color-red);
+  border-radius: 20px;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.qtyBtn {
+  background: none;
+  border: none;
+  color: var(--color-white);
+  width: 30px;
+  height: 30px;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .15s;
+}
+.qtyBtn:hover { background: rgba(0,0,0,.15); }
+
+.qtyNum {
+  color: var(--color-white);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Info row */
 .info {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 16px 20px 18px;
+  align-items: flex-end;
+  padding: 14px 6px 8px;
+  gap: 8px;
+  height: 72px;
+  overflow: hidden;
+}
+
+.infoLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .name {
@@ -65,44 +162,40 @@
   font-size: var(--text-lg);
   font-weight: 500;
   color: var(--color-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sizes {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-xs);
+  color: var(--color-red);
+  letter-spacing: .04em;
 }
 
 .pricing {
   text-align: right;
-  font-size: var(--text-base);
-  white-space: nowrap;
-}
-
-.priceLabel {
-  font-size: 11px;
-  color: #999;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .oldPrice {
-  color: #B0ACA5;
+  color: var(--color-red);
   text-decoration: line-through;
   font-size: var(--text-sm);
-  margin-right: 2px;
+  font-family: var(--font-mono, monospace);
 }
 
 .price {
-  color: var(--color-dark);
-  font-weight: 600;
-}
-
-/* Stars (blend cards) */
-.stars {
-  display: flex;
-  gap: 2px;
-  margin-top: 4px;
-}
-.stars span {
-  font-size: var(--text-sm);
   color: var(--color-red);
+  font-size: var(--text-sm);
+  font-family: var(--font-mono, monospace);
+  font-weight: 500;
 }
 
-/* Merch variant (no bag, square ratio) */
+/* Merch variant */
 .imgSquare {
   aspect-ratio: 1 / 1;
 }
@@ -120,13 +213,26 @@
 
 @media (max-width: 768px) {
   .card { padding: 6px; }
-  .info { padding: 12px 10px 14px; }
-  .badge { top: 8px; right: 8px; padding: 3px 8px; }
+  .info {
+    padding: 10px 4px 6px;
+    height: auto;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .infoLeft { width: 100%; }
+  .name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+  .pricing { text-align: left; }
+  .badge { top: 8px; left: 8px; padding: 3px 8px; }
+  .addToCart { bottom: 8px; right: 8px; width: 34px; height: 34px; font-size: 20px; }
 }
 
 @media (max-width: 480px) {
   .card { padding: 4px; }
-  .info { padding: 10px 6px 12px; }
-  .name { font-size: var(--text-base); }
-  .pricing { font-size: var(--text-sm); }
+  .sizes { font-size: var(--text-xs); }
+  .price, .oldPrice { font-size: var(--text-xs); }
 }

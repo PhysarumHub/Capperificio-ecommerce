@@ -44,10 +44,9 @@ export default function Header() {
             aria-expanded={menuOpen}
             aria-controls="megaMenu"
           >
-            Shop{' '}
-            <span className={`${styles.triggerIcon} ${menuOpen ? styles.triggerIconOpen : ''}`}>+</span>
+            Menu{' '}
+            <span className={styles.triggerIcon}>{menuOpen ? '—' : '+'}</span>
           </button>
-          <Link to="/" className={styles.navLink}>Blog</Link>
           <Link to="/" className={styles.navLink}>About</Link>
         </nav>
 
@@ -58,7 +57,6 @@ export default function Header() {
         </div>
 
         <nav className={styles.navRight}>
-          <Link to="/" className={styles.navLink}>Search</Link>
           <Link to="/account" className={styles.navLink}>
             {isLoggedIn ? 'Account' : 'Login'}
           </Link>
@@ -80,7 +78,7 @@ export default function Header() {
         aria-label="Shop navigation"
       >
         <div className={styles.megaLeft}>
-          <div className={styles.megaNavLabel}>Shop</div>
+          <div className={styles.megaNavLabel}>Menu</div>
           <nav className={styles.megaLinks}>
             {MEGA_LINKS.map(({ label, href }) => (
               <Link key={label} to={href} className={styles.megaLink} onClick={closeMenu}>
@@ -93,10 +91,14 @@ export default function Header() {
           </button>
         </div>
         <div className={styles.megaCenter}>
-          <img src="/images/CAPPERI.jpg" alt="Featured product" className={styles.megaCenterImg} />
+          <div className={styles.megaImgBox}>
+            <img src="/images/CAPPERI.jpg" alt="Featured product" className={styles.megaCenterImg} />
+          </div>
         </div>
         <div className={styles.megaRight}>
-          <img src="/images/CAPPERI.jpg" alt="Coffee drip" className={styles.megaRightImg} />
+          <div className={styles.megaImgBox}>
+            <img src="/images/CAPPERI.jpg" alt="Coffee drip" className={styles.megaRightImg} />
+          </div>
         </div>
       </div>
     </>

@@ -4,7 +4,7 @@ import { formatPrice } from '../lib/utils/price';
 import { getProductImage } from '../lib/utils/image';
 
 export default function CartPage() {
-  const { cart, loading, error, updateQuantity, removeItem, clearCart, itemCount, totalPrice } = useCartContext();
+  const { cart, loading, error, updateQuantity, removeItem, mergeUpdate, removeItems, clearCart, itemCount, totalPrice } = useCartContext();
 
   if (loading && !cart) {
     return (
@@ -23,7 +23,28 @@ export default function CartPage() {
     );
   }
 
-  const lineItems = cart?.lineItems || [];
+  const rawItems = (cart?.lineItems || []).filter((item) => item.type === 'product');
+
+  // Group duplicate line items for the same product into one row
+  const groupedMap = {};
+  rawItems.forEach((item) => {
+    const key = item.referencedId || item.id;
+    if (!groupedMap[key]) {
+      groupedMap[key] = { ...item, _allIds: [item.id], _totalPrice: item.price?.totalPrice || 0 };
+    } else {
+      groupedMap[key].quantity += item.quantity;
+      groupedMap[key]._totalPrice += item.price?.totalPrice || 0;
+      groupedMap[key]._allIds.push(item.id);
+    }
+  });
+  const lineItems = Object.values(groupedMap);
+
+  const handleUpdateQty = (group, newQty) => {
+    const [firstId, ...duplicates] = group._allIds;
+    mergeUpdate(firstId, newQty, duplicates);
+  };
+
+  const handleRemoveGroup = (group) => removeItems(group._allIds);
 
   if (lineItems.length === 0) {
     return (
@@ -81,24 +102,24 @@ export default function CartPage() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <button
-                onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                onClick={() => handleUpdateQty(item, Math.max(1, item.quantity - 1))}
                 style={{ width: 32, height: 32, border: '1px solid #ccc', background: '#fff', cursor: 'pointer', borderRadius: 4 }}
               >
                 &minus;
               </button>
               <span style={{ minWidth: 24, textAlign: 'center' }}>{item.quantity}</span>
               <button
-                onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                onClick={() => handleUpdateQty(item, item.quantity + 1)}
                 style={{ width: 32, height: 32, border: '1px solid #ccc', background: '#fff', cursor: 'pointer', borderRadius: 4 }}
               >
                 +
               </button>
             </div>
             <div style={{ minWidth: 80, textAlign: 'right', fontWeight: 600 }}>
-              {formatPrice(item.price?.totalPrice)}
+              {formatPrice(item._totalPrice)}
             </div>
             <button
-              onClick={() => removeItem(item.id)}
+              onClick={() => handleRemoveGroup(item)}
               style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 18 }}
               aria-label="Remove item"
             >

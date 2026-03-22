@@ -49,7 +49,7 @@
 /* ── Shop trigger ───────────────────────── */
 .shopTrigger {
   background: none;
-  border: none;
+  border: 1.5px solid var(--color-red);
   outline: none;
   font-family: var(--font-sans);
   font-size: var(--text-base);
@@ -58,28 +58,23 @@
   letter-spacing: .06em;
   color: var(--color-red);
   cursor: pointer;
-  padding: 0;
+  padding: 5px 10px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   transition: opacity var(--duration-fast);
 }
 .shopTrigger:hover { opacity: .6; }
 .shopTrigger:focus-visible {
   outline: 2px solid var(--color-red);
   outline-offset: 3px;
-  border-radius: 2px;
 }
 
 .triggerIcon {
   display: inline-block;
   font-style: normal;
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   line-height: 1;
-  transition: transform .25s;
-}
-.triggerIconOpen {
-  transform: rotate(45deg);
 }
 
 /* ── Mega menu ──────────────────────────── */
@@ -188,7 +183,8 @@
 
 /* Center pane */
 .megaCenter {
-  background: #EDEBE6;
+  background: var(--color-white);
+  padding: 24px;
   overflow: hidden;
   transform: translateY(-20px);
   opacity: 0;
@@ -199,15 +195,10 @@
   opacity: 1;
 }
 
-.megaCenterImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 /* Right pane */
 .megaRight {
-  background: #2A1E14;
+  background: var(--color-white);
+  padding: 24px;
   overflow: hidden;
   transform: translateY(-20px);
   opacity: 0;
@@ -218,10 +209,27 @@
   opacity: 1;
 }
 
+/* Image box */
+.megaImgBox {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.megaCenterImg,
 .megaRightImg {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 30%;
+  display: block;
+  transition: transform .6s ease;
+}
+
+.megaImgBox:hover .megaCenterImg,
+.megaImgBox:hover .megaRightImg {
+  transform: scale(1.04);
 }
 
 /* ─── RESPONSIVE ─────────────────────────── */

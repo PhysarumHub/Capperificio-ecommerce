@@ -58,6 +58,41 @@ export function useCart() {
     mutateCart(() => cartApi.removeCartItem(lineItemId)),
   [mutateCart]);
 
+  // Update primary item + remove duplicates in one single cart refresh
+  const mergeUpdate = useCallback(async (primaryId, newQty, duplicateIds = []) => {
+    if (!configured) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await cartApi.updateCartItem(primaryId, newQty);
+      for (const id of duplicateIds) await cartApi.removeCartItem(id);
+      const fresh = await cartApi.getCart();
+      setCart(fresh);
+    } catch (err) {
+      setError(err.message || 'Cart operation failed');
+      try { const fresh = await cartApi.getCart(); setCart(fresh); } catch {}
+    } finally {
+      setLoading(false);
+    }
+  }, [configured]);
+
+  // Remove multiple items in one single cart refresh
+  const removeItems = useCallback(async (ids) => {
+    if (!configured) return;
+    setLoading(true);
+    setError(null);
+    try {
+      for (const id of ids) await cartApi.removeCartItem(id);
+      const fresh = await cartApi.getCart();
+      setCart(fresh);
+    } catch (err) {
+      setError(err.message || 'Cart operation failed');
+      try { const fresh = await cartApi.getCart(); setCart(fresh); } catch {}
+    } finally {
+      setLoading(false);
+    }
+  }, [configured]);
+
   const clearCart = useCallback(async () => {
     if (!configured) return;
     setLoading(true);
@@ -87,6 +122,8 @@ export function useCart() {
     addItem,
     updateQuantity,
     removeItem,
+    mergeUpdate,
+    removeItems,
     clearCart,
   };
 }

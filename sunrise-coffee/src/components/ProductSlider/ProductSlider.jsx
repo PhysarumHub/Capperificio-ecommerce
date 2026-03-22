@@ -7,10 +7,19 @@ export default function ProductSlider({ children, slideWidth = 100 / 3.35 }) {
   const trackRef = useRef(null);
   const [idx, setIdx] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const startXRef = useRef(0);
   const curTxRef = useRef(0);
   const prevTxRef = useRef(0);
   const dragDistRef = useRef(0);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    setIsMobile(mq.matches);
+    const handler = (e) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const getSlideWidth = useCallback(() => {
     const firstSlide = trackRef.current?.firstElementChild;
@@ -26,6 +35,7 @@ export default function ProductSlider({ children, slideWidth = 100 / 3.35 }) {
   const dotCount = maxIdx + 1;
 
   const goTo = useCallback((i) => {
+    if (isMobile) return;
     const clamped = Math.max(0, Math.min(i, maxIdx));
     setIdx(clamped);
     const tx = -(clamped * getSlideWidth());
@@ -34,16 +44,19 @@ export default function ProductSlider({ children, slideWidth = 100 / 3.35 }) {
     if (trackRef.current) {
       trackRef.current.style.transform = `translateX(${tx}px)`;
     }
-  }, [maxIdx, getSlideWidth]);
+  }, [maxIdx, getSlideWidth, isMobile]);
 
   const handlePointerDown = useCallback((e) => {
+    if (isMobile) return;
     setDragging(true);
     dragDistRef.current = 0;
     startXRef.current = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
     prevTxRef.current = curTxRef.current;
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
+    if (isMobile) return;
+
     const onMove = (e) => {
       if (!dragging) return;
       const x = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
@@ -59,9 +72,7 @@ export default function ProductSlider({ children, slideWidth = 100 / 3.35 }) {
     const onUp = () => {
       if (!dragging) return;
       setDragging(false);
-      if (trackRef.current) {
-        trackRef.current.style.transition = '';
-      }
+      if (trackRef.current) trackRef.current.style.transition = '';
       const moved = curTxRef.current - prevTxRef.current;
       const thresh = getSlideWidth() * 0.2;
       if (moved < -thresh) goTo(idx + 1);
@@ -80,45 +91,47 @@ export default function ProductSlider({ children, slideWidth = 100 / 3.35 }) {
       window.removeEventListener('touchmove', onMove);
       window.removeEventListener('touchend', onUp);
     };
-  }, [dragging, idx, goTo, getSlideWidth]);
+  }, [dragging, idx, goTo, getSlideWidth, isMobile]);
 
   return (
     <>
       <div
         ref={wrapperRef}
-        className={`${styles.wrapper} ${dragging ? styles.grabbing : ''}`}
+        className={`${styles.wrapper} ${isMobile ? styles.mobileWrapper : ''} ${dragging ? styles.grabbing : ''}`}
         onMouseDown={handlePointerDown}
         onTouchStart={handlePointerDown}
       >
-        <div ref={trackRef} className={styles.track}>
+        <div ref={trackRef} className={`${styles.track} ${isMobile ? styles.mobileTrack : ''}`}>
           {Array.isArray(children) && children.map((child, i) => (
-            <div key={i} className={styles.slide} style={{ flex: `0 0 ${slideWidth}%` }}>
+            <div
+              key={i}
+              className={`${styles.slide} ${isMobile ? styles.mobileSlide : ''}`}
+              style={!isMobile ? { flex: `0 0 ${slideWidth}%` } : undefined}
+            >
               {child}
             </div>
           ))}
         </div>
       </div>
 
-      <div className={styles.footer}>
-        <div className={styles.dots}>
-          {Array.from({ length: dotCount }, (_, i) => (
-            <button
-              key={i}
-              className={`${styles.dot} ${i === idx ? styles.dotActive : ''}`}
-              onClick={() => goTo(i)}
-              aria-label={`Go to slide ${i + 1}`}
-            />
-          ))}
+      {!isMobile && (
+        <div className={styles.footer}>
+          <div className={styles.dots}>
+            {Array.from({ length: dotCount }, (_, i) => (
+              <button
+                key={i}
+                className={`${styles.dot} ${i === idx ? styles.dotActive : ''}`}
+                onClick={() => goTo(i)}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+          <div className={styles.arrows}>
+            <button className={styles.arrow} onClick={() => goTo(idx - 1)} disabled={idx <= 0} aria-label="Previous">←</button>
+            <button className={styles.arrow} onClick={() => goTo(idx + 1)} disabled={idx >= maxIdx} aria-label="Next">→</button>
+          </div>
         </div>
-        <div className={styles.arrows}>
-          <button className={styles.arrow} onClick={() => goTo(idx - 1)} disabled={idx <= 0} aria-label="Previous">
-            ←
-          </button>
-          <button className={styles.arrow} onClick={() => goTo(idx + 1)} disabled={idx >= maxIdx} aria-label="Next">
-            →
-          </button>
-        </div>
-      </div>
+      )}
     </>
   );
 }

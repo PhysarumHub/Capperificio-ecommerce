@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   border: 1px solid var(--color-card-border);
-  margin-top: 60px;
+  margin-top: 0;
 }
 
 .textCol {

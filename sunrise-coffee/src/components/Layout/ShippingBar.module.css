@@ -3,6 +3,8 @@
   background: var(--color-white);
   border-bottom: 1.5px solid var(--color-red);
   padding: 7px 0;
+  position: relative;
+  z-index: 205;
 }
 
 .shipping-bar__track {

@@ -18,7 +18,6 @@ const BREW_RECIPES_FALLBACK = [
   { name: 'Plunger / French Press', rows: [['Coffee', '30g coarse'], ['Water', '500ml at 96°C'], ['Ratio', '1:16'], ['Steep', '4:00, then plunge slowly']] },
 ];
 
-// Mapping custom field name → label accordion
 const BREW_CUSTOM_FIELDS = [
   { key: 'capperificio_brew_pour_over', name: 'Pour-over' },
   { key: 'capperificio_brew_drip',      name: 'Drip' },
@@ -32,8 +31,6 @@ const ALSO_LIKE_FALLBACK = [
   { name: "It's Golden", image: '/images/PRODUCTSTILL.jpg' },
   { name: 'Andean Sky', image: '/images/PRODUCTSTILL.jpg' },
 ];
-
-/* ─── Fallback data for when Shopware is not connected ─── */
 
 const FALLBACK_PRODUCT = {
   name: 'Sweet Velvet',
@@ -55,13 +52,62 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const [selectedOptions, setSelectedOptions] = useState({});
   const [size, setSize] = useState('250g');
   const [grind, setGrind] = useState('Beans');
-  const [qty, setQty] = useState(1);
   const [openBrew, setOpenBrew] = useState(null);
-  const [addedFeedback, setAddedFeedback] = useState(false);
-  const feedbackTimeout = useRef(null);
+  const [cartQty, setCartQty] = useState(0);
+  const [showControl, setShowControl] = useState(false);
+  const [showTag, setShowTag] = useState(false);
+  const [imgIndex, setImgIndex] = useState(0);
+  const [stickyVisible, setStickyVisible] = useState(true);
+  const debounceRef = useRef(null);
+  const touchStartX = useRef(null);
+  const alsoLikeSectionRef = useRef(null);
   const { addItem } = useCartContext();
 
-  // Parse Shopware configurator settings into grouped options { 'Size': [{id, name}], 'Grind': [...] }
+  const scheduleCollapse = (currentQty) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (currentQty === 0) return;
+    debounceRef.current = setTimeout(() => {
+      setShowControl(false);
+      setShowTag(true);
+    }, 2000);
+  };
+
+  const handleAdd = async () => {
+    const next = cartQty + 1;
+    setCartQty(next);
+    setShowControl(true);
+    setShowTag(false);
+    if (hasApiProduct && shopwareProduct?.id) {
+      try { await addItem(shopwareProduct.id, 1); } catch {}
+    }
+    scheduleCollapse(next);
+  };
+
+  const handleDecrease = () => {
+    const next = cartQty - 1;
+    setCartQty(next);
+    if (next === 0) {
+      setShowControl(false);
+      setShowTag(false);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    } else {
+      scheduleCollapse(next);
+    }
+  };
+
+  // Hide sticky only when user scrolls into the "also like" section
+  useEffect(() => {
+    const alsoLike = alsoLikeSectionRef.current;
+    if (!alsoLike) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setStickyVisible(!entry.isIntersecting),
+      { threshold: 0.05 }
+    );
+    observer.observe(alsoLike);
+    return () => observer.disconnect();
+  }, []);
+
   const configuratorGroups = {};
   if (shopwareProduct?.configuratorSettings?.length) {
     shopwareProduct.configuratorSettings.forEach((setting) => {
@@ -76,7 +122,6 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   }
   const hasConfigurator = Object.keys(configuratorGroups).length > 0;
 
-  // Initialize selected options to the first value of each group when the product loads
   useEffect(() => {
     if (!hasConfigurator) return;
     const defaults = {};
@@ -87,7 +132,6 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopwareProduct?.id]);
 
-  // Use Shopware product data if available, otherwise fallback
   const hasApiProduct = Boolean(shopwareProduct);
 
   const productName = hasApiProduct
@@ -108,7 +152,6 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
       : [getProductImage(shopwareProduct)])
     : FALLBACK_PRODUCT.images;
 
-  // Extract properties for info table, in canonical display order
   const PROPERTY_ORDER = ['Tasting notes', 'Region', 'Type', 'Best for', 'Process'];
   const properties = hasApiProduct ? (shopwareProduct.properties || []) : [];
   const groupedProperties = properties.reduce((acc, prop) => {
@@ -122,7 +165,6 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     ...Object.keys(groupedProperties).filter((g) => !PROPERTY_ORDER.includes(g)),
   ].map((g) => [g, groupedProperties[g]]);
 
-  // Cross-selling products
   const crossSellings = hasApiProduct
     ? (shopwareProduct.crossSellings || []).flatMap((cs) =>
         (cs.assignedProducts || []).map((ap) => ap.product).filter(Boolean)
@@ -139,20 +181,91 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     : ALSO_LIKE_FALLBACK.map((p) => ({ ...p, price: '$25.00' }));
 
   const unitPrice = hasApiProduct ? productPrice : FALLBACK_PRICES[size];
-  const totalPrice = unitPrice * qty;
 
-  const handleAddToCart = async () => {
-    if (hasApiProduct && shopwareProduct.id) {
-      try {
-        await addItem(shopwareProduct.id, qty);
-      } catch {
-        // Still show feedback even if API fails
-      }
-    }
-    setAddedFeedback(true);
-    if (feedbackTimeout.current) clearTimeout(feedbackTimeout.current);
-    feedbackTimeout.current = setTimeout(() => setAddedFeedback(false), 1800);
+  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (dx < -40 && imgIndex < productImages.length - 1) setImgIndex((i) => i + 1);
+    if (dx > 40 && imgIndex > 0) setImgIndex((i) => i - 1);
+    touchStartX.current = null;
   };
+
+  const purchasePanel = (
+    <>
+      <h1 className={styles.pdpTitle}>{productName}</h1>
+      {shopwareProduct?.customFields?.capperificio_calibro && (
+        <span className={styles.calibroTag}>
+          {shopwareProduct.customFields.capperificio_calibro}
+        </span>
+      )}
+      <div className={styles.pdpPrice}>
+        {hasApiProduct ? formatPrice(unitPrice) : `$${unitPrice.toFixed(2)}`}
+      </div>
+
+      {hasApiProduct && hasConfigurator ? (
+        Object.entries(configuratorGroups).map(([groupName, options]) => (
+          <div key={groupName}>
+            <div className={styles.optionLabel}>{groupName}:</div>
+            <div className={styles.options}>
+              {options.map((opt) => (
+                <label key={opt.id} className={styles.option}>
+                  <input
+                    type="radio"
+                    name={groupName}
+                    value={opt.id}
+                    checked={selectedOptions[groupName] === opt.id}
+                    onChange={() => setSelectedOptions((prev) => ({ ...prev, [groupName]: opt.id }))}
+                  />
+                  <span>{opt.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        ))
+      ) : !hasApiProduct ? (
+        <>
+          <div className={styles.optionLabel}>Size:</div>
+          <div className={styles.options}>
+            {SIZES.map((s) => (
+              <label key={s} className={styles.option}>
+                <input type="radio" name="size" value={s} checked={size === s} onChange={() => setSize(s)} />
+                <span>{s}</span>
+              </label>
+            ))}
+          </div>
+          <div className={styles.optionLabel}>Grind:</div>
+          <div className={styles.options}>
+            {GRINDS.map((g) => (
+              <label key={g} className={styles.option}>
+                <input type="radio" name="grind" value={g} checked={grind === g} onChange={() => setGrind(g)} />
+                <span>{g}</span>
+              </label>
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      {showControl ? (
+        <div className={styles.pdpQtyControl}>
+          <button className={styles.pdpQtyBtn} onClick={handleDecrease} aria-label="Decrease">−</button>
+          <span className={styles.pdpQtyNum}>{cartQty}</span>
+          <button className={styles.pdpQtyBtn} onClick={handleAdd} aria-label="Increase">+</button>
+        </div>
+      ) : showTag ? (
+        <button
+          className={styles.pdpCartTag}
+          onClick={() => { setShowTag(false); setShowControl(true); scheduleCollapse(cartQty); }}
+        >
+          In cart · {cartQty}
+        </button>
+      ) : (
+        <button className={styles.btnAddCart} onClick={handleAdd}>
+          Add to Cart <span>→</span> {hasApiProduct ? formatPrice(unitPrice) : `$${unitPrice.toFixed(2)}`}
+        </button>
+      )}
+    </>
+  );
 
   if (loading) {
     return (
@@ -160,10 +273,6 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         <p style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-2xl)', color: '#999' }}>Caricamento prodotto...</p>
       </div>
     );
-  }
-
-  if (error && !hasApiProduct) {
-    // Show fallback product when API fails
   }
 
   return (
@@ -175,14 +284,11 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         <span>{productName}</span>
       </div>
 
-      {/* Product section — 3 columns */}
+      {/* Product section — 3 columns desktop / stacked mobile */}
       <section className={styles.productSection}>
         {/* LEFT COL */}
         <div className={styles.colLeft}>
-          <p
-            className={styles.description}
-            dangerouslySetInnerHTML={{ __html: productDescription }}
-          />
+          <p className={styles.description} dangerouslySetInnerHTML={{ __html: productDescription }} />
 
           {(() => {
             const cf = shopwareProduct?.customFields || {};
@@ -229,7 +335,6 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
             {(() => {
               const cf = shopwareProduct?.customFields || {};
               const hasBrewCustomFields = BREW_CUSTOM_FIELDS.some(({ key }) => cf[key]);
-
               if (hasBrewCustomFields) {
                 return BREW_CUSTOM_FIELDS.filter(({ key }) => cf[key]).map(({ key, name }) => {
                   const isOpen = openBrew === name;
@@ -248,7 +353,6 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
                   );
                 });
               }
-
               return BREW_RECIPES_FALLBACK.map((recipe) => {
                 const isOpen = openBrew === recipe.name;
                 return (
@@ -275,92 +379,91 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
           </div>
         </div>
 
-        {/* CENTER COL */}
+        {/* CENTER COL — desktop: stacked images / mobile: swipe slider */}
         <div className={styles.colCenter}>
-          {productImages.map((src, i) => (
-            <div key={i} className={styles.productImage}>
-              <img src={src} alt={`${productName} — ${i + 1}`} className={styles.pdpImg} />
+          {/* Desktop stacked images */}
+          <div className={styles.desktopImages}>
+            {productImages.map((src, i) => (
+              <div key={i} className={styles.productImage}>
+                <img src={src} alt={`${productName} — ${i + 1}`} className={styles.pdpImg} />
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile slider */}
+          <div
+            className={styles.mobileSlider}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div
+              className={styles.mobileSliderTrack}
+              style={{ transform: `translateX(-${imgIndex * 100}%)` }}
+            >
+              {productImages.map((src, i) => (
+                <div key={i} className={styles.mobileSlide}>
+                  <img src={src} alt={`${productName} — ${i + 1}`} className={styles.mobileSlideImg} />
+                </div>
+              ))}
             </div>
-          ))}
+            {productImages.length > 1 && (
+              <div className={styles.sliderDots}>
+                {productImages.map((_, i) => (
+                  <button
+                    key={i}
+                    className={`${styles.sliderDot} ${i === imgIndex ? styles.sliderDotActive : ''}`}
+                    onClick={() => setImgIndex(i)}
+                    aria-label={`Slide ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Mobile: product info right below the slider */}
+          <div className={styles.mobileInfo}>
+            {purchasePanel}
+          </div>
         </div>
 
-        {/* RIGHT COL */}
+        {/* RIGHT COL — desktop only */}
         <div className={styles.colRight}>
-          <h1 className={styles.pdpTitle}>{productName}</h1>
-          {shopwareProduct?.customFields?.capperificio_calibro && (
-            <span className={styles.calibroTag}>
-              {shopwareProduct.customFields.capperificio_calibro}
-            </span>
-          )}
-          <div className={styles.pdpPrice}>
-            {hasApiProduct ? formatPrice(unitPrice) : `$${unitPrice.toFixed(2)}`}
-          </div>
-
-          {hasApiProduct && hasConfigurator ? (
-            Object.entries(configuratorGroups).map(([groupName, options]) => (
-              <div key={groupName}>
-                <div className={styles.optionLabel}>{groupName}:</div>
-                <div className={styles.options}>
-                  {options.map((opt) => (
-                    <label key={opt.id} className={styles.option}>
-                      <input
-                        type="radio"
-                        name={groupName}
-                        value={opt.id}
-                        checked={selectedOptions[groupName] === opt.id}
-                        onChange={() => setSelectedOptions((prev) => ({ ...prev, [groupName]: opt.id }))}
-                      />
-                      <span>{opt.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ))
-          ) : !hasApiProduct ? (
-            <>
-              <div className={styles.optionLabel}>Size:</div>
-              <div className={styles.options}>
-                {SIZES.map((s) => (
-                  <label key={s} className={styles.option}>
-                    <input type="radio" name="size" value={s} checked={size === s} onChange={() => setSize(s)} />
-                    <span>{s}</span>
-                  </label>
-                ))}
-              </div>
-              <div className={styles.optionLabel}>Grind:</div>
-              <div className={styles.options}>
-                {GRINDS.map((g) => (
-                  <label key={g} className={styles.option}>
-                    <input type="radio" name="grind" value={g} checked={grind === g} onChange={() => setGrind(g)} />
-                    <span>{g}</span>
-                  </label>
-                ))}
-              </div>
-            </>
-          ) : null}
-
-          <div className={styles.qtyRow}>
-            <div className={styles.qty}>
-              <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Decrease quantity">&minus;</button>
-              <span>{qty}</span>
-              <button onClick={() => setQty((q) => Math.min(20, q + 1))} aria-label="Increase quantity">+</button>
-            </div>
-            <button
-              className={styles.btnAddCart}
-              onClick={handleAddToCart}
-              style={addedFeedback ? { background: '#2C8843', color: '#fff', borderColor: '#2C8843' } : {}}
-            >
-              {addedFeedback
-                ? 'Added ✓'
-                : <>Add to Cart <span>→</span> {hasApiProduct ? formatPrice(totalPrice) : `$${totalPrice.toFixed(2)}`}</>
-              }
-            </button>
-          </div>
+          {purchasePanel}
         </div>
       </section>
 
+      {/* Mobile sticky Add to Cart */}
+      <div className={`${styles.mobileSticky} ${stickyVisible ? styles.mobileStickyShow : ''}`}>
+        <div className={styles.mobileStickyInner}>
+          <div>
+            <div className={styles.mobileStickyName}>{productName}</div>
+            <div className={styles.mobileStickyPrice}>
+              {hasApiProduct ? formatPrice(unitPrice) : `$${unitPrice.toFixed(2)}`}
+            </div>
+          </div>
+          {showControl ? (
+            <div className={styles.pdpQtyControl}>
+              <button className={styles.pdpQtyBtn} onClick={handleDecrease} aria-label="Decrease">−</button>
+              <span className={styles.pdpQtyNum}>{cartQty}</span>
+              <button className={styles.pdpQtyBtn} onClick={handleAdd} aria-label="Increase">+</button>
+            </div>
+          ) : showTag ? (
+            <button
+              className={styles.pdpCartTag}
+              onClick={() => { setShowTag(false); setShowControl(true); scheduleCollapse(cartQty); }}
+            >
+              In cart · {cartQty}
+            </button>
+          ) : (
+            <button className={styles.mobileStickyBtn} onClick={handleAdd}>
+              Add to Cart →
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* You may also like */}
-      <section className={styles.alsoLikeSection}>
+      <section ref={alsoLikeSectionRef} className={styles.alsoLikeSection}>
         <SectionHeader label="Recommended" title="You may also like" />
         <div className={styles.alsoLikeGrid}>
           {alsoLikeProducts.map((product) => (

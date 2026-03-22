@@ -7,6 +7,7 @@ import ProductCard from '../components/ProductCard/ProductCard';
 import CategoryBanners from '../components/CategoryBanner/CategoryBanner';
 import AboutSection from '../components/AboutSection/AboutSection';
 import GuidesEditorial from '../components/GuidesEditorial/GuidesEditorial';
+import StorySlider from '../components/StorySlider/StorySlider';
 import BlogGrid from '../components/BlogGrid/BlogGrid';
 import { useProducts } from '../hooks/useProducts';
 import { formatPrice } from '../lib/utils/price';
@@ -39,13 +40,16 @@ const MERCH_PRODUCTS_FALLBACK = [
 function mapShopwareProduct(product) {
   const price = product.calculatedPrice || product.price?.[0];
   const listPrice = price?.listPrice;
+  const options = product.options?.map((o) => o.translated?.name || o.name).filter(Boolean);
   return {
+    id: product.id,
     name: product.translated?.name || product.name,
     slug: getProductSlug(product),
     image: getProductImage(product),
     price: formatPrice(price?.unitPrice),
     oldPrice: listPrice?.price ? formatPrice(listPrice.price) : undefined,
     badge: listPrice?.price ? 'Sale' : undefined,
+    options: options?.length ? options : undefined,
   };
 }
 
@@ -81,6 +85,11 @@ export default function HomePage() {
 
       <CategoryBanners filterImage="/images/CAPPERI.jpg" espressoImage="/images/CAPPERI.jpg" />
 
+      <AboutSection />
+
+      <SectionHeader label="Merch" title="Fits for Drips" count={3} style={{ marginTop: 60 }} />
+      <StorySlider />
+
       <SectionHeader label="Latest Blends" title="Let's Mix Things Up" count={8} viewAllHref="/collections/blend" style={{ marginTop: 60 }} />
       <div className={styles.productGrid}>
         {blendProducts.map((p) => (
@@ -88,18 +97,7 @@ export default function HomePage() {
         ))}
       </div>
 
-      <AboutSection />
-
-      <SectionHeader label="Merch" title="Fits for Drips" count={3} style={{ marginTop: 60 }} />
-      <div className={styles.productGrid}>
-        {MERCH_PRODUCTS_FALLBACK.map((p) => (
-          <ProductCard key={p.name} variant="merch" name={p.name} price={p.price} image={p.image} />
-        ))}
-      </div>
-
       <RedMarquee />
-      <ProductsMarquee />
-
       <GuidesEditorial image="/images/CAPPERI.jpg" />
 
       <SectionHeader label="Dispatch" title="From the Blog" viewAllHref="/" viewAllText="More News →" style={{ marginTop: 60 }} />

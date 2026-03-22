@@ -1,7 +1,10 @@
+import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useCartContext } from '../../context/ShopwareContext';
 import styles from './ProductCard.module.css';
 
 export default function ProductCard({
+  id,
   name,
   slug,
   price,
@@ -9,19 +12,86 @@ export default function ProductCard({
   image,
   badge,
   badgeColor,
-  stars,
+  options,
+  sizes,
   variant = 'default',
   children,
 }) {
+  const { addItem, removeItem, cart } = useCartContext();
+  const [qty, setQty] = useState(0);
+  const [showControl, setShowControl] = useState(false);
+  const [showTag, setShowTag] = useState(false);
+  const debounceRef = useRef(null);
   const href = `/product/${slug || name.toLowerCase().replace(/\s+/g, '-')}`;
+
+  const sizeLabels = options?.length ? options.join('  ') : (sizes || null);
+
+  const scheduleCollapse = (currentQty) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (currentQty === 0) return;
+    debounceRef.current = setTimeout(() => {
+      setShowControl(false);
+      setShowTag(true);
+    }, 2000);
+  };
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = qty + 1;
+    setQty(next);
+    setShowControl(true);
+    setShowTag(false);
+    if (id) try { await addItem(id, 1); } catch {}
+    scheduleCollapse(next);
+  };
+
+  const handleDecrease = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = qty - 1;
+    setQty(next);
+    if (next === 0) {
+      setShowControl(false);
+      setShowTag(false);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (id && cart) {
+        const lineItem = cart.lineItems?.find((li) => li.referencedId === id);
+        try { if (lineItem) await removeItem(lineItem.id); } catch {}
+      }
+    } else {
+      scheduleCollapse(next);
+    }
+  };
+
+  const handleTagClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowTag(false);
+    setShowControl(true);
+    scheduleCollapse(qty);
+  };
+
+  const control = showControl ? (
+    <div className={styles.qtyControl} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+      <button className={styles.qtyBtn} onClick={handleDecrease} aria-label="Decrease">−</button>
+      <span className={styles.qtyNum}>{qty}</span>
+      <button className={styles.qtyBtn} onClick={handleAdd} aria-label="Increase">+</button>
+    </div>
+  ) : showTag ? (
+    <button className={styles.cartTag} onClick={handleTagClick} aria-label="In cart">
+      In cart · {qty}
+    </button>
+  ) : (
+    <button className={styles.addToCart} onClick={handleAdd} aria-label="Add to cart">+</button>
+  );
 
   if (variant === 'merch') {
     return (
       <div className={styles.card}>
         <div className={`${styles.imgWrap} ${styles.imgSquare}`}>
-          {image ? (
-            <img src={image} alt={name} className={styles.productImg} />
-          ) : children}
+          {image ? <img src={image} alt={name} className={styles.productImg} /> : children}
+          {control}
         </div>
         <div className={styles.merchFooter}>
           <span className={styles.merchName}>{name}</span>
@@ -44,21 +114,18 @@ export default function ProductCard({
         ) : (
           <div className={styles.imgPlaceholder} />
         )}
+        {control}
       </div>
       <div className={styles.info}>
-        <div>
+        <div className={styles.infoLeft}>
           <span className={styles.name}>{name}</span>
-          {stars && (
-            <div className={styles.stars}>
-              {Array.from({ length: stars }, (_, i) => <span key={i}>★</span>)}
-            </div>
-          )}
+          {sizeLabels && <span className={styles.sizes}>{sizeLabels}</span>}
         </div>
         <div className={styles.pricing}>
-          <span className={styles.priceLabel}>
-            From{oldPrice && <> <span className={styles.oldPrice}>{oldPrice}</span></>}
+          {oldPrice && <span className={styles.oldPrice}>{oldPrice}</span>}
+          <span className={styles.price}>
+            {oldPrice ? `On Sale from ${price}` : `From ${price}`}
           </span>
-          <span className={styles.price}>{price}</span>
         </div>
       </div>
     </Link>
