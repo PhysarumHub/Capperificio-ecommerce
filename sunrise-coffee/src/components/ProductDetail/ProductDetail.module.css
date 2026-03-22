@@ -23,6 +23,7 @@
   height: calc(100vh - 56px);
   overflow-y: auto;
   align-self: start;
+  z-index: 1;
 }
 .colLeft::-webkit-scrollbar,
 .colRight::-webkit-scrollbar { width: 0; }
