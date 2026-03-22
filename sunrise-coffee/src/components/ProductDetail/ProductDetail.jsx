@@ -204,7 +204,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         {hasApiProduct ? formatPrice(unitPrice) : `$${unitPrice.toFixed(2)}`}
       </div>
 
-      {hasApiProduct && hasConfigurator ? (
+      {hasApiProduct && hasConfigurator && (
         Object.entries(configuratorGroups).map(([groupName, options]) => (
           <div key={groupName}>
             <div className={styles.optionLabel}>{groupName}:</div>
@@ -224,28 +224,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
             </div>
           </div>
         ))
-      ) : !hasApiProduct ? (
-        <>
-          <div className={styles.optionLabel}>Size:</div>
-          <div className={styles.options}>
-            {SIZES.map((s) => (
-              <label key={s} className={styles.option}>
-                <input type="radio" name="size" value={s} checked={size === s} onChange={() => setSize(s)} />
-                <span>{s}</span>
-              </label>
-            ))}
-          </div>
-          <div className={styles.optionLabel}>Grind:</div>
-          <div className={styles.options}>
-            {GRINDS.map((g) => (
-              <label key={g} className={styles.option}>
-                <input type="radio" name="grind" value={g} checked={grind === g} onChange={() => setGrind(g)} />
-                <span>{g}</span>
-              </label>
-            ))}
-          </div>
-        </>
-      ) : null}
+      )}
 
       {showControl ? (
         <div className={styles.pdpQtyControl}>
@@ -262,9 +241,38 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         </button>
       ) : (
         <button className={styles.btnAddCart} onClick={handleAdd}>
-          Add to Cart <span>→</span> {hasApiProduct ? formatPrice(unitPrice) : `$${unitPrice.toFixed(2)}`}
+          Aggiungi al carrello <span>→</span> {hasApiProduct ? formatPrice(unitPrice) : `$${unitPrice.toFixed(2)}`}
         </button>
       )}
+
+      <ul className={styles.trustList}>
+        <li>
+          <span className={styles.trustIcon}>✓</span>
+          <span>Tostato fresco a Racale, Puglia</span>
+        </li>
+        <li>
+          <span className={styles.trustIcon}>✓</span>
+          <span>Spedizione gratuita sopra i €50</span>
+        </li>
+        <li>
+          <span className={styles.trustIcon}>✓</span>
+          <span>Consegna in 24–48h su tutto il territorio italiano</span>
+        </li>
+        <li>
+          <span className={styles.trustIcon}>✓</span>
+          <span>Soddisfatti o rimborsati entro 30 giorni</span>
+        </li>
+        <li>
+          <span className={styles.trustIcon}>✓</span>
+          <span>Pagamento sicuro — Stripe, PayPal, carta di credito</span>
+        </li>
+      </ul>
+
+      <div className={styles.trustBadges}>
+        <div className={styles.badge}>🌿 100% Artigianale</div>
+        <div className={styles.badge}>📦 Imballaggio sostenibile</div>
+        <div className={styles.badge}>⭐ Specialty Grade</div>
+      </div>
     </>
   );
 
