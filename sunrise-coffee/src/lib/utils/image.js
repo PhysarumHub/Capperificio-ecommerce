@@ -6,8 +6,8 @@ function proxyUrl(url) {
   if (!url) return url;
   try {
     const u = new URL(url);
-    // If the image comes from the Shopware backend, strip the origin
-    if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {
+    // Strip origin for any Shopware media URL so it goes through the nginx proxy
+    if (u.pathname.startsWith('/media/') || u.pathname.startsWith('/thumbnail/')) {
       return u.pathname + u.search;
     }
   } catch {
