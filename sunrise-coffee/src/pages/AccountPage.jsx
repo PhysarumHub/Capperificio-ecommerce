@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useCustomerContext } from '../context/ShopwareContext';
-import { getOrders } from '../lib/api/customer';
+import { getOrders, submitReview } from '../lib/api/customer';
 import { formatPrice } from '../lib/utils/price';
 import { proxyUrl } from '../lib/utils/image';
 
@@ -71,32 +71,128 @@ function groupItems(lineItems) {
   return Object.values(map);
 }
 
-// ── Riga prodotto ──────────────────────────────────────────
-function OrderItem({ item }) {
-  const img = item.cover?.url ? proxyUrl(item.cover.url) : null;
+// ── Form recensione inline ─────────────────────────────────
+function ReviewForm({ productId, onClose }) {
+  const [points, setPoints]   = useState(0);
+  const [hovered, setHovered] = useState(0);
+  const [title, setTitle]     = useState('');
+  const [content, setContent] = useState('');
+  const [sending, setSending] = useState(false);
+  const [done, setDone]       = useState(false);
+  const [error, setError]     = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!points) { setError('Seleziona un punteggio.'); return; }
+    if (!title.trim()) { setError('Inserisci un titolo.'); return; }
+    if (!content.trim()) { setError('Scrivi la tua recensione.'); return; }
+    setSending(true); setError('');
+    try {
+      await submitReview(productId, { title: title.trim(), content: content.trim(), points });
+      setDone(true);
+    } catch (err) {
+      setError(err.message || 'Errore durante l\'invio. Riprova.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (done) return (
+    <div style={{ padding: '12px 14px', background: 'rgba(216,64,50,0.06)', borderRadius: 8, fontSize: 13, color: 'var(--color-red)', fontWeight: 600, marginTop: 8 }}>
+      ✓ Recensione inviata, grazie!
+    </div>
+  );
+
+  const star = (n) => {
+    const filled = n <= (hovered || points);
+    return (
+      <span
+        key={n}
+        onMouseEnter={() => setHovered(n)}
+        onMouseLeave={() => setHovered(0)}
+        onClick={() => { setPoints(n); setError(''); }}
+        style={{ fontSize: 22, cursor: 'pointer', color: filled ? 'var(--color-red)' : 'var(--color-border)', transition: 'color .15s', userSelect: 'none' }}
+      >
+        ★
+      </span>
+    );
+  };
+
   return (
-    <div style={{
-      display: 'flex', gap: 12, alignItems: 'center',
-      padding: '10px 0', borderBottom: '1px solid var(--color-border)',
-    }}>
-      <div style={{
-        width: 52, height: 52, borderRadius: 6, flexShrink: 0,
-        overflow: 'hidden', background: 'var(--color-light)',
-        border: '1px solid var(--color-border)',
-      }}>
-        {img && <img src={img} alt={item.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+    <form onSubmit={handleSubmit} style={{ marginTop: 10, padding: '14px', background: '#fff', borderRadius: 8, border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={sectionLabel}>La tua recensione</span>
+        <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--color-mid)', padding: 0 }}>✕</button>
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--color-dark)' }}>
-          {item.label}
+
+      {/* Stelle */}
+      <div style={{ display: 'flex', gap: 2 }}>{[1,2,3,4,5].map(star)}</div>
+
+      {/* Titolo */}
+      <input
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        placeholder="Titolo (es. Ottimo caffè!)"
+        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--color-border)', borderRadius: 7, fontSize: 13, fontFamily: 'var(--font-sans)', outline: 'none', boxSizing: 'border-box' }}
+      />
+
+      {/* Testo */}
+      <textarea
+        value={content}
+        onChange={e => setContent(e.target.value)}
+        placeholder="Descrivi la tua esperienza..."
+        rows={3}
+        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--color-border)', borderRadius: 7, fontSize: 13, fontFamily: 'var(--font-sans)', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+      />
+
+      {error && <p style={{ fontSize: 12, color: 'var(--color-red)', margin: 0 }}>⚠ {error}</p>}
+
+      <button
+        type="submit"
+        disabled={sending}
+        style={{ padding: '10px 0', background: sending ? '#ccc' : 'var(--color-red)', color: '#fff', border: 'none', borderRadius: 'var(--radius-pill)', fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)' }}
+      >
+        {sending ? 'Invio...' : 'Invia recensione →'}
+      </button>
+    </form>
+  );
+}
+
+// ── Riga prodotto ──────────────────────────────────────────
+function OrderItem({ item, canReview }) {
+  const [reviewing, setReviewing] = useState(false);
+  const img = item.cover?.url ? proxyUrl(item.cover.url) : null;
+  const productId = item.referencedId || item.id;
+
+  return (
+    <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: reviewing ? 12 : 0 }}>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0' }}>
+        <div style={{
+          width: 52, height: 52, borderRadius: 6, flexShrink: 0,
+          overflow: 'hidden', background: 'var(--color-light)',
+          border: '1px solid var(--color-border)',
+        }}>
+          {img && <img src={img} alt={item.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
         </div>
-        <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 2 }}>
-          Qtà: {item._qty}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--color-dark)' }}>
+            {item.label}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 2 }}>Qtà: {item._qty}</div>
+          {canReview && !reviewing && (
+            <button
+              onClick={() => setReviewing(true)}
+              style={{ marginTop: 4, background: 'none', border: 'none', padding: 0, fontSize: 12, color: 'var(--color-red)', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)', textDecoration: 'underline' }}
+            >
+              Lascia una recensione
+            </button>
+          )}
+        </div>
+        <div style={{ fontWeight: 700, fontSize: 14, flexShrink: 0, color: 'var(--color-dark)' }}>
+          {formatPrice(item._total)}
         </div>
       </div>
-      <div style={{ fontWeight: 700, fontSize: 14, flexShrink: 0, color: 'var(--color-dark)' }}>
-        {formatPrice(item._total)}
-      </div>
+      {reviewing && <ReviewForm productId={productId} onClose={() => setReviewing(false)} />}
     </div>
   );
 }
@@ -152,6 +248,9 @@ function OrderCard({ order }) {
 
   const grouped   = groupItems(order.lineItems);
   const delivery  = order.deliveries?.[0];
+  const canReview = ['shipped', 'shipped_partially', 'completed'].includes(
+    delivery?.stateMachineState?.technicalName || order.stateMachineState?.technicalName
+  );
   const transaction = order.transactions?.[0];
   const deliveryState = delivery?.stateMachineState?.technicalName;
   const paymentState  = transaction?.stateMachineState?.technicalName;
@@ -204,7 +303,7 @@ function OrderCard({ order }) {
           {grouped.length > 0 && (
             <div style={{ marginBottom: 20 }}>
               <div style={sectionLabel}>Prodotti</div>
-              {grouped.map(item => <OrderItem key={item.id} item={item} />)}
+              {grouped.map(item => <OrderItem key={item.id} item={item} canReview={canReview} />)}
               <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 10, fontWeight: 700, fontSize: 14, color: 'var(--color-dark)' }}>
                 Totale: {formatPrice(order.amountTotal)}
               </div>

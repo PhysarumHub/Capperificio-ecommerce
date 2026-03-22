@@ -76,3 +76,10 @@ export async function getSalutations() {
   const result = await storeApiGet('/salutation');
   return result?.elements || [];
 }
+
+/**
+ * Submit a product review.
+ */
+export async function submitReview(productId, { title, content, points }) {
+  return storeApiPost(`/product/${productId}/review`, { title, content, points });
+}
