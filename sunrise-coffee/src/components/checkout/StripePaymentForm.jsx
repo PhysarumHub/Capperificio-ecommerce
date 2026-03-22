@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatPrice } from '../../lib/utils/price';
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 export default function StripePaymentForm({ onSuccess, totalPrice, isMobile }) {
@@ -66,7 +67,7 @@ export default function StripePaymentForm({ onSuccess, totalPrice, isMobile }) {
           fontFamily: 'var(--font-sans)', minHeight: 52,
         }}
       >
-        {loading ? 'Elaborazione...' : `Paga ${typeof totalPrice === 'number' ? (totalPrice / 100).toFixed(2).replace('.', ',') + ' €' : ''}`}
+        {loading ? 'Elaborazione...' : `Paga ${typeof totalPrice === 'number' ? formatPrice(totalPrice) : ''}`}
       </button>
     </form>
   );
