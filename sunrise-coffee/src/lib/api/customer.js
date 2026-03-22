@@ -39,6 +39,16 @@ export async function getOrders({ page = 1, limit = 10 } = {}) {
     sort: [{ field: 'createdAt', order: 'DESC' }],
     associations: {
       lineItems: { associations: { cover: {} } },
+      deliveries: {
+        associations: {
+          stateMachineState: {},
+          shippingMethod: {},
+          shippingOrderAddress: {},
+        },
+      },
+      transactions: {
+        associations: { stateMachineState: {}, paymentMethod: {} },
+      },
     },
   });
 }
