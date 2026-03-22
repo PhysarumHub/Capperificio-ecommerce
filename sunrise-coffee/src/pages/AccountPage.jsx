@@ -4,23 +4,82 @@ import { useCustomerContext } from '../context/ShopwareContext';
 import { getOrders, getCountries, getSalutations, register } from '../lib/api/customer';
 import { formatPrice } from '../lib/utils/price';
 
-const inputStyle = {
-  width: '100%',
-  padding: '10px 12px',
-  border: '1px solid #ddd',
-  borderRadius: 6,
-  fontSize: 15,
-  boxSizing: 'border-box',
-  fontFamily: 'var(--font-sans)',
-};
+function inputStyle(hasError) {
+  return {
+    width: '100%',
+    padding: '11px 14px',
+    border: `1.5px solid ${hasError ? 'var(--color-red)' : '#ddd'}`,
+    borderRadius: 8,
+    fontSize: 15,
+    boxSizing: 'border-box',
+    fontFamily: 'var(--font-sans)',
+    outline: 'none',
+    transition: 'border-color .2s',
+    WebkitAppearance: 'none',
+  };
+}
 
-const labelStyle = {
-  display: 'block',
-  fontSize: 13,
-  fontWeight: 500,
-  color: '#555',
-  marginBottom: 5,
-};
+function Field({ label, error, children, required }) {
+  return (
+    <div data-error={error ? 'true' : undefined}>
+      <label style={{
+        display: 'block', fontSize: 11, fontWeight: 600,
+        color: error ? 'var(--color-red)' : '#777',
+        marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em',
+      }}>
+        {label}{required && <span style={{ color: 'var(--color-red)', marginLeft: 2 }}>*</span>}
+      </label>
+      {children}
+      {error && (
+        <p style={{ fontSize: 12, color: 'var(--color-red)', marginTop: 4 }}>
+          ⚠ {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function StepBar({ step }) {
+  const steps = ['Account', 'Sicurezza', 'Indirizzo'];
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: 36 }}>
+      {steps.map((label, i) => {
+        const done = i < step;
+        const active = i === step;
+        return (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 'none' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, minWidth: 60 }}>
+              <div style={{
+                width: 34, height: 34, borderRadius: '50%',
+                background: done ? '#2C8843' : active ? 'var(--color-red)' : '#e8e8e8',
+                color: done || active ? '#fff' : '#aaa',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: done ? 13 : 12, fontWeight: 700, transition: 'all .3s',
+              }}>
+                {done ? '✓' : i + 1}
+              </div>
+              <span style={{
+                fontSize: 10, fontWeight: active ? 700 : 400,
+                color: active ? 'var(--color-red)' : done ? '#2C8843' : '#aaa',
+                letterSpacing: '.04em', textTransform: 'uppercase',
+              }}>
+                {label}
+              </span>
+            </div>
+            {i < steps.length - 1 && (
+              <div style={{
+                flex: 1, height: 2,
+                background: done ? '#2C8843' : '#e8e8e8',
+                margin: '0 8px', marginBottom: 20,
+                transition: 'background .3s',
+              }} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function AccountPage() {
   const { isLoggedIn, loading, error, login, logout, customer } = useCustomerContext();
@@ -142,10 +201,13 @@ function LoginForm({ login, loading, error }) {
 }
 
 function RegisterForm({ onRegistered }) {
+  const [step, setStep] = useState(0);
   const [countries, setCountries] = useState([]);
   const [salutations, setSalutations] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [success, setSuccess] = useState(false);
 
   const [form, setForm] = useState({
@@ -178,26 +240,68 @@ function RegisterForm({ onRegistered }) {
       .catch(() => {});
   }, []);
 
-  const setField = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
+  const setField = (key) => (e) => {
+    setForm((prev) => ({ ...prev, [key]: e.target.value }));
+    setTouched((prev) => ({ ...prev, [key]: true }));
+    setErrors((prev) => ({ ...prev, [key]: null }));
+  };
+
+  const blur = (key) => () => setTouched((prev) => ({ ...prev, [key]: true }));
+
+  function validateStep(s) {
+    const errs = {};
+    if (s === 0) {
+      if (!form.firstName.trim()) errs.firstName = 'Inserisci il nome';
+      if (!form.lastName.trim()) errs.lastName = 'Inserisci il cognome';
+      if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+        errs.email = 'Inserisci un\'email valida';
+    }
+    if (s === 1) {
+      if (form.password.length < 8) errs.password = 'Minimo 8 caratteri';
+      if (form.password !== form.passwordConfirm) errs.passwordConfirm = 'Le password non corrispondono';
+    }
+    if (s === 2) {
+      if (!form.street.trim()) errs.street = 'Inserisci via e numero civico';
+      if (!form.zipcode.trim()) errs.zipcode = 'Inserisci il CAP';
+      if (!form.city.trim()) errs.city = 'Inserisci la città';
+      if (!form.countryId) errs.countryId = 'Seleziona un paese';
+    }
+    return errs;
+  }
+
+  const goNext = (e) => {
+    e.preventDefault();
+    const errs = validateStep(step);
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      const allTouched = {};
+      Object.keys(errs).forEach((k) => (allTouched[k] = true));
+      setTouched((prev) => ({ ...prev, ...allTouched }));
+      return;
+    }
+    setFormError(null);
+    setStep((s) => s + 1);
+  };
+
+  const goBack = () => {
+    setFormError(null);
+    setStep((s) => s - 1);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFormError(null);
-
+    const errs = validateStep(2);
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
     if (countries.length === 0) {
-      setFormError('Impossibile caricare i paesi. Controlla la connessione a Shopware e ricarica la pagina.');
-      return;
-    }
-    if (form.password !== form.passwordConfirm) {
-      setFormError('Le password non corrispondono.');
-      return;
-    }
-    if (form.password.length < 8) {
-      setFormError('La password deve essere di almeno 8 caratteri.');
+      setFormError('Impossibile caricare i paesi. Ricarica la pagina.');
       return;
     }
 
     setSubmitting(true);
+    setFormError(null);
     try {
       const billingAddress = {
         firstName: form.firstName,
@@ -206,8 +310,8 @@ function RegisterForm({ onRegistered }) {
         zipcode: form.zipcode,
         city: form.city,
         salutationId: form.salutationId,
+        countryId: form.countryId,
       };
-      if (form.countryId) billingAddress.countryId = form.countryId;
       await register({
         firstName: form.firstName,
         lastName: form.lastName,
@@ -220,7 +324,7 @@ function RegisterForm({ onRegistered }) {
       setSuccess(true);
       setTimeout(() => onRegistered(), 2000);
     } catch (err) {
-      setFormError(err.message || 'Registration failed. Please try again.');
+      setFormError(err.message || 'Registrazione fallita. Riprova.');
     } finally {
       setSubmitting(false);
     }
@@ -229,68 +333,150 @@ function RegisterForm({ onRegistered }) {
   if (success) {
     return (
       <div style={{ textAlign: 'center', padding: '40px 0' }}>
-        <div style={{ fontSize: 40, color: '#2C8843', marginBottom: 12 }}>✓</div>
+        <div style={{ fontSize: 48, color: '#2C8843', marginBottom: 16 }}>✓</div>
         <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-2xl)', marginBottom: 8 }}>
-          Account Created!
+          Account creato!
         </h2>
-        <p style={{ color: '#666' }}>Redirecting to login...</p>
+        <p style={{ color: '#666' }}>Reindirizzamento al login...</p>
       </div>
     );
   }
 
+  const btnStyle = (disabled) => ({
+    padding: '13px 0',
+    background: disabled ? '#bbb' : 'var(--color-red)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 'var(--radius-pill)',
+    fontSize: 15,
+    fontWeight: 600,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    fontFamily: 'var(--font-sans)',
+    flex: 1,
+  });
+
+  const outlineBtn = {
+    padding: '13px 0',
+    background: '#fff',
+    color: '#555',
+    border: '1.5px solid #ddd',
+    borderRadius: 'var(--radius-pill)',
+    fontSize: 15,
+    fontWeight: 600,
+    cursor: 'pointer',
+    fontFamily: 'var(--font-sans)',
+    flex: '0 0 auto',
+    minWidth: 100,
+  };
+
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-3xl)', marginBottom: 8 }}>
+    <div>
+      <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-3xl)', marginBottom: 28 }}>
         Crea Account
       </h1>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <div>
-          <label style={labelStyle}>Nome *</label>
-          <input value={form.firstName} onChange={setField('firstName')} required style={inputStyle} />
-        </div>
-        <div>
-          <label style={labelStyle}>Cognome *</label>
-          <input value={form.lastName} onChange={setField('lastName')} required style={inputStyle} />
-        </div>
-      </div>
+      <StepBar step={step} />
 
-      <div>
-        <label style={labelStyle}>Email *</label>
-        <input type="email" value={form.email} onChange={setField('email')} required style={inputStyle} />
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <div>
-          <label style={labelStyle}>Password *</label>
-          <input type="password" value={form.password} onChange={setField('password')} required style={inputStyle} />
-        </div>
-        <div>
-          <label style={labelStyle}>Conferma Password *</label>
-          <input type="password" value={form.passwordConfirm} onChange={setField('passwordConfirm')} required style={inputStyle} />
-        </div>
-      </div>
-
-      <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 16, marginTop: 4 }}>
-        <p style={{ fontSize: 13, color: '#888', marginBottom: 12 }}>Indirizzo di fatturazione</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <label style={labelStyle}>Via e numero civico *</label>
-            <input value={form.street} onChange={setField('street')} required style={inputStyle} />
-          </div>
+      {/* Step 0 — Account */}
+      {step === 0 && (
+        <form onSubmit={goNext} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={labelStyle}>CAP *</label>
-              <input value={form.zipcode} onChange={setField('zipcode')} required style={inputStyle} />
-            </div>
-            <div>
-              <label style={labelStyle}>Città *</label>
-              <input value={form.city} onChange={setField('city')} required style={inputStyle} />
-            </div>
+            <Field label="Nome" required error={touched.firstName && errors.firstName}>
+              <input
+                value={form.firstName}
+                onChange={setField('firstName')}
+                onBlur={blur('firstName')}
+                style={inputStyle(touched.firstName && errors.firstName)}
+              />
+            </Field>
+            <Field label="Cognome" required error={touched.lastName && errors.lastName}>
+              <input
+                value={form.lastName}
+                onChange={setField('lastName')}
+                onBlur={blur('lastName')}
+                style={inputStyle(touched.lastName && errors.lastName)}
+              />
+            </Field>
           </div>
-          <div>
-            <label style={labelStyle}>Paese *</label>
-            <select value={form.countryId} onChange={setField('countryId')} style={inputStyle} disabled={countries.length === 0}>
+          <Field label="Email" required error={touched.email && errors.email}>
+            <input
+              type="email"
+              value={form.email}
+              onChange={setField('email')}
+              onBlur={blur('email')}
+              style={inputStyle(touched.email && errors.email)}
+            />
+          </Field>
+          <button type="submit" style={btnStyle(false)}>Continua →</button>
+        </form>
+      )}
+
+      {/* Step 1 — Sicurezza */}
+      {step === 1 && (
+        <form onSubmit={goNext} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <Field label="Password" required error={touched.password && errors.password}>
+            <input
+              type="password"
+              value={form.password}
+              onChange={setField('password')}
+              onBlur={blur('password')}
+              style={inputStyle(touched.password && errors.password)}
+              placeholder="Minimo 8 caratteri"
+            />
+          </Field>
+          <Field label="Conferma password" required error={touched.passwordConfirm && errors.passwordConfirm}>
+            <input
+              type="password"
+              value={form.passwordConfirm}
+              onChange={setField('passwordConfirm')}
+              onBlur={blur('passwordConfirm')}
+              style={inputStyle(touched.passwordConfirm && errors.passwordConfirm)}
+            />
+          </Field>
+          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+            <button type="button" onClick={goBack} style={outlineBtn}>← Indietro</button>
+            <button type="submit" style={btnStyle(false)}>Continua →</button>
+          </div>
+        </form>
+      )}
+
+      {/* Step 2 — Indirizzo */}
+      {step === 2 && (
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <Field label="Via e numero civico" required error={touched.street && errors.street}>
+            <input
+              value={form.street}
+              onChange={setField('street')}
+              onBlur={blur('street')}
+              style={inputStyle(touched.street && errors.street)}
+            />
+          </Field>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Field label="CAP" required error={touched.zipcode && errors.zipcode}>
+              <input
+                value={form.zipcode}
+                onChange={setField('zipcode')}
+                onBlur={blur('zipcode')}
+                style={inputStyle(touched.zipcode && errors.zipcode)}
+              />
+            </Field>
+            <Field label="Città" required error={touched.city && errors.city}>
+              <input
+                value={form.city}
+                onChange={setField('city')}
+                onBlur={blur('city')}
+                style={inputStyle(touched.city && errors.city)}
+              />
+            </Field>
+          </div>
+          <Field label="Paese" required error={touched.countryId && errors.countryId}>
+            <select
+              value={form.countryId}
+              onChange={setField('countryId')}
+              onBlur={blur('countryId')}
+              disabled={countries.length === 0}
+              style={inputStyle(touched.countryId && errors.countryId)}
+            >
               {countries.length === 0
                 ? <option value="">Caricamento paesi...</option>
                 : countries.map((c) => (
@@ -298,33 +484,21 @@ function RegisterForm({ onRegistered }) {
                   ))
               }
             </select>
+          </Field>
+
+          {formError && (
+            <p style={{ color: 'var(--color-red)', fontSize: 13 }}>⚠ {formError}</p>
+          )}
+
+          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+            <button type="button" onClick={goBack} style={outlineBtn}>← Indietro</button>
+            <button type="submit" disabled={submitting} style={btnStyle(submitting)}>
+              {submitting ? 'Creazione in corso...' : 'Crea Account →'}
+            </button>
           </div>
-        </div>
-      </div>
-
-      {formError && (
-        <p style={{ color: 'var(--color-red)', fontSize: 14 }}>{formError}</p>
+        </form>
       )}
-
-      <button
-        type="submit"
-        disabled={submitting}
-        style={{
-          padding: '14px 0',
-          background: submitting ? '#bbb' : 'var(--color-red)',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 'var(--radius-pill)',
-          fontSize: 16,
-          fontWeight: 600,
-          cursor: submitting ? 'not-allowed' : 'pointer',
-          fontFamily: 'var(--font-sans)',
-          marginTop: 4,
-        }}
-      >
-        {submitting ? 'Creazione in corso...' : 'Crea Account →'}
-      </button>
-    </form>
+    </div>
   );
 }
 
