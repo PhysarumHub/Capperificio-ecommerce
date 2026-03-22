@@ -23,7 +23,7 @@ export async function getProducts({ page = 1, limit = 24, filters = [], sort = [
 
 const PRODUCT_DETAIL_ASSOCIATIONS = {
   cover: { associations: { media: {} } },
-  media: {},
+  media: { associations: { media: {} } },
   seoUrls: {},
   categories: {},
   properties: { associations: { group: {} } },
