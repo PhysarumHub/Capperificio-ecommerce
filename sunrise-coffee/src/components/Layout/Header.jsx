@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { SunLogo } from '../Icons';
 import { useCartContext, useCustomerContext } from '../../context/ShopwareContext';
 import CartDrawer from '../CartDrawer/CartDrawer';
+import AuthDrawer from '../AuthDrawer/AuthDrawer';
 import styles from './Header.module.css';
 
 const MEGA_LINKS = [
@@ -17,6 +18,7 @@ const MEGA_LINKS = [
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
   const { itemCount } = useCartContext();
   const { isLoggedIn } = useCustomerContext();
 
@@ -26,6 +28,13 @@ export default function Header() {
   }, []);
 
   const closeCart = useCallback(() => setCartOpen(false), []);
+
+  const openAuth = useCallback(() => {
+    setAuthOpen(true);
+    setMenuOpen(false);
+  }, []);
+
+  const closeAuth = useCallback(() => setAuthOpen(false), []);
 
   const openMenu = useCallback(() => {
     setMenuOpen(true);
@@ -66,9 +75,13 @@ export default function Header() {
         </div>
 
         <nav className={styles.navRight}>
-          <Link to="/account" className={styles.navLink}>
-            {isLoggedIn ? 'Account' : 'Login'}
-          </Link>
+          {isLoggedIn ? (
+            <Link to="/account" className={styles.navLink}>Account</Link>
+          ) : (
+            <button className={styles.navLink} onClick={openAuth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+              Login
+            </button>
+          )}
           <button className={styles.navLink} onClick={openCart} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             Cart ({itemCount})
           </button>
@@ -76,6 +89,7 @@ export default function Header() {
       </header>
 
       <CartDrawer open={cartOpen} onClose={closeCart} />
+      <AuthDrawer open={authOpen} onClose={closeAuth} />
 
       {/* Mega menu */}
       <div
