@@ -380,46 +380,15 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
           </div>
         </div>
 
-        {/* CENTER COL — desktop: sticky viewer / mobile: swipe slider */}
+        {/* CENTER COL — desktop: stacked images / mobile: swipe slider */}
         <div className={styles.colCenter}>
-          {/* Desktop image viewer */}
-          <div className={styles.desktopViewer}>
-            <div
-              className={styles.desktopTrack}
-              style={{ transform: `translateX(-${imgIndex * 100}%)` }}
-            >
-              {productImages.map((src, i) => (
-                <div key={i} className={styles.desktopSlide}>
-                  <img src={src} alt={`${productName} — ${i + 1}`} className={styles.pdpImg} />
-                </div>
-              ))}
-            </div>
-            {productImages.length > 1 && (
-              <>
-                <button
-                  className={`${styles.imgNav} ${styles.imgNavPrev}`}
-                  onClick={() => setImgIndex((i) => Math.max(0, i - 1))}
-                  disabled={imgIndex === 0}
-                  aria-label="Previous"
-                >‹</button>
-                <button
-                  className={`${styles.imgNav} ${styles.imgNavNext}`}
-                  onClick={() => setImgIndex((i) => Math.min(productImages.length - 1, i + 1))}
-                  disabled={imgIndex === productImages.length - 1}
-                  aria-label="Next"
-                >›</button>
-                <div className={styles.desktopDots}>
-                  {productImages.map((_, i) => (
-                    <button
-                      key={i}
-                      className={`${styles.sliderDot} ${i === imgIndex ? styles.sliderDotActive : ''}`}
-                      onClick={() => setImgIndex(i)}
-                      aria-label={`Immagine ${i + 1}`}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
+          {/* Desktop stacked images */}
+          <div className={styles.desktopImages}>
+            {productImages.map((src, i) => (
+              <div key={i} className={styles.productImage}>
+                <img src={src} alt={`${productName} — ${i + 1}`} className={styles.pdpImg} />
+              </div>
+            ))}
           </div>
 
           {/* Mobile slider */}

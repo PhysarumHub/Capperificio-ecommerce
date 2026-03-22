@@ -12,9 +12,19 @@
 .productSection {
   display: grid;
   grid-template-columns: 1fr 1.4fr 1fr;
-  align-items: start;
+  min-height: 100vh;
   border-bottom: 1px solid var(--color-border);
 }
+
+.colLeft,
+.colRight {
+  position: sticky;
+  top: 56px;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
+}
+.colLeft::-webkit-scrollbar,
+.colRight::-webkit-scrollbar { width: 0; }
 
 .colLeft {
   padding: 40px 36px;
@@ -22,10 +32,6 @@
 }
 
 .colCenter {
-  position: sticky;
-  top: 56px;
-  height: calc(100vh - 56px);
-  overflow: hidden;
   background: var(--color-light);
 }
 
@@ -34,64 +40,24 @@
   border-left: 1px solid var(--color-border);
 }
 
-/* ─── DESKTOP IMAGE VIEWER ────────────────── */
-.desktopViewer {
-  position: relative;
+/* ─── DESKTOP STACKED IMAGES ─────────────── */
+.productImage {
   width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.desktopTrack {
+  min-height: 100vh;
   display: flex;
-  height: 100%;
-  transition: transform .4s ease;
-}
-
-.desktopSlide {
-  flex: 0 0 100%;
-  height: 100%;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
+  border-bottom: 1px solid var(--color-border);
 }
+.productImage:last-child { border-bottom: none; }
 
 .pdpImg {
   width: 100%;
   height: 100%;
+  min-height: 100vh;
   object-fit: cover;
   display: block;
-}
-
-.imgNav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(255,255,255,.85);
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 22px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10;
-  transition: background .2s, opacity .2s;
-  color: var(--color-dark);
-}
-.imgNav:hover { background: #fff; }
-.imgNav:disabled { opacity: .3; cursor: default; }
-.imgNavPrev { left: 12px; }
-.imgNavNext { right: 12px; }
-
-.desktopDots {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 6px;
 }
 
 /* ─── LEFT COLUMN ─────────────────────────── */
@@ -394,8 +360,9 @@
 }
 
 /* ─── MOBILE SLIDER ───────────────────────── */
-.mobileSlider { display: none; }
-.mobileInfo   { display: none; }
+.mobileSlider  { display: none; }
+.mobileInfo    { display: none; }
+.desktopImages { display: contents; }
 
 /* ─── MOBILE STICKY BAR ───────────────────── */
 .mobileSticky { display: none; }
@@ -451,14 +418,12 @@
     min-height: auto;
   }
 
-  .colCenter {
+  .colLeft,
+  .colRight {
     position: static;
     height: auto;
     overflow: visible;
   }
-
-  /* Hide desktop viewer on mobile */
-  .desktopViewer { display: none; }
 
   .colLeft {
     padding: 28px 20px;
@@ -470,6 +435,9 @@
   .colCenter {
     order: 0;
   }
+
+  /* Hide desktop stacked images on mobile */
+  .desktopImages { display: none; }
 
   /* Show mobile slider */
   .mobileSlider {
