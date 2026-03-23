@@ -13,7 +13,7 @@ import urllib.request, urllib.error, json, uuid, sys
 
 # ── Configurazione (override via CLI: --base / --user / --pass) ──────────────
 _args = dict(zip(sys.argv[1::2], sys.argv[2::2]))
-_base_raw = _args.get('--base', 'http://127.0.0.1').rstrip('/')
+_base_raw = _args.get('--base', 'http://SHOPWARE_HOST_REDACTED:8090').rstrip('/')
 BASE       = _base_raw + '/api' if not _base_raw.endswith('/api') else _base_raw
 ADMIN_USER = _args.get('--user', 'admin')
 ADMIN_PASS = _args.get('--pass', 'shopware')
