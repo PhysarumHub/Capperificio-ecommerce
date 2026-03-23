@@ -61,11 +61,12 @@ function groupItems(lineItems) {
   const map = {};
   (lineItems || []).filter(i => i.type === 'product').forEach(item => {
     const key = item.referencedId || item.id;
+    const price = item.totalPrice ?? item.price?.totalPrice ?? 0;
     if (!map[key]) {
-      map[key] = { ...item, _qty: item.quantity, _total: item.price?.totalPrice ?? 0 };
+      map[key] = { ...item, _qty: item.quantity, _total: price };
     } else {
       map[key]._qty   += item.quantity;
-      map[key]._total += item.price?.totalPrice ?? 0;
+      map[key]._total += price;
     }
   });
   return Object.values(map);
