@@ -226,7 +226,7 @@ def setup_rules(it_id, eu_ids):
                     'value': {'operator': '=', 'countryIds': [it_id]},
                 },
                 {
-                    'type':  'cartPrice',
+                    'type':  'cartTotalPrice',
                     'value': {'operator': '<', 'amount': 50},
                 },
             ],
@@ -244,7 +244,7 @@ def setup_rules(it_id, eu_ids):
                     'value': {'operator': '=', 'countryIds': [it_id]},
                 },
                 {
-                    'type':  'cartPrice',
+                    'type':  'cartTotalPrice',
                     'value': {'operator': '>=', 'amount': 50},
                 },
             ],
@@ -299,6 +299,7 @@ def setup_shipping(r_avail, r_it_lt50, r_it_gte50, r_eu):
     r = api('POST', '/shipping-method', {
         'id':                 method_id,
         'name':               'Spedizione Standard',
+        'technicalName':      'spedizione_standard',
         'active':             True,
         'deliveryTimeId':     dt_id,
         'availabilityRuleId': r_avail,
