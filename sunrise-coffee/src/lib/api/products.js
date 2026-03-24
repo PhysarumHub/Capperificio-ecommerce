@@ -119,6 +119,22 @@ export async function getProductsByCategory(categoryId, { page = 1, limit = 24, 
 }
 
 /**
+ * Fetch variant children of a configurable product.
+ */
+export async function getProductVariants(parentId) {
+  return storeApiPost('/product', {
+    limit: 50,
+    filter: [{ type: 'equals', field: 'parentId', value: parentId }],
+    associations: {
+      options: { associations: { group: {} } },
+    },
+    includes: {
+      product: ['id', 'productNumber', 'options', 'calculatedPrice', 'availableStock'],
+    },
+  });
+}
+
+/**
  * Full-text search for products.
  */
 export async function searchProducts(term, { page = 1, limit = 24 } = {}) {

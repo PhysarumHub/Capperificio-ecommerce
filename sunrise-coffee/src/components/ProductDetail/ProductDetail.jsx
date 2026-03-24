@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../ProductCard/ProductCard';
 import SectionHeader from '../SectionHeader/SectionHeader';
@@ -6,6 +6,7 @@ import { useCartContext } from '../../context/ShopwareContext';
 import { useProducts } from '../../hooks/useProducts';
 import { formatPrice } from '../../lib/utils/price';
 import { getProductImage, getProductSlug, proxyUrl } from '../../lib/utils/image';
+import { getProductVariants } from '../../lib/api/products';
 import styles from './ProductDetail.module.css';
 
 const SIZES = ['250g', '500g', '1kg'];
@@ -20,10 +21,10 @@ const BREW_RECIPES_FALLBACK = [
 ];
 
 const BREW_CUSTOM_FIELDS = [
-  { key: 'capperificio_brew_pour_over', name: 'Pour-over' },
-  { key: 'capperificio_brew_drip',      name: 'Drip' },
-  { key: 'capperificio_brew_aeropress', name: 'AeroPress' },
-  { key: 'capperificio_brew_plunger',   name: 'Plunger / French Press' },
+  { key: 'capperificio_brew_pour_over', name: 'In cucina' },
+  { key: 'capperificio_brew_drip',      name: 'Abbinamenti' },
+  { key: 'capperificio_brew_aeropress', name: 'Conservazione' },
+  { key: 'capperificio_brew_plunger',   name: 'Lo sapevi?' },
 ];
 
 const ALSO_LIKE_FALLBACK = [
@@ -51,6 +52,7 @@ const FALLBACK_PRODUCT = {
 
 export default function ProductDetail({ product: shopwareProduct, loading, error, slug }) {
   const [selectedOptions, setSelectedOptions] = useState({});
+  const [variants, setVariants] = useState([]);
   const [size, setSize] = useState('250g');
   const [grind, setGrind] = useState('Beans');
   const [openBrew, setOpenBrew] = useState(null);
@@ -79,7 +81,8 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     setShowControl(true);
     setShowTag(false);
     if (hasApiProduct && shopwareProduct?.id) {
-      try { await addItem(shopwareProduct.id, 1); } catch {}
+      const itemId = activeVariant?.id || shopwareProduct.id;
+      try { await addItem(itemId, 1); } catch {}
     }
     scheduleCollapse(next);
   };
@@ -133,6 +136,26 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopwareProduct?.id]);
 
+  // Carica le varianti figlie per abilitare il cart con l'ID corretto
+  useEffect(() => {
+    if (!shopwareProduct?.configuratorSettings?.length) {
+      setVariants([]);
+      return;
+    }
+    getProductVariants(shopwareProduct.id).then((res) => {
+      setVariants(res?.elements || []);
+    });
+  }, [shopwareProduct?.id]);
+
+  // Trova la variante che corrisponde alle opzioni selezionate
+  const activeVariant = useMemo(() => {
+    if (!variants.length || !Object.keys(selectedOptions).length) return null;
+    const selectedIds = Object.values(selectedOptions);
+    return variants.find((v) =>
+      selectedIds.every((id) => v.options?.some((o) => o.id === id))
+    ) || null;
+  }, [variants, selectedOptions]);
+
   const hasApiProduct = Boolean(shopwareProduct);
 
   const productName = hasApiProduct
@@ -144,7 +167,10 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     : FALLBACK_PRODUCT.description;
 
   const productPrice = hasApiProduct
-    ? (shopwareProduct.calculatedPrice?.unitPrice || shopwareProduct.price?.[0]?.gross || 0)
+    ? (activeVariant?.calculatedPrice?.unitPrice
+        || shopwareProduct.calculatedPrice?.unitPrice
+        || shopwareProduct.price?.[0]?.gross
+        || 0)
     : FALLBACK_PRICES[size];
 
   const rawMediaImages = (shopwareProduct?.media || [])
@@ -327,7 +353,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
             </table>
           )}
 
-          <div className={styles.sectionTitle}>Brew Recipes</div>
+          <div className={styles.sectionTitle}>Suggerimenti d'uso</div>
           <div className={styles.brewAccordion}>
             {(() => {
               const cf = shopwareProduct?.customFields || {};
