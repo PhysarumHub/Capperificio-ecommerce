@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import ProductCard from '../components/ProductCard/ProductCard';
+import ShopFilter from '../components/ShopFilter/ShopFilter';
 import { ProductsMarquee } from '../components/Marquee/Marquee';
 import { useProducts } from '../hooks/useProducts';
 import { formatPrice } from '../lib/utils/price';
@@ -8,170 +9,259 @@ import { getProductImage, getProductSlug } from '../lib/utils/image';
 import { isShopwareConfigured } from '../lib/shopware-client';
 import styles from './CollectionPage.module.css';
 
-/* ─── Fallback product catalogue (used when Shopware is not connected) ─── */
+/* ─── Catalogo fallback (usato quando Shopware non è connesso) ─── */
 
 const ALL_PRODUCTS_FALLBACK = [
-  { name: 'Jungle Boogie', slug: 'jungle-boogie', image: '/images/PRODUCTSTILL.jpg', oldPrice: '€20.00', price: '€16.00', collections: ['all', 'filter', 'single-origin'], origin: 'Colombia', process: 'Washed' },
-  { name: 'Day For It', slug: 'day-for-it', image: '/images/PRODUCTSTILL.jpg', badge: 'Sale', oldPrice: '€20.00', price: '€16.00', collections: ['all', 'espresso', 'single-origin'], origin: 'Brazil', process: 'Natural' },
-  { name: 'Basecamp', slug: 'basecamp', image: '/images/PRODUCTSTILL.jpg', badge: 'Sale', oldPrice: '€20.00', price: '€16.00', collections: ['all', 'filter', 'single-origin'], origin: 'Ethiopia', process: 'Washed' },
-  { name: 'Copacabana', slug: 'copacabana', image: '/images/PRODUCTSTILL.jpg', price: '€18.00', collections: ['all', 'espresso', 'single-origin'], origin: 'Brazil', process: 'Natural' },
-  { name: 'Highland Reserve', slug: 'highland-reserve', image: '/images/PRODUCTSTILL.jpg', price: '€22.00', collections: ['all', 'filter', 'single-origin'], origin: 'Kenya', process: 'Washed' },
-  { name: 'Slow Phase', slug: 'slow-phase', image: '/images/PRODUCTSTILL.jpg', price: '€19.00', collections: ['all', 'espresso', 'single-origin'], origin: 'Colombia', process: 'Natural' },
-  { name: 'Sweet Velvet', slug: 'sweet-velvet', image: '/images/PRODUCTSTILL.jpg', price: '€25.00', collections: ['all', 'espresso', 'single-origin'], origin: 'Ethiopia', process: 'Natural' },
-  { name: 'Morning Ritual', slug: 'morning-ritual', image: '/images/PRODUCTSTILL.jpg', price: '€20.00', collections: ['all', 'filter', 'single-origin'], origin: 'Kenya', process: 'Washed' },
-  { name: 'Decaf', slug: 'decaf', image: '/images/PRODUCTSTILL.jpg', badge: 'Sale', badgeColor: 'blue', stars: 5, price: '€18.00', collections: ['all', 'espresso', 'blend'], origin: null, process: null },
-  { name: "Half Caff'd", slug: 'half-caffd', image: '/images/PRODUCTSTILL.jpg', stars: 5, oldPrice: '€20.00', price: '€16.00', collections: ['all', 'espresso', 'blend'], origin: null, process: null },
-  { name: 'Daily Grind', slug: 'daily-grind', image: '/images/PRODUCTSTILL.jpg', stars: 5, price: '€19.00', collections: ['all', 'filter', 'blend'], origin: null, process: null },
-  { name: 'Rooftop Blend', slug: 'rooftop-blend', image: '/images/PRODUCTSTILL.jpg', stars: 5, price: '€21.00', collections: ['all', 'espresso', 'blend'], origin: null, process: null },
-  { name: 'Golden Hour', slug: 'golden-hour', image: '/images/PRODUCTSTILL.jpg', price: '€23.00', collections: ['all', 'filter', 'single-origin'], origin: 'Colombia', process: 'Washed' },
-  { name: 'Night Owl', slug: 'night-owl', image: '/images/PRODUCTSTILL.jpg', badge: 'New', price: '€24.00', collections: ['all', 'espresso', 'single-origin'], origin: 'Ethiopia', process: 'Natural' },
-  { name: 'Dusk Till Dawn', slug: 'dusk-till-dawn', image: '/images/PRODUCTSTILL.jpg', price: '€17.00', collections: ['all', 'filter', 'blend'], origin: null, process: null },
-  { name: 'Sunday Session', slug: 'sunday-session', image: '/images/PRODUCTSTILL.jpg', badge: 'New', price: '€20.00', collections: ['all', 'filter', 'single-origin'], origin: 'Brazil', process: 'Natural' },
+  {
+    name: 'Cappero di Racale al Sale — Lilliput',
+    slug: 'cappero-sale-lilliput',
+    image: '/images/PRODUCTSTILL.jpg',
+    price: '€9.90',
+    collections: ['all', 'cappero'],
+    tipo: 'Cappero', formato: 'Lilliput', conservazione: 'Sotto sale',
+  },
+  {
+    name: 'Cappero di Racale al Sale — Lacrimella',
+    slug: 'cappero-sale-lacrimella',
+    image: '/images/PRODUCTSTILL.jpg',
+    price: '€9.90',
+    collections: ['all', 'cappero'],
+    tipo: 'Cappero', formato: 'Lacrimella', conservazione: 'Sotto sale',
+  },
+  {
+    name: "Cappero di Racale al Sale — Occhio di pernice",
+    slug: 'cappero-sale-occhio',
+    image: '/images/PRODUCTSTILL.jpg',
+    price: '€10.90',
+    collections: ['all', 'cappero'],
+    tipo: 'Cappero', formato: 'Occhio di pernice', conservazione: 'Sotto sale',
+  },
+  {
+    name: 'Cappero di Racale al Sale — Capperone',
+    slug: 'cappero-sale-capperone',
+    image: '/images/PRODUCTSTILL.jpg',
+    price: '€11.90',
+    collections: ['all', 'cappero'],
+    tipo: 'Cappero', formato: 'Capperone', conservazione: 'Sotto sale',
+  },
+  {
+    name: "Cappero di Racale all'Aceto — Lilliput",
+    slug: 'cappero-aceto-lilliput',
+    image: '/images/PRODUCTSTILL.jpg',
+    badge: 'Sale',
+    oldPrice: '€10.90',
+    price: '€9.90',
+    collections: ['all', 'cappero'],
+    tipo: 'Cappero', formato: 'Lilliput', conservazione: 'Sotto aceto di vino',
+  },
+  {
+    name: "Cappero di Racale all'Aceto — Lacrimella",
+    slug: 'cappero-aceto-lacrimella',
+    image: '/images/PRODUCTSTILL.jpg',
+    price: '€9.90',
+    collections: ['all', 'cappero'],
+    tipo: 'Cappero', formato: 'Lacrimella', conservazione: 'Sotto aceto di vino',
+  },
+  {
+    name: "Cappero di Racale all'Aceto — Capperone",
+    slug: 'cappero-aceto-capperone',
+    image: '/images/PRODUCTSTILL.jpg',
+    price: '€11.90',
+    collections: ['all', 'cappero'],
+    tipo: 'Cappero', formato: 'Capperone', conservazione: 'Sotto aceto di vino',
+  },
+  {
+    name: "Cucunci all'Aceto di Vino",
+    slug: 'cucunci-aceto-vino',
+    image: '/images/PRODUCTSTILL.jpg',
+    price: '€11.90',
+    collections: ['all', 'cucunci'],
+    tipo: 'Cucunci', formato: null, conservazione: 'Sotto aceto di vino',
+  },
+  {
+    name: "Cucunci all'Aceto di Mele",
+    slug: 'cucunci-aceto-mele',
+    image: '/images/PRODUCTSTILL.jpg',
+    price: '€12.50',
+    collections: ['all', 'cucunci'],
+    tipo: 'Cucunci', formato: null, conservazione: 'Sotto aceto di mele',
+  },
+  {
+    name: "Foglie di Cappero all'Aceto",
+    slug: 'foglie-cappero-aceto',
+    image: '/images/PRODUCTSTILL.jpg',
+    badge: 'New',
+    price: '€8.90',
+    collections: ['all', 'foglie'],
+    tipo: 'Foglie', formato: null, conservazione: 'Sotto aceto di vino',
+  },
+  {
+    name: 'Polvere di Cappero di Racale',
+    slug: 'polvere-cappero',
+    image: '/images/PRODUCTSTILL.jpg',
+    badge: 'New',
+    price: '€14.90',
+    collections: ['all', 'polvere'],
+    tipo: 'Polvere', formato: null, conservazione: null,
+  },
+  {
+    name: 'Cofanetto Degustazione',
+    slug: 'cofanetto-degustazione',
+    image: '/images/PRODUCTSTILL.jpg',
+    badge: 'New',
+    price: '€34.90',
+    collections: ['all'],
+    tipo: 'Cappero', formato: null, conservazione: null,
+  },
 ];
 
-/* ─── Collection metadata ─── */
+/* ─── Metadati collezioni ─── */
 
 const COLLECTIONS = {
   all: {
-    title: 'All Coffee',
-    description: 'Our entire range of honestly good coffee — single origins, blends, and everything in between.',
+    title: 'Tutti i Prodotti',
+    description: "L'intera gamma dei nostri capperi di Racale — dalle varietà classiche alle specialità artigianali.",
     label: 'Shop',
   },
-  espresso: {
-    title: 'Espresso',
-    description: 'Rich, bold, and built for the machine. Coffees roasted to shine as espresso.',
-    label: 'Collection',
+  cappero: {
+    title: 'Capperi',
+    description: 'Capperi di Racale raccolti a mano e conservati al sale marino o in aceto artigianale.',
+    label: 'Categoria',
   },
-  filter: {
-    title: 'Filter',
-    description: 'Light and nuanced roasts designed for pour-over, drip, and batch brew.',
-    label: 'Collection',
+  cucunci: {
+    title: 'Cucunci',
+    description: 'I frutti del cappero, dalla polpa carnosa e dal sapore intenso e profumato.',
+    label: 'Categoria',
   },
-  'single-origin': {
-    title: 'Single Origin',
-    description: 'Unique lots from individual farms and regions — each one a snapshot of place and process.',
-    label: 'Origin',
+  foglie: {
+    title: 'Foglie di Cappero',
+    description: 'Foglie tenere di cappero conservate in aceto, perfette per antipasti e condimenti.',
+    label: 'Categoria',
   },
-  blend: {
-    title: 'Blend',
-    description: 'Our signature blends, crafted for balance, consistency, and a vibe that never gets old.',
-    label: 'Collection',
+  polvere: {
+    title: 'Polvere di Cappero',
+    description: 'Capperi di Racale essiccati e macinati: un condimento unico, intenso e versatile.',
+    label: 'Specialità',
   },
 };
 
 const SORT_OPTIONS = [
-  { value: 'featured', label: 'Featured' },
-  { value: 'name-asc', label: 'A — Z' },
-  { value: 'name-desc', label: 'Z — A' },
-  { value: 'price-asc', label: 'Price: Low to High' },
-  { value: 'price-desc', label: 'Price: High to Low' },
+  { value: 'featured',   label: 'In evidenza' },
+  { value: 'name-asc',   label: 'A — Z' },
+  { value: 'name-desc',  label: 'Z — A' },
+  { value: 'price-asc',  label: 'Prezzo: crescente' },
+  { value: 'price-desc', label: 'Prezzo: decrescente' },
 ];
 
+const EMPTY_FILTERS = { tipo: [], formato: [], conservazione: [], priceRange: '' };
+
 function parsePrice(str) {
-  return parseFloat(str.replace(/[^0-9.]/g, ''));
+  return parseFloat(String(str).replace(/[^0-9.]/g, '')) || 0;
 }
 
-/* ─── Sub-filter tags per collection ─── */
+/* ─── Filtro prezzo ─── */
 
-function getSubFilters(collectionSlug) {
-  if (collectionSlug === 'all') return ['All', 'Espresso', 'Filter', 'Single Origin', 'Blend'];
-  if (collectionSlug === 'single-origin') return ['All', 'Brazil', 'Colombia', 'Ethiopia', 'Kenya'];
-  if (collectionSlug === 'blend') return ['All', 'Espresso', 'Filter'];
-  return null;
-}
-
-function matchesSubFilter(product, collectionSlug, subFilter) {
-  if (subFilter === 'All') return true;
-
-  if (collectionSlug === 'all') {
-    const mapped = subFilter.toLowerCase().replace(/\s+/g, '-');
-    return product.collections.includes(mapped);
-  }
-
-  if (collectionSlug === 'single-origin') {
-    return product.origin === subFilter;
-  }
-
-  if (collectionSlug === 'blend') {
-    const mapped = subFilter.toLowerCase();
-    return product.collections.includes(mapped);
-  }
-
+function matchesPriceRange(product, range) {
+  if (!range) return true;
+  const p = parsePrice(product.price);
+  if (range === 'Fino a €10')  return p < 10;
+  if (range === '€10 – €13')   return p >= 10 && p <= 13;
+  if (range === 'Oltre €13')   return p > 13;
   return true;
 }
 
-/* ─── Map Shopware products to component props ─── */
+/* ─── Filtro proprietà ─── */
 
-function mapShopwareProduct(product) {
-  const price = product.calculatedPrice || product.price?.[0];
-  const listPrice = price?.listPrice;
-  return {
-    name: product.translated?.name || product.name,
-    slug: getProductSlug(product),
-    image: getProductImage(product),
-    price: formatPrice(price?.unitPrice),
-    oldPrice: listPrice?.price ? formatPrice(listPrice.price) : undefined,
-    badge: listPrice?.price ? 'Sale' : undefined,
-    // These won't be available from Shopware in fallback mode
-    collections: ['all'],
-    origin: null,
-    process: null,
-  };
+function matchesFilters(product, filters) {
+  if (filters.tipo.length          && !filters.tipo.includes(product.tipo))                return false;
+  if (filters.formato.length       && product.formato && !filters.formato.includes(product.formato)) return false;
+  if (filters.conservazione.length && !filters.conservazione.includes(product.conservazione)) return false;
+  if (!matchesPriceRange(product, filters.priceRange))                                      return false;
+  return true;
 }
 
-/* ─── Sort helpers for Shopware API ─── */
+/* ─── Sort Shopware API ─── */
 
 function getSortCriteria(sortValue) {
   switch (sortValue) {
-    case 'name-asc': return [{ field: 'name', order: 'ASC' }];
-    case 'name-desc': return [{ field: 'name', order: 'DESC' }];
-    case 'price-asc': return [{ field: 'price', order: 'ASC' }];
+    case 'name-asc':   return [{ field: 'name',  order: 'ASC'  }];
+    case 'name-desc':  return [{ field: 'name',  order: 'DESC' }];
+    case 'price-asc':  return [{ field: 'price', order: 'ASC'  }];
     case 'price-desc': return [{ field: 'price', order: 'DESC' }];
-    default: return [];
+    default:           return [];
   }
 }
 
-/* ─── Component ─── */
+/* ─── Mapping prodotto Shopware ─── */
+
+function mapShopwareProduct(product) {
+  const price     = product.calculatedPrice || product.price?.[0];
+  const listPrice = price?.listPrice;
+
+  const props          = product.properties || [];
+  const tipo           = props.find((p) => p.group?.name === 'Tipo')?.name          || null;
+  const formato        = props.find((p) => p.group?.name === 'Formato')?.name       || null;
+  const conservazione  = props.find((p) => p.group?.name === 'Conservazione')?.name || null;
+
+  return {
+    name:           product.translated?.name || product.name,
+    slug:           getProductSlug(product),
+    image:          getProductImage(product),
+    price:          formatPrice(price?.unitPrice),
+    oldPrice:       listPrice?.price ? formatPrice(listPrice.price) : undefined,
+    badge:          listPrice?.price ? 'Sale' : undefined,
+    collections:    ['all'],
+    tipo,
+    formato,
+    conservazione,
+  };
+}
+
+/* ─── Componente ─── */
 
 export default function CollectionPage() {
-  const { slug } = useParams();
-  const collection = COLLECTIONS[slug] || COLLECTIONS.all;
-  const collectionSlug = COLLECTIONS[slug] ? slug : 'all';
+  const { slug }          = useParams();
+  const collection        = COLLECTIONS[slug] || COLLECTIONS.all;
+  const collectionSlug    = COLLECTIONS[slug] ? slug : 'all';
 
-  const [sort, setSort] = useState('featured');
-  const [activeFilter, setActiveFilter] = useState('All');
+  const [sort, setSort]         = useState('featured');
+  const [filters, setFilters]   = useState(EMPTY_FILTERS);
+  const [filterOpen, setFilterOpen] = useState(false);
 
-  const subFilters = getSubFilters(collectionSlug);
-
-  // Try Shopware API
   const apiSort = getSortCriteria(sort);
   const { products: shopwareProducts, loading, error } = useProducts({
     limit: 50,
-    sort: apiSort,
+    sort:  apiSort,
   });
 
   const useApi = isShopwareConfigured() && !error && shopwareProducts.length > 0;
 
-  // Build product list: either from API or fallback
   const products = useMemo(() => {
+    let list;
+
     if (useApi) {
-      return shopwareProducts.map(mapShopwareProduct);
+      list = shopwareProducts.map(mapShopwareProduct);
+    } else {
+      list = ALL_PRODUCTS_FALLBACK.filter((p) => p.collections.includes(collectionSlug));
     }
 
-    // Fallback: local filtering + sorting
-    let filtered = ALL_PRODUCTS_FALLBACK.filter((p) => p.collections.includes(collectionSlug));
+    // Applica filtri sidebar (sia per API che per fallback)
+    list = list.filter((p) => matchesFilters(p, filters));
 
-    if (activeFilter !== 'All') {
-      filtered = filtered.filter((p) => matchesSubFilter(p, collectionSlug, activeFilter));
-    }
+    // Ordinamento
+    if (sort === 'name-asc')   list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    else if (sort === 'name-desc')  list = [...list].sort((a, b) => b.name.localeCompare(a.name));
+    else if (sort === 'price-asc')  list = [...list].sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
+    else if (sort === 'price-desc') list = [...list].sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
 
-    if (sort === 'name-asc') filtered.sort((a, b) => a.name.localeCompare(b.name));
-    else if (sort === 'name-desc') filtered.sort((a, b) => b.name.localeCompare(a.name));
-    else if (sort === 'price-asc') filtered.sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
-    else if (sort === 'price-desc') filtered.sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
+    return list;
+  }, [useApi, shopwareProducts, collectionSlug, sort, filters]);
 
-    return filtered;
-  }, [useApi, shopwareProducts, collectionSlug, sort, activeFilter]);
+  const activeFilterCount =
+    (filters.tipo?.length || 0) +
+    (filters.formato?.length || 0) +
+    (filters.conservazione?.length || 0) +
+    (filters.priceRange ? 1 : 0);
 
   return (
     <>
@@ -183,44 +273,33 @@ export default function CollectionPage() {
         <h1 className={styles.bannerTitle}>{collection.title}</h1>
         <p className={styles.bannerDesc}>{collection.description}</p>
         <p className={styles.bannerCount}>
-          {loading ? '...' : `${products.length} product${products.length !== 1 ? 's' : ''}`}
+          {loading ? '...' : `${products.length} prodott${products.length !== 1 ? 'i' : 'o'}`}
         </p>
       </section>
 
-      {/* Sub-filter tags (only for fallback mode — API handles filtering server-side) */}
-      {!useApi && subFilters && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 10, padding: '32px 60px 24px' }}>
-          {subFilters.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => setActiveFilter(tag)}
-              style={{
-                fontFamily: 'var(--font-serif)',
-                fontStyle: 'italic',
-                fontSize: 'var(--text-2xl)',
-                color: activeFilter === tag ? 'var(--color-white)' : 'var(--color-red)',
-                background: activeFilter === tag ? 'var(--color-red)' : 'transparent',
-                border: '1.5px solid var(--color-red)',
-                borderRadius: 'var(--radius-pill)',
-                padding: '8px 24px',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'background .2s, color .2s',
-              }}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Toolbar */}
       <div className={styles.toolbar}>
+        {/* Pulsante filtri (visibile su tutti i dispositivi) */}
+        <button
+          type="button"
+          className={styles.filterToggle}
+          onClick={() => setFilterOpen(true)}
+        >
+          <svg width="14" height="12" viewBox="0 0 14 12" fill="none" aria-hidden="true">
+            <path d="M0 1h14M3 6h8M5 11h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          Filtra
+          {activeFilterCount > 0 && (
+            <span className={styles.filterBadge}>{activeFilterCount}</span>
+          )}
+        </button>
+
         <span className={styles.resultCount}>
-          {loading ? '...' : `${products.length} product${products.length !== 1 ? 's' : ''}`}
+          {loading ? '...' : `${products.length} prodott${products.length !== 1 ? 'i' : 'o'}`}
         </span>
+
         <div className={styles.sortWrap}>
-          <span className={styles.sortLabel}>Sort by</span>
+          <span className={styles.sortLabel}>Ordina</span>
           <select
             className={styles.sortSelect}
             value={sort}
@@ -233,28 +312,50 @@ export default function CollectionPage() {
         </div>
       </div>
 
-      {/* Product grid */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#999' }}>Caricamento prodotti...</div>
-      ) : products.length > 0 ? (
-        <div className={`${styles.grid} ${products.length <= 3 ? styles.gridThree : ''}`}>
-          {products.map((p) => (
-            <ProductCard
-              key={p.slug}
-              name={p.name}
-              slug={p.slug}
-              image={p.image}
-              price={p.price}
-              oldPrice={p.oldPrice}
-              badge={p.badge}
-              badgeColor={p.badgeColor}
-              stars={p.stars}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className={styles.empty}>Nessun prodotto trovato in questa collezione.</div>
-      )}
+      {/* Layout: sidebar + griglia */}
+      <div className={styles.layout}>
+        <ShopFilter
+          filters={filters}
+          onChange={setFilters}
+          isMobileOpen={filterOpen}
+          onClose={() => setFilterOpen(false)}
+        />
+
+        <main className={styles.main}>
+          {loading ? (
+            <div className={styles.loading}>Caricamento prodotti...</div>
+          ) : products.length > 0 ? (
+            <div className={`${styles.grid} ${products.length <= 3 ? styles.gridThree : ''}`}>
+              {products.map((p) => (
+                <ProductCard
+                  key={p.slug}
+                  name={p.name}
+                  slug={p.slug}
+                  image={p.image}
+                  price={p.price}
+                  oldPrice={p.oldPrice}
+                  badge={p.badge}
+                  badgeColor={p.badgeColor}
+                  stars={p.stars}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className={styles.empty}>
+              Nessun prodotto trovato.
+              {activeFilterCount > 0 && (
+                <button
+                  type="button"
+                  className={styles.emptyReset}
+                  onClick={() => setFilters(EMPTY_FILTERS)}
+                >
+                  Rimuovi i filtri
+                </button>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
 
       <ProductsMarquee />
     </>

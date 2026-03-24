@@ -1,0 +1,234 @@
+/* ── Backdrop (solo mobile) ─────────────────────────────────────────────────── */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 49;
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .backdrop { display: block; }
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: 240px;
+  min-width: 240px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-white, #fff);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 280px;
+    max-height: 100vh;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(.4, 0, .2, 1);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.14);
+    border-right: none;
+    padding-bottom: 48px;
+  }
+
+  .open {
+    transform: translateX(0);
+  }
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  background: var(--color-white, #fff);
+  z-index: 1;
+}
+
+.title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--color-dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reset {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-sm);
+  color: var(--color-red);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  line-height: 1;
+}
+
+.closeBtn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-mid);
+  font-size: 13px;
+  border-radius: 50%;
+  transition: background .15s;
+}
+
+.closeBtn:hover {
+  background: var(--color-light);
+}
+
+/* Nascondi X su desktop */
+@media (min-width: 769px) {
+  .closeBtn { display: none; }
+}
+
+/* ── Sezione accordion ───────────────────────────────────────────────────────── */
+.section {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sectionHead {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--color-dark);
+  transition: background .15s;
+}
+
+.sectionHead:hover {
+  background: var(--color-light);
+}
+
+.arrow {
+  color: var(--color-mid);
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 300;
+}
+
+/* ── Lista opzioni ───────────────────────────────────────────────────────────── */
+.list {
+  list-style: none;
+  padding: 4px 0 10px;
+  margin: 0;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 20px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--color-dark);
+  line-height: 1.4;
+  transition: background .12s;
+  user-select: none;
+}
+
+.label:hover {
+  background: var(--color-light);
+}
+
+.hiddenInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Custom checkbox */
+.check {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color .15s, background .15s;
+  background: #fff;
+  position: relative;
+}
+
+.check::after {
+  content: '';
+  width: 8px;
+  height: 5px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) translateY(-1px);
+  opacity: 0;
+  transition: opacity .12s;
+  position: absolute;
+}
+
+.checked {
+  border-color: var(--color-red);
+  background: var(--color-red);
+}
+
+.checked::after {
+  opacity: 1;
+}

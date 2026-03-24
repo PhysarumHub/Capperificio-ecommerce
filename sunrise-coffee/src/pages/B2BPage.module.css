@@ -1,0 +1,417 @@
+/* ══════════════════════════════════════════════════════════════════════
+   LANDING — Stato A (non loggato)
+══════════════════════════════════════════════════════════════════════ */
+
+.landingRoot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: calc(100vh - 120px);
+}
+
+.landingHero {
+  background: var(--color-dark);
+  color: var(--color-white, #fff);
+  padding: 80px 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 28px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--color-red);
+}
+
+.tagDot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-red);
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
+
+.heroTitle {
+  font-family: var(--font-serif);
+  font-size: clamp(2.4rem, 4vw, 3.6rem);
+  font-weight: 500;
+  line-height: 1.12;
+  color: #fff;
+  margin: 0;
+}
+
+.heroTitle em {
+  color: var(--color-red);
+}
+
+.heroDesc {
+  font-size: var(--text-lg);
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.65;
+  max-width: 420px;
+  margin: 0;
+}
+
+.benefits {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.benefit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.82);
+  letter-spacing: .01em;
+}
+
+/* ── Form panel ── */
+.landingForm {
+  background: var(--color-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+}
+
+.formCard {
+  width: 100%;
+  max-width: 400px;
+}
+
+.formTitle {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-3xl);
+  font-weight: 500;
+  color: var(--color-dark);
+  margin: 0 0 6px;
+}
+
+.formSub {
+  font-size: var(--text-sm);
+  color: var(--color-mid);
+  margin: 0 0 24px;
+}
+
+.formError {
+  background: rgba(216, 64, 50, .08);
+  border: 1px solid rgba(216, 64, 50, .3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--color-red);
+  margin-bottom: 16px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #777;
+}
+
+.input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: var(--font-sans);
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color .2s;
+  background: #fff;
+}
+
+.input:focus {
+  border-color: var(--color-dark);
+}
+
+.btnPrimary {
+  width: 100%;
+  padding: 13px;
+  background: var(--color-dark);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .2s;
+  margin-top: 4px;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: var(--color-red);
+}
+
+.btnPrimary:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.formDivider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 24px 0;
+}
+
+.formHint {
+  font-size: 13px;
+  color: var(--color-mid);
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.link {
+  color: var(--color-red);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   PENDING — Stato B (loggato, non B2B)
+══════════════════════════════════════════════════════════════════════ */
+
+.pendingRoot {
+  min-height: calc(100vh - 200px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  background: var(--color-light);
+}
+
+.pendingCard {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 56px 48px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+}
+
+.pendingIcon {
+  font-size: 40px;
+  margin-bottom: 16px;
+}
+
+.pendingTitle {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-3xl);
+  font-weight: 500;
+  color: var(--color-dark);
+  margin: 0 0 20px;
+}
+
+.pendingDesc {
+  font-size: var(--text-base);
+  color: var(--color-mid);
+  line-height: 1.65;
+  margin: 0 0 14px;
+}
+
+.pendingContact {
+  margin: 32px 0 24px;
+  padding: 24px;
+  background: var(--color-light);
+  border-radius: 12px;
+}
+
+.pendingContactTitle {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--color-dark);
+  margin: 0 0 14px;
+}
+
+.btnOutline {
+  display: inline-block;
+  padding: 10px 24px;
+  border: 1.5px solid var(--color-red);
+  border-radius: var(--radius-pill);
+  color: var(--color-red);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background .2s, color .2s;
+}
+
+.btnOutline:hover {
+  background: var(--color-red);
+  color: #fff;
+}
+
+.pendingBack {
+  font-size: 13px;
+  color: var(--color-mid);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.pendingBack:hover {
+  color: var(--color-dark);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CATALOG — Stato C (cliente B2B)
+══════════════════════════════════════════════════════════════════════ */
+
+.banner {
+  background: var(--color-dark);
+  text-align: center;
+  padding: 64px 40px 48px;
+}
+
+.bannerLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--color-red);
+  margin-bottom: 12px;
+}
+
+.bannerDot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-red);
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
+
+.bannerTitle {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-5xl);
+  font-weight: 500;
+  color: #fff;
+  margin: 0 0 12px;
+}
+
+.bannerDesc {
+  font-size: var(--text-lg);
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.bannerMeta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.netBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: rgba(216, 64, 50, .15);
+  border: 1px solid rgba(216, 64, 50, .4);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--color-red);
+}
+
+.bannerCount {
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: .04em;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px;
+  color: var(--color-mid);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.b2bFooter {
+  border-top: 1px solid var(--color-border);
+  padding: 24px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  color: var(--color-mid);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 900px) {
+  .landingRoot {
+    grid-template-columns: 1fr;
+  }
+
+  .landingHero {
+    padding: 56px 32px;
+    min-height: auto;
+  }
+
+  .landingForm {
+    padding: 48px 24px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .landingHero { padding: 40px 20px; }
+  .formCard { max-width: 100%; }
+  .pendingCard { padding: 36px 24px; }
+  .banner { padding: 48px 20px 36px; }
+  .b2bFooter { padding: 20px; flex-direction: column; align-items: flex-start; gap: 8px; }
+}

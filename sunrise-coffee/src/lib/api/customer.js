@@ -23,10 +23,12 @@ export async function register(data) {
 }
 
 /**
- * Get the currently logged-in customer profile.
+ * Get the currently logged-in customer profile (includes customer group).
  */
 export async function getCustomer() {
-  return storeApiGet('/account/customer');
+  return storeApiPost('/account/customer', {
+    associations: { group: {} },
+  });
 }
 
 /**

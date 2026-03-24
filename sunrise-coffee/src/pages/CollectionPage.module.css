@@ -1,3 +1,4 @@
+/* ── Banner ──────────────────────────────────────────────────────────────────── */
 .banner {
   background: var(--color-light);
   text-align: center;
@@ -49,25 +50,65 @@
   letter-spacing: .04em;
 }
 
-/* Toolbar: sort / view controls */
+/* ── Toolbar ─────────────────────────────────────────────────────────────────── */
 .toolbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px 40px;
+  gap: 12px;
+  padding: 14px 24px;
   border-bottom: 1px solid var(--color-border);
+}
+
+.filterToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--color-dark);
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  white-space: nowrap;
+}
+
+.filterToggle:hover {
+  border-color: var(--color-dark);
+  background: var(--color-light);
+}
+
+.filterBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: var(--radius-full);
+  background: var(--color-red);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .resultCount {
   font-size: var(--text-sm);
   color: var(--color-mid);
   letter-spacing: .04em;
+  flex: 1;
 }
 
 .sortWrap {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: auto;
 }
 
 .sortLabel {
@@ -75,6 +116,7 @@
   color: var(--color-mid);
   text-transform: uppercase;
   letter-spacing: .06em;
+  white-space: nowrap;
 }
 
 .sortSelect {
@@ -93,40 +135,97 @@
   background-position: right 10px center;
 }
 
-/* Product grid */
+/* ── Layout sidebar + griglia ────────────────────────────────────────────────── */
+.layout {
+  display: flex;
+  align-items: flex-start;
+  min-height: 400px;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Griglia prodotti ────────────────────────────────────────────────────────── */
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .gridThree {
   grid-template-columns: repeat(3, 1fr);
 }
 
-/* Empty state */
+/* ── Stato vuoto ─────────────────────────────────────────────────────────────── */
+.loading {
+  text-align: center;
+  padding: 60px 40px;
+  color: var(--color-mid);
+}
+
 .empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
   text-align: center;
   padding: 80px 40px;
   color: var(--color-mid);
   font-size: var(--text-xl);
 }
 
-@media (max-width: 768px) {
-  .banner { padding: 48px 20px 36px; }
-  .toolbar { padding: 12px 20px; }
+.emptyReset {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-lg);
+  color: var(--color-red);
+  background: none;
+  border: 1.5px solid var(--color-red);
+  border-radius: var(--radius-pill);
+  padding: 8px 24px;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+
+.emptyReset:hover {
+  background: var(--color-red);
+  color: #fff;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
   .grid { grid-template-columns: repeat(2, 1fr); }
   .gridThree { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .banner { padding: 48px 20px 36px; }
+
+  .toolbar { padding: 10px 16px; gap: 8px; }
+
+  /* Su mobile la sidebar è un drawer (gestito da ShopFilter),
+     quindi il layout non ha bisogno del gap laterale */
+  .layout { display: block; }
+
+  .grid { grid-template-columns: repeat(2, 1fr); }
+  .gridThree { grid-template-columns: repeat(2, 1fr); }
+
   .empty { padding: 48px 20px; }
+
+  .sortLabel { display: none; }
 }
 
 @media (max-width: 480px) {
   .banner { padding: 36px 16px 28px; }
+
   .toolbar {
-    padding: 10px 16px;
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
+    padding: 10px 12px;
+    flex-wrap: wrap;
   }
+
+  .sortWrap { margin-left: 0; }
+
   .grid { grid-template-columns: 1fr 1fr; }
   .gridThree { grid-template-columns: 1fr 1fr; }
 }
