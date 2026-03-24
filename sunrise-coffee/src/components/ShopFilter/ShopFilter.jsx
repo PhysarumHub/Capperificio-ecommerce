@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import styles from './ShopFilter.module.css';
 
-/* ── Configurazione sezioni filtro ─────────────────────────────────────────── */
-
 const FILTER_SECTIONS = [
   {
     key:    'tipo',
@@ -30,11 +28,34 @@ const FILTER_SECTIONS = [
   },
 ];
 
-/* ── Sezione accordion singola ──────────────────────────────────────────────── */
+/* ── Lista opzioni (condivisa desktop + mobile) ──────────────────────────── */
+function OptionList({ section, selected, onToggle }) {
+  return (
+    <ul className={styles.list}>
+      {section.items.map((item) => {
+        const checked = selected.includes(item);
+        return (
+          <li key={item}>
+            <label className={styles.label}>
+              <span className={`${styles.check} ${checked ? styles.checked : ''}`} aria-hidden="true" />
+              <input
+                type="checkbox"
+                className={styles.hiddenInput}
+                checked={checked}
+                onChange={() => onToggle(section.key, item, section.single)}
+              />
+              {item}
+            </label>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
+/* ── Accordion (desktop) ─────────────────────────────────────────────────── */
 function FilterSection({ section, selected, onToggle }) {
   const [open, setOpen] = useState(true);
-
   return (
     <div className={styles.section}>
       <button
@@ -46,35 +67,15 @@ function FilterSection({ section, selected, onToggle }) {
         <span>{section.title}</span>
         <span className={styles.arrow}>{open ? '−' : '+'}</span>
       </button>
-
-      {open && (
-        <ul className={styles.list}>
-          {section.items.map((item) => {
-            const checked = selected.includes(item);
-            return (
-              <li key={item}>
-                <label className={styles.label}>
-                  <span className={`${styles.check} ${checked ? styles.checked : ''}`} aria-hidden="true" />
-                  <input
-                    type="checkbox"
-                    className={styles.hiddenInput}
-                    checked={checked}
-                    onChange={() => onToggle(section.key, item, section.single)}
-                  />
-                  {item}
-                </label>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      {open && <OptionList section={section} selected={selected} onToggle={onToggle} />}
     </div>
   );
 }
 
-/* ── Componente principale ──────────────────────────────────────────────────── */
-
+/* ── Componente principale ──────────────────────────────────────────────── */
 export default function ShopFilter({ filters, onChange, isMobileOpen, onClose }) {
+  const [activeTab, setActiveTab] = useState(0);
+
   const toggle = (key, item, single) => {
     if (single) {
       onChange({ ...filters, [key]: filters[key] === item ? '' : item });
@@ -96,6 +97,13 @@ export default function ShopFilter({ filters, onChange, isMobileOpen, onClose })
   const reset = () =>
     onChange({ tipo: [], formato: [], conservazione: [], priceRange: '' });
 
+  const getSelected = (section) =>
+    section.single
+      ? (filters[section.key] ? [filters[section.key]] : [])
+      : (filters[section.key] || []);
+
+  const activeSection = FILTER_SECTIONS[activeTab];
+
   return (
     <>
       {/* Backdrop */}
@@ -113,40 +121,62 @@ export default function ShopFilter({ filters, onChange, isMobileOpen, onClose })
         <div className={styles.header}>
           <span className={styles.title}>
             Filtri
-            {activeCount > 0 && (
-              <span className={styles.badge}>{activeCount}</span>
-            )}
+            {activeCount > 0 && <span className={styles.badge}>{activeCount}</span>}
           </span>
           <div className={styles.headerActions}>
             {activeCount > 0 && (
-              <button type="button" className={styles.reset} onClick={reset}>
-                Reset
-              </button>
+              <button type="button" className={styles.reset} onClick={reset}>Reset</button>
             )}
-            <button
-              type="button"
-              className={styles.closeBtn}
-              onClick={onClose}
-              aria-label="Chiudi filtri"
-            >
-              ✕
-            </button>
+            <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Chiudi filtri">✕</button>
           </div>
         </div>
 
-        {/* Sezioni */}
-        {FILTER_SECTIONS.map((section) => (
-          <FilterSection
-            key={section.key}
-            section={section}
-            selected={
-              section.single
-                ? (filters[section.key] ? [filters[section.key]] : [])
-                : (filters[section.key] || [])
-            }
-            onToggle={toggle}
-          />
-        ))}
+        {/* ── DESKTOP: accordion ── */}
+        <div className={styles.desktopSections}>
+          {FILTER_SECTIONS.map((section) => (
+            <FilterSection
+              key={section.key}
+              section={section}
+              selected={getSelected(section)}
+              onToggle={toggle}
+            />
+          ))}
+        </div>
+
+        {/* ── MOBILE: tabs ── */}
+        <div className={styles.mobileTabs}>
+          <div className={styles.tabBar}>
+            {FILTER_SECTIONS.map((section, i) => {
+              const count = getSelected(section).length;
+              return (
+                <button
+                  key={section.key}
+                  type="button"
+                  className={`${styles.tab} ${activeTab === i ? styles.tabActive : ''}`}
+                  onClick={() => setActiveTab(i)}
+                >
+                  {section.title}
+                  {count > 0 && <span className={styles.tabBadge}>{count}</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className={styles.tabContent}>
+            <OptionList
+              section={activeSection}
+              selected={getSelected(activeSection)}
+              onToggle={toggle}
+            />
+          </div>
+        </div>
+
+        {/* Applica — mobile */}
+        <div className={styles.mobileFooter}>
+          <button type="button" className={styles.applyBtn} onClick={onClose}>
+            Applica filtri{activeCount > 0 ? ` (${activeCount})` : ''}
+          </button>
+        </div>
       </aside>
     </>
   );
