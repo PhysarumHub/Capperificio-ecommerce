@@ -12,7 +12,6 @@ const MEGA_LINKS = [
   { label: 'Cucunci',          href: '/collections/cucunci' },
   { label: 'Foglie',           href: '/collections/foglie' },
   { label: 'Polvere',          href: '/collections/polvere' },
-  { label: 'Area B2B',         href: '/b2b', b2b: true },
 ];
 
 export default function Header() {
@@ -75,7 +74,6 @@ export default function Header() {
         </div>
 
         <nav className={styles.navRight}>
-          <Link to="/b2b" className={styles.b2bLink}>B2B</Link>
           {isLoggedIn ? (
             <Link to="/account" className={styles.navLink}>Account</Link>
           ) : (
