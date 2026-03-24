@@ -98,14 +98,12 @@ export default function ShopFilter({ filters, onChange, isMobileOpen, onClose })
 
   return (
     <>
-      {/* Backdrop mobile */}
-      {isMobileOpen && (
-        <div
-          className={styles.backdrop}
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
+      {/* Backdrop */}
+      <div
+        className={`${styles.backdrop} ${isMobileOpen ? styles.backdropOpen : ''}`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
       <aside
         className={`${styles.sidebar} ${isMobileOpen ? styles.open : ''}`}
