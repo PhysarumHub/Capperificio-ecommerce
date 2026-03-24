@@ -66,11 +66,13 @@ function mapShopwareProduct(product) {
 }
 
 export default function HomePage() {
-  const b2bFilter = B2B_CATEGORY_ID
-    ? [{ type: 'not', operator: 'AND', queries: [{ type: 'equals', field: 'categoryTree', value: B2B_CATEGORY_ID }] }]
-    : [];
+  // Fetch more products to account for B2B ones being filtered out client-side
+  const { products: rawProducts, loading, error } = useProducts({ limit: 24 });
 
-  const { products: shopwareProducts, loading, error } = useProducts({ limit: 12, filters: b2bFilter });
+  // Filter out B2B products client-side (avoids Store API "not" filter compatibility issues)
+  const shopwareProducts = B2B_CATEGORY_ID
+    ? rawProducts.filter(p => !p.categoryTree?.includes(B2B_CATEGORY_ID))
+    : rawProducts;
 
   // If Shopware data is available, split into sections; otherwise use fallbacks
   const hasApiData = !error && !loading && shopwareProducts.length > 0;

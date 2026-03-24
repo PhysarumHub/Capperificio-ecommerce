@@ -8,7 +8,9 @@
     "server": "node server.js",
     "frontend": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "backup": "bash scripts/backup-shopware.sh",
+    "restore": "bash scripts/restore-shopware.sh"
   },
   "keywords": [],
   "author": "",
