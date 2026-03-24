@@ -17,18 +17,18 @@ import styles from './HomePage.module.css';
 /* ─── Fallback data (used when Shopware is not connected) ─── */
 
 const SLIDER_PRODUCTS_FALLBACK = [
-  { name: 'Jungle Boogie', image: '/images/PRODUCTSTILL.jpg', oldPrice: '€20.00', price: '€16.00' },
-  { name: 'Day For It', image: '/images/PRODUCTSTILL.jpg', badge: 'Sale', oldPrice: '€20.00', price: '€16.00' },
-  { name: 'Basecamp', image: '/images/PRODUCTSTILL.jpg', badge: 'Sale', oldPrice: '€20.00', price: '€16.00' },
-  { name: 'Copacabana', image: '/images/PRODUCTSTILL.jpg', price: '€18.00' },
-  { name: 'Highland Reserve', image: '/images/PRODUCTSTILL.jpg', price: '€22.00' },
-  { name: 'Slow Phase', image: '/images/PRODUCTSTILL.jpg', price: '€19.00' },
+  { name: 'Jungle Boogie', image: '/images/PRODUCTSTILL.jpg', oldPrice: '€20.00', price: '€16.00', options: ['250g', '500g', '1kg'] },
+  { name: 'Day For It', image: '/images/PRODUCTSTILL.jpg', badge: 'Sale', oldPrice: '€20.00', price: '€16.00', options: ['250g', '500g'] },
+  { name: 'Basecamp', image: '/images/PRODUCTSTILL.jpg', badge: 'Sale', oldPrice: '€20.00', price: '€16.00', options: ['250g', '500g', '1kg'] },
+  { name: 'Copacabana', image: '/images/PRODUCTSTILL.jpg', price: '€18.00', options: ['250g', '500g'] },
+  { name: 'Highland Reserve', image: '/images/PRODUCTSTILL.jpg', price: '€22.00', options: ['250g', '500g', '1kg'] },
+  { name: 'Slow Phase', image: '/images/PRODUCTSTILL.jpg', price: '€19.00', options: ['250g', '500g'] },
 ];
 
 const BLEND_PRODUCTS_FALLBACK = [
-  { name: 'Decaf', image: '/images/PRODUCTSTILL.jpg', badge: 'Sale', badgeColor: 'blue', stars: 5, price: '€18.00' },
-  { name: "Half Caff'd", image: '/images/PRODUCTSTILL.jpg', stars: 5, oldPrice: '€20.00', price: '€16.00' },
-  { name: 'Daily Grind', image: '/images/PRODUCTSTILL.jpg', stars: 5, price: '€19.00' },
+  { name: 'Decaf', image: '/images/PRODUCTSTILL.jpg', badge: 'Sale', badgeColor: 'blue', stars: 5, price: '€18.00', options: ['250g', '500g'] },
+  { name: "Half Caff'd", image: '/images/PRODUCTSTILL.jpg', stars: 5, oldPrice: '€20.00', price: '€16.00', options: ['250g', '500g', '1kg'] },
+  { name: 'Daily Grind', image: '/images/PRODUCTSTILL.jpg', stars: 5, price: '€19.00', options: ['250g', '500g'] },
 ];
 
 const MERCH_PRODUCTS_FALLBACK = [
@@ -40,7 +40,17 @@ const MERCH_PRODUCTS_FALLBACK = [
 function mapShopwareProduct(product) {
   const price = product.calculatedPrice || product.price?.[0];
   const listPrice = price?.listPrice;
-  const options = product.options?.map((o) => o.translated?.name || o.name).filter(Boolean);
+
+  // configuratorSettings = tutte le varianti del prodotto padre (es. 250g, 500g, 1kg)
+  // options = variante specifica di un prodotto figlio
+  const fromConfigurator = product.configuratorSettings
+    ?.map((s) => s.option?.translated?.name || s.option?.name)
+    .filter(Boolean);
+  const fromOptions = product.options
+    ?.map((o) => o.translated?.name || o.name)
+    .filter(Boolean);
+  const options = fromConfigurator?.length ? [...new Set(fromConfigurator)] : (fromOptions?.length ? fromOptions : undefined);
+
   return {
     id: product.id,
     name: product.translated?.name || product.name,
@@ -49,7 +59,7 @@ function mapShopwareProduct(product) {
     price: formatPrice(price?.unitPrice),
     oldPrice: listPrice?.price ? formatPrice(listPrice.price) : undefined,
     badge: listPrice?.price ? 'Sale' : undefined,
-    options: options?.length ? options : undefined,
+    options,
   };
 }
 

@@ -12,6 +12,9 @@ export async function getProducts({ page = 1, limit = 24, filters = [], sort = [
       seoUrls: {},
       categories: {},
       options: { associations: { group: {} } },
+      configuratorSettings: {
+        associations: { option: { associations: { group: {} } } },
+      },
     },
   };
 
