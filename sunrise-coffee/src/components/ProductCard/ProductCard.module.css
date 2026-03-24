@@ -6,7 +6,9 @@
   overflow: hidden;
   padding: 10px;
   text-decoration: none;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   color: inherit;
 }
 
@@ -145,7 +147,8 @@
   align-items: flex-end;
   padding: 14px 6px 8px;
   gap: 8px;
-  min-height: 72px;
+  height: 80px;
+  flex-shrink: 0;
   overflow: hidden;
 }
 
@@ -242,16 +245,16 @@
   .card { padding: 6px; }
   .info {
     padding: 10px 4px 6px;
-    height: auto;
+    height: 88px;
     align-items: flex-start;
     flex-direction: column;
     gap: 6px;
   }
   .infoLeft { width: 100%; }
   .name {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .pricing { text-align: left; }
   .badge { top: 8px; left: 8px; padding: 3px 8px; }
