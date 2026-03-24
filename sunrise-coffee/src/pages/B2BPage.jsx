@@ -246,8 +246,11 @@ function B2BCatalog({ customer }) {
     categoryId: B2B_CATEGORY_ID || undefined,
   });
 
-  const useApi    = isShopwareConfigured() && !error && apiProducts.length > 0;
-  const allProducts = useApi ? apiProducts.map(mapB2BProduct) : B2B_FALLBACK;
+  // Se Shopware è connesso usa SOLO i prodotti della categoria B2B — niente fallback misto
+  const shopwareActive = isShopwareConfigured() && !error;
+  const allProducts = shopwareActive
+    ? apiProducts.map(mapB2BProduct)
+    : B2B_FALLBACK;
   const products  = allProducts.filter((p) => matchesB2BFilters(p, filters));
 
   const activeCount =
