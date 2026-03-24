@@ -145,7 +145,7 @@
   align-items: flex-end;
   padding: 14px 6px 8px;
   gap: 8px;
-  height: 72px;
+  min-height: 72px;
   overflow: hidden;
 }
 
@@ -167,11 +167,30 @@
   text-overflow: ellipsis;
 }
 
-.sizes {
+.variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.variantChip {
   font-family: var(--font-mono, monospace);
-  font-size: var(--text-xs);
+  font-size: 10px;
   color: var(--color-red);
+  border: 1px solid var(--color-red);
+  border-radius: var(--radius-pill, 99px);
+  padding: 2px 8px;
   letter-spacing: .04em;
+  white-space: nowrap;
+  opacity: 0.85;
+  transition: background .15s, color .15s;
+}
+
+.card:hover .variantChip {
+  background: var(--color-red);
+  color: #fff;
+  opacity: 1;
 }
 
 .pricing {
@@ -233,6 +252,6 @@
 
 @media (max-width: 480px) {
   .card { padding: 4px; }
-  .sizes { font-size: var(--text-xs); }
+  .variantChip { font-size: 9px; padding: 2px 6px; }
   .price, .oldPrice { font-size: var(--text-xs); }
 }

@@ -24,7 +24,7 @@ export default function ProductCard({
   const debounceRef = useRef(null);
   const href = `/product/${slug || name.toLowerCase().replace(/\s+/g, '-')}`;
 
-  const sizeLabels = options?.length ? options.join('  ') : (sizes || null);
+  const variantList = options?.length ? options : sizes ? [sizes] : null;
 
   const scheduleCollapse = (currentQty) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -119,7 +119,13 @@ export default function ProductCard({
       <div className={styles.info}>
         <div className={styles.infoLeft}>
           <span className={styles.name}>{name}</span>
-          {sizeLabels && <span className={styles.sizes}>{sizeLabels}</span>}
+          {variantList && (
+            <div className={styles.variants}>
+              {variantList.map((v, i) => (
+                <span key={i} className={styles.variantChip}>{v}</span>
+              ))}
+            </div>
+          )}
         </div>
         <div className={styles.pricing}>
           {oldPrice && <span className={styles.oldPrice}>{oldPrice}</span>}

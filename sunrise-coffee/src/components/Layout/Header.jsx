@@ -63,7 +63,7 @@ export default function Header() {
             aria-controls="megaMenu"
           >
             Menu{' '}
-            <span className={styles.triggerIcon}>{menuOpen ? '—' : '+'}</span>
+            <span className={styles.triggerIcon}>+</span>
           </button>
           <Link to="/" className={styles.navLink}>About</Link>
         </nav>
@@ -91,40 +91,30 @@ export default function Header() {
       <CartDrawer open={cartOpen} onClose={closeCart} />
       <AuthDrawer open={authOpen} onClose={closeAuth} />
 
-      {/* Mega menu */}
+      {/* Menu drawer */}
       <div
         className={`${styles.megaBackdrop} ${menuOpen ? styles.megaBackdropOpen : ''}`}
         onClick={closeMenu}
+        aria-hidden="true"
       />
       <div
         id="megaMenu"
         className={`${styles.megaMenu} ${menuOpen ? styles.megaMenuOpen : ''}`}
         role="dialog"
-        aria-label="Shop navigation"
+        aria-label="Navigazione"
+        aria-modal="true"
       >
-        <div className={styles.megaLeft}>
-          <div className={styles.megaNavLabel}>Menu</div>
-          <nav className={styles.megaLinks}>
-            {MEGA_LINKS.map(({ label, href }) => (
-              <Link key={label} to={href} className={styles.megaLink} onClick={closeMenu}>
-                {label} <span className={styles.megaLinkArrow}>&rsaquo;</span>
-              </Link>
-            ))}
-          </nav>
-          <button className={styles.megaCloseBtn} onClick={closeMenu}>
-            Close &times;
-          </button>
+        <div className={styles.megaDrawerHeader}>
+          <span className={styles.megaDrawerTitle}>Menu</span>
+          <button className={styles.megaCloseBtn} onClick={closeMenu} aria-label="Chiudi menu">✕</button>
         </div>
-        <div className={styles.megaCenter}>
-          <div className={styles.megaImgBox}>
-            <img src="/images/CAPPERI.jpg" alt="Featured product" className={styles.megaCenterImg} />
-          </div>
-        </div>
-        <div className={styles.megaRight}>
-          <div className={styles.megaImgBox}>
-            <img src="/images/CAPPERI.jpg" alt="Coffee drip" className={styles.megaRightImg} />
-          </div>
-        </div>
+        <nav className={styles.megaLinks}>
+          {MEGA_LINKS.map(({ label, href }) => (
+            <Link key={label} to={href} className={styles.megaLink} onClick={closeMenu}>
+              {label} <span className={styles.megaLinkArrow}>&rsaquo;</span>
+            </Link>
+          ))}
+        </nav>
       </div>
     </>
   );
