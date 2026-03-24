@@ -178,16 +178,24 @@
   font-family: var(--font-mono, monospace);
   font-size: 10px;
   color: var(--color-red);
+  background: none;
   border: 1px solid var(--color-red);
   border-radius: var(--radius-pill, 99px);
   padding: 2px 8px;
   letter-spacing: .04em;
   white-space: nowrap;
-  opacity: 0.85;
-  transition: background .15s, color .15s;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: background .15s, color .15s, opacity .15s;
 }
 
-.card:hover .variantChip {
+.variantChip:hover {
+  background: var(--color-red);
+  color: #fff;
+  opacity: 1;
+}
+
+.variantChipSelected {
   background: var(--color-red);
   color: #fff;
   opacity: 1;

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import ProductCard from '../ProductCard/ProductCard';
 import SectionHeader from '../SectionHeader/SectionHeader';
 import { useCartContext } from '../../context/ShopwareContext';
@@ -51,6 +51,7 @@ const FALLBACK_PRODUCT = {
 };
 
 export default function ProductDetail({ product: shopwareProduct, loading, error, slug }) {
+  const [searchParams] = useSearchParams();
   const [selectedOptions, setSelectedOptions] = useState({});
   const [variants, setVariants] = useState([]);
   const [size, setSize] = useState('250g');
@@ -128,9 +129,12 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
 
   useEffect(() => {
     if (!hasConfigurator) return;
+    const preselect = searchParams.get('variant');
     const defaults = {};
-    Object.entries(configuratorGroups).forEach(([group, options]) => {
-      if (options.length > 0) defaults[group] = options[0].id;
+    Object.entries(configuratorGroups).forEach(([group, opts]) => {
+      if (!opts.length) return;
+      const match = preselect && opts.find((o) => o.name === preselect);
+      defaults[group] = match ? match.id : opts[0].id;
     });
     setSelectedOptions(defaults);
   // eslint-disable-next-line react-hooks/exhaustive-deps

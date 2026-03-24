@@ -22,9 +22,18 @@ export default function ProductCard({
   const [showControl, setShowControl] = useState(false);
   const [showTag, setShowTag] = useState(false);
   const debounceRef = useRef(null);
-  const href = `/product/${slug || name.toLowerCase().replace(/\s+/g, '-')}`;
 
   const variantList = options?.length ? options : sizes ? [sizes] : null;
+  const [selectedVariant, setSelectedVariant] = useState(variantList?.[0] ?? null);
+
+  const base = `/product/${slug || name.toLowerCase().replace(/\s+/g, '-')}`;
+  const href = selectedVariant ? `${base}?variant=${encodeURIComponent(selectedVariant)}` : base;
+
+  const handleVariantClick = (e, v) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedVariant(v);
+  };
 
   const scheduleCollapse = (currentQty) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -122,7 +131,14 @@ export default function ProductCard({
           {variantList && (
             <div className={styles.variants}>
               {variantList.map((v, i) => (
-                <span key={i} className={styles.variantChip}>{v}</span>
+                <button
+                  key={i}
+                  className={`${styles.variantChip} ${selectedVariant === v ? styles.variantChipSelected : ''}`}
+                  onClick={(e) => handleVariantClick(e, v)}
+                  aria-pressed={selectedVariant === v}
+                >
+                  {v}
+                </button>
               ))}
             </div>
           )}
