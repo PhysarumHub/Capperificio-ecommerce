@@ -14,6 +14,8 @@ import { formatPrice } from '../lib/utils/price';
 import { getProductImage, getProductSlug } from '../lib/utils/image';
 import styles from './HomePage.module.css';
 
+const B2B_CATEGORY_ID = import.meta.env.VITE_B2B_CATEGORY_ID || null;
+
 /* ─── Fallback data (used when Shopware is not connected) ─── */
 
 const SLIDER_PRODUCTS_FALLBACK = [
@@ -64,7 +66,11 @@ function mapShopwareProduct(product) {
 }
 
 export default function HomePage() {
-  const { products: shopwareProducts, loading, error } = useProducts({ limit: 12 });
+  const b2bFilter = B2B_CATEGORY_ID
+    ? [{ type: 'not', operator: 'AND', queries: [{ type: 'equals', field: 'categoryTree', value: B2B_CATEGORY_ID }] }]
+    : [];
+
+  const { products: shopwareProducts, loading, error } = useProducts({ limit: 12, filters: b2bFilter });
 
   // If Shopware data is available, split into sections; otherwise use fallbacks
   const hasApiData = !error && !loading && shopwareProducts.length > 0;
