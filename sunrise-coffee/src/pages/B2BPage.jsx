@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCustomerContext } from '../context/ShopwareContext';
 import { useProducts } from '../hooks/useProducts';
 import ProductCard from '../components/ProductCard/ProductCard';
+import ShopFilter from '../components/ShopFilter/ShopFilter';
 import { formatPrice } from '../lib/utils/price';
 import { getProductImage, getProductSlug } from '../lib/utils/image';
 import { isShopwareConfigured } from '../lib/shopware-client';
@@ -217,14 +218,43 @@ function B2BPending({ customer }) {
    STATO C — Loggato + gruppo B2B: catalogo ingrosso
 ══════════════════════════════════════════════════════════════════════ */
 
+const EMPTY_FILTERS = { tipo: [], formato: [], conservazione: [], priceRange: '' };
+
+function parsePrice(str) {
+  return parseFloat(String(str).replace(/[^0-9.]/g, '')) || 0;
+}
+
+function matchesB2BFilters(product, filters) {
+  if (filters.tipo.length          && !filters.tipo.includes(product.tipo))                return false;
+  if (filters.formato.length       && product.formato && !filters.formato.includes(product.formato)) return false;
+  if (filters.conservazione.length && !filters.conservazione.includes(product.conservazione)) return false;
+  if (filters.priceRange) {
+    const p = parsePrice(product.price);
+    if (filters.priceRange === 'Fino a €15'  && p >= 15)             return false;
+    if (filters.priceRange === '€15 – €40'   && (p < 15 || p > 40)) return false;
+    if (filters.priceRange === 'Oltre €40'   && p <= 40)             return false;
+  }
+  return true;
+}
+
 function B2BCatalog({ customer }) {
+  const [filters, setFilters]       = useState(EMPTY_FILTERS);
+  const [filterOpen, setFilterOpen] = useState(false);
+
   const { products: apiProducts, loading, error } = useProducts({
     limit:      50,
     categoryId: B2B_CATEGORY_ID || undefined,
   });
 
-  const useApi = isShopwareConfigured() && !error && apiProducts.length > 0;
-  const products = useApi ? apiProducts.map(mapB2BProduct) : B2B_FALLBACK;
+  const useApi    = isShopwareConfigured() && !error && apiProducts.length > 0;
+  const allProducts = useApi ? apiProducts.map(mapB2BProduct) : B2B_FALLBACK;
+  const products  = allProducts.filter((p) => matchesB2BFilters(p, filters));
+
+  const activeCount =
+    (filters.tipo?.length || 0) +
+    (filters.formato?.length || 0) +
+    (filters.conservazione?.length || 0) +
+    (filters.priceRange ? 1 : 0);
 
   return (
     <>
@@ -246,24 +276,66 @@ function B2BCatalog({ customer }) {
         </div>
       </section>
 
-      {/* Griglia prodotti */}
-      {loading ? (
-        <div className={styles.loading}>Caricamento catalogo B2B…</div>
-      ) : (
-        <div className={styles.grid}>
-          {products.map((p) => (
-            <ProductCard
-              key={p.slug}
-              name={p.name}
-              slug={p.slug}
-              image={p.image}
-              price={p.price}
-              oldPrice={p.oldPrice}
-              badge={p.badge}
-            />
-          ))}
-        </div>
-      )}
+      {/* Toolbar */}
+      <div className={styles.toolbar}>
+        <button
+          type="button"
+          className={styles.filterToggle}
+          onClick={() => setFilterOpen(true)}
+        >
+          <svg width="14" height="12" viewBox="0 0 14 12" fill="none" aria-hidden="true">
+            <path d="M0 1h14M3 6h8M5 11h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          Filtra
+          {activeCount > 0 && <span className={styles.filterBadge}>{activeCount}</span>}
+        </button>
+        <span className={styles.resultCount}>
+          {loading ? '…' : `${products.length} prodott${products.length !== 1 ? 'i' : 'o'}`}
+        </span>
+      </div>
+
+      {/* Layout sidebar + griglia */}
+      <div className={styles.layout}>
+        <ShopFilter
+          filters={filters}
+          onChange={setFilters}
+          isMobileOpen={filterOpen}
+          onClose={() => setFilterOpen(false)}
+        />
+
+        <main className={styles.main}>
+          {loading ? (
+            <div className={styles.loading}>Caricamento catalogo B2B…</div>
+          ) : products.length > 0 ? (
+            <div className={styles.grid}>
+              {products.map((p) => (
+                <ProductCard
+                  key={p.slug}
+                  name={p.name}
+                  slug={p.slug}
+                  image={p.image}
+                  price={p.price}
+                  oldPrice={p.oldPrice}
+                  badge={p.badge}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className={styles.empty}>
+              Nessun prodotto trovato.
+              {activeCount > 0 && (
+                <button
+                  type="button"
+                  className={styles.emptyReset}
+                  onClick={() => setFilters(EMPTY_FILTERS)}
+                >
+                  Rimuovi i filtri
+                </button>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
 
       {/* Footer B2B */}
       <div className={styles.b2bFooter}>
