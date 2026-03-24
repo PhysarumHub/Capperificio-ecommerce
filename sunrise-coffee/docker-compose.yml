@@ -45,6 +45,8 @@ services:
         - VITE_SHOPWARE_STOREFRONT_URL=${VITE_SHOPWARE_STOREFRONT_URL:-default.headless0}
         - VITE_STRIPE_PUBLIC_KEY=${VITE_STRIPE_PUBLIC_KEY}
         - VITE_PAYPAL_CLIENT_ID=${VITE_PAYPAL_CLIENT_ID}
+        - VITE_B2B_CATEGORY_ID=${VITE_B2B_CATEGORY_ID}
+        - VITE_B2B_GROUP_NAME=${VITE_B2B_GROUP_NAME:-B2B}
     container_name: capperificio-frontend
     ports:
       - "3001:80"    # Frontend (nginx)
