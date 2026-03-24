@@ -9,6 +9,7 @@
 
 .track {
   display: flex;
+  align-items: stretch;
   gap: 0;
   transition: transform .45s cubic-bezier(.4, 0, .2, 1);
 }
