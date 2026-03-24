@@ -156,12 +156,27 @@ def setup_b2b_category():
         _ok(f'Categoria già presente: {cat_id}')
         return cat_id
 
-    # Trova la root category
-    root_res = api('GET', '/category', params='?filter[parentId]=null&limit=1')
-    if not root_res.get('data'):
+    # Trova la root category — prova prima type=root, poi level=1, poi qualsiasi
+    root_id = None
+    for params in [
+        '?filter[type]=root&limit=1',
+        '?filter[level]=1&limit=1',
+        '?limit=1',
+    ]:
+        root_res = api('GET', '/category', params=params)
+        if root_res.get('data'):
+            # Se ci sono più risultati, prendi quello con parentId assente/null
+            for cat in root_res.get('data', []):
+                if not cat.get('parentId'):
+                    root_id = cat['id']
+                    break
+            if not root_id:
+                root_id = root_res['data'][0]['id']
+            break
+
+    if not root_id:
         _fail('Root category non trovata')
         return None
-    root_id = root_res['data'][0]['id']
     _ok(f'Root category: {root_id}')
 
     cat_id = uid()
