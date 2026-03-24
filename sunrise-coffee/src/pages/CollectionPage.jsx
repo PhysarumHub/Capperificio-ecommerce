@@ -1,5 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useState, useMemo } from 'react';
+
+const B2B_CATEGORY_ID = import.meta.env.VITE_B2B_CATEGORY_ID || null;
 import ProductCard from '../components/ProductCard/ProductCard';
 import ShopFilter from '../components/ShopFilter/ShopFilter';
 import { ProductsMarquee } from '../components/Marquee/Marquee';
@@ -228,10 +230,15 @@ export default function CollectionPage() {
   const [filters, setFilters]   = useState(EMPTY_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const apiSort = getSortCriteria(sort);
+  const apiSort    = getSortCriteria(sort);
+  const apiFilters = B2B_CATEGORY_ID
+    ? [{ type: 'not', operator: 'AND', queries: [{ type: 'equals', field: 'categoryTree', value: B2B_CATEGORY_ID }] }]
+    : [];
+
   const { products: shopwareProducts, loading, error } = useProducts({
-    limit: 50,
-    sort:  apiSort,
+    limit:   50,
+    sort:    apiSort,
+    filters: apiFilters,
   });
 
   const useApi = isShopwareConfigured() && !error && shopwareProducts.length > 0;
