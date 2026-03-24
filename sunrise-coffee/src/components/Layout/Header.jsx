@@ -7,12 +7,12 @@ import AuthDrawer from '../AuthDrawer/AuthDrawer';
 import styles from './Header.module.css';
 
 const MEGA_LINKS = [
-  { label: 'All Coffee', href: '/collections/all' },
-  { label: 'Espresso', href: '/collections/espresso' },
-  { label: 'Filter', href: '/collections/filter' },
-  { label: 'Single Origin', href: '/collections/single-origin' },
-  { label: 'Blend', href: '/collections/blend' },
-  { label: 'Full List', href: '/collections/all' },
+  { label: 'Tutti i Prodotti', href: '/collections/all' },
+  { label: 'Capperi',          href: '/collections/cappero' },
+  { label: 'Cucunci',          href: '/collections/cucunci' },
+  { label: 'Foglie',           href: '/collections/foglie' },
+  { label: 'Polvere',          href: '/collections/polvere' },
+  { label: 'Area B2B',         href: '/b2b', b2b: true },
 ];
 
 export default function Header() {
@@ -75,6 +75,7 @@ export default function Header() {
         </div>
 
         <nav className={styles.navRight}>
+          <Link to="/b2b" className={styles.b2bLink}>B2B</Link>
           {isLoggedIn ? (
             <Link to="/account" className={styles.navLink}>Account</Link>
           ) : (
@@ -109,8 +110,13 @@ export default function Header() {
           <button className={styles.megaCloseBtn} onClick={closeMenu} aria-label="Chiudi menu">✕</button>
         </div>
         <nav className={styles.megaLinks}>
-          {MEGA_LINKS.map(({ label, href }) => (
-            <Link key={label} to={href} className={styles.megaLink} onClick={closeMenu}>
+          {MEGA_LINKS.map(({ label, href, b2b }) => (
+            <Link
+              key={label}
+              to={href}
+              className={`${styles.megaLink} ${b2b ? styles.megaLinkB2B : ''}`}
+              onClick={closeMenu}
+            >
               {label} <span className={styles.megaLinkArrow}>&rsaquo;</span>
             </Link>
           ))}

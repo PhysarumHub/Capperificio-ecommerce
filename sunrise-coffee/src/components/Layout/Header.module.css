@@ -46,6 +46,23 @@
 }
 .navLink:hover { opacity: .6; }
 
+.b2bLink {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--color-dark);
+  text-decoration: none;
+  border: 1.5px solid var(--color-dark);
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  transition: background .15s, color .15s;
+}
+.b2bLink:hover {
+  background: var(--color-dark);
+  color: #fff;
+}
+
 /* ── Shop trigger ───────────────────────── */
 .shopTrigger {
   background: none;
@@ -163,6 +180,13 @@
   transition: padding-left .2s, opacity .2s;
 }
 .megaLink:last-child { border-bottom: none; }
+
+.megaLinkB2B {
+  color: var(--color-dark);
+  border-color: rgba(26,26,26,.12);
+  font-style: italic;
+  font-family: var(--font-serif);
+}
 .megaLink:hover { padding-left: 8px; opacity: .7; }
 
 .megaLinkArrow {
