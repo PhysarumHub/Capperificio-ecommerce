@@ -1,6 +1,8 @@
 .card {
   position: relative;
-  outline: 1px solid var(--color-card-border);
+  width: 100%;
+  border-right: 1px solid var(--color-card-border);
+  border-bottom: 1px solid var(--color-card-border);
   background: var(--color-white);
   overflow: hidden;
   padding: 10px;

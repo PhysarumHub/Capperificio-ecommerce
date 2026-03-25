@@ -1,6 +1,8 @@
 .productGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--color-card-border);
+  border-left: 1px solid var(--color-card-border);
 }
 
 @media (max-width: 768px) {
