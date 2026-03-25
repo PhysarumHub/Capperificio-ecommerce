@@ -4,21 +4,21 @@ import styles from './StorySlider.module.css';
 const ITEMS = [
   {
     type: 'text',
-    content: 'Our coffees are sourced through transparent, ethical relationships with farmers and cooperatives. We pay fair prices, prioritize long-term partnerships, and work with producers who invest in their communities and workers.',
+    content: 'Ogni cappero viene raccolto a mano tra luglio e agosto, quando il bocciolo è al punto giusto di maturazione. Un gesto antico che si ripete uguale da tre generazioni tra le campagne di Racale, in provincia di Lecce.',
   },
   {
     type: 'image',
     src: '/images/CAPPERI.jpg',
-    alt: 'Green coffee beans on branch',
+    alt: 'Capperi di Racale',
   },
   {
     type: 'text',
-    content: 'Quality is checked at every stage, from green bean selection to final roast. Each batch is carefully profiled, cupped, and evaluated to ensure consistency, balance, and exceptional flavor in every roast.',
+    content: 'La qualità si controlla ad ogni fase: dalla selezione in campo alla salamoia, fino alla conservazione. Ogni vasetto che esce dalla nostra bottega porta con sé il sapore autentico del Salento.',
   },
   {
     type: 'image',
     src: '/images/CAPPERI.jpg',
-    alt: 'Coffee brewing',
+    alt: 'Lavorazione capperi artigianale',
   },
 ];
 

@@ -11,8 +11,8 @@ const PAYMENT_METHODS = [
   { label: 'DISC', bg: '#FF6000' },
 ];
 
-const LINKS_COL1 = ['All', 'Popular', 'Filter', 'Espresso', 'Full List'];
-const LINKS_COL2 = ['Merch', 'Contact', 'FAQ', 'Brew Guide'];
+const LINKS_COL1 = ['Tutti i prodotti', 'Capperi', 'Cucunci', 'Foglie', 'Polvere'];
+const LINKS_COL2 = ['Chi siamo', 'Contatti', 'FAQ', 'Area B2B'];
 
 const SOCIAL_ICONS = [
   { Icon: FacebookIcon,  label: 'Facebook' },
@@ -29,7 +29,7 @@ export default function Footer() {
       <div className={styles.top}>
 
         <p className={styles.desc}>
-          This is a demo store. All coffee mockups are designed by <a href="#">Switch</a>.
+          Capperi, cucunci e foglie di Racale. Artigianali, autentici, con tre generazioni di storia alle spalle.
         </p>
 
         <ul className={styles.links}>
@@ -55,7 +55,7 @@ export default function Footer() {
 
       <div className={styles.bottom}>
         <div className={styles.copy}>
-          &copy; 2026. baseline-preset-coffee.<br />Powered by Shopify
+          &copy; 2026. Capperificio di Racale.<br />Tutti i diritti riservati.
         </div>
         <div className={styles.payments}>
           {PAYMENT_METHODS.map(({ label, bg }) => (

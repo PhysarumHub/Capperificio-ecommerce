@@ -5,17 +5,17 @@ export default function Newsletter() {
     <section className={styles.newsletter}>
       <div className={styles.inner}>
         <div>
-          <h2 className={styles.heading}>Join the club</h2>
-          <p className={styles.sub}>Receive special offers and first look at new products.</p>
+          <h2 className={styles.heading}>Resta in contatto</h2>
+          <p className={styles.sub}>Offerte esclusive, nuovi prodotti e ricette direttamente nella tua casella.</p>
         </div>
         <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
           <input
             className={styles.input}
             type="email"
-            placeholder="Email address"
+            placeholder="Il tuo indirizzo email"
             autoComplete="email"
           />
-          <button className={styles.button} type="submit">Subscribe &rarr;</button>
+          <button className={styles.button} type="submit">Iscriviti &rarr;</button>
         </form>
       </div>
     </section>

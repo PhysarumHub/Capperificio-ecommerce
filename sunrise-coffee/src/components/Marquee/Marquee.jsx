@@ -4,7 +4,7 @@ import styles from './Marquee.module.css';
 export function BrandMarquee() {
   const items = Array.from({ length: 12 }, (_, i) => (
     <span key={i} className={i % 2 === 0 ? styles.dark : styles.red}>
-      Honestly Good Coffee.
+      Capperi di Racale.
     </span>
   ));
 
@@ -16,8 +16,8 @@ export function BrandMarquee() {
 }
 
 const PRODUCT_NAMES = [
-  'Amazonia', 'Andean Sky', 'Basecamp', 'Buoi Sang',
-  'Copacabana', 'Highland Reserve', 'Horn Please', 'Island Life',
+  'Lilliput', 'Lacrimella', 'Occhio di pernice', 'Capperone',
+  'Cucunci', 'Foglie', 'Polvere', 'Cofanetto',
 ];
 
 export function ProductsMarquee({ names = PRODUCT_NAMES }) {
@@ -35,7 +35,7 @@ export function ProductsMarquee({ names = PRODUCT_NAMES }) {
   );
 }
 
-export function RedMarquee({ text = 'Brew of the month' }) {
+export function RedMarquee({ text = 'Raccolti a mano — Racale, Puglia' }) {
   const items = Array.from({ length: 16 }, (_, i) => (
     <span key={i}>
       <span>{text}</span>

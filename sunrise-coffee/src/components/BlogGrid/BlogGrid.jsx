@@ -3,18 +3,18 @@ import styles from './BlogGrid.module.css';
 
 const POSTS = [
   {
-    title: 'How to Store Coffee Beans So They Stay Fresh Longer',
-    excerpt: "Coffee tastes best when it's fresh. Even the highest-quality beans lose flavor over time if they're stored incorrectly. The good news? ...",
+    title: 'Come conservare i capperi sotto sale: guida pratica',
+    excerpt: "Il sale marino è il metodo di conservazione più antico e migliore per i capperi. Scopri come mantenerli fragranti e saporiti a lungo, direttamente in dispensa...",
     image: '/images/CAPPERI.jpg',
   },
   {
-    title: 'Morning Coffee: Make It Part of Your Routine',
-    excerpt: "For many of us, mornings are a bit of a dance, rushed and scrambling out the door. But what if your coffee wasn't just fuel—it was a moment to ...",
+    title: 'Capperi in cucina: 5 abbinamenti da provare',
+    excerpt: "Dal pesce spada alla pasta alla Norma, i capperi di Racale esaltano ogni piatto. Ecco cinque ricette della tradizione pugliese e siciliana da mettere in tavola...",
     image: '/images/CAPPERI.jpg',
   },
   {
-    title: '5 Easy Ways to Upgrade Your Home Coffee Game',
-    excerpt: "You don't need a café setup to achieve a better cup at home. Here's how to make great coffee at home. A few small tweaks can make a big difference in flavor.",
+    title: 'Lilliput, Lacrimella, Capperone: le differenze',
+    excerpt: "Non tutti i capperi sono uguali. La dimensione incide su sapore, consistenza e uso ideale in cucina. Una piccola guida per scegliere il formato giusto...",
     image: '/images/CAPPERI.jpg',
   },
 ];

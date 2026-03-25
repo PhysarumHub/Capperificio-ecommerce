@@ -2,8 +2,8 @@ import { useState } from 'react';
 import styles from './FilterTags.module.css';
 
 const DEFAULT_TAGS = [
-  'All coffee', 'Popular', 'Single Origin', 'Blend', 'Filter',
-  'Espresso', 'Brazil', 'Colombia', 'Ethiopia', 'Kenya', 'Washed', 'Natural',
+  'Tutti', 'Capperi', 'Cucunci', 'Foglie', 'Polvere',
+  'Sotto sale', 'Sotto aceto', 'Lilliput', 'Capperone', 'Novità',
 ];
 
 export default function FilterTags({ tags = DEFAULT_TAGS }) {

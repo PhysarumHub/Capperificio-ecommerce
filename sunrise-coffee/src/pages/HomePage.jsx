@@ -128,7 +128,7 @@ export default function HomePage() {
       <Hero image="/images/HERO.jpeg" />
       <FilterTags />
 
-      <SectionHeader label="Bestsellers" title="Hot off the Roaster" count={sliderProducts.length} viewAllHref="/collections/all" />
+      <SectionHeader label="I più amati" title="I nostri Bestseller" count={sliderProducts.length} viewAllHref="/collections/all" />
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>Caricamento prodotti...</div>
       ) : (
@@ -146,11 +146,11 @@ export default function HomePage() {
       <AboutSection />
 
       <div style={{ background: 'var(--color-white)', paddingTop: 60 }}>
-        <SectionHeader label="Merch" title="Fits for Drips" count={3} />
+        <SectionHeader label="La nostra storia" title="Dal campo alla tavola" count={3} />
         <StorySlider />
       </div>
 
-      <SectionHeader label="Latest Blends" title="Let's Mix Things Up" count={8} viewAllHref="/collections/blend" style={{ marginTop: 60 }} />
+      <SectionHeader label="Materia prima" title="Le nostre specialità" count={8} viewAllHref="/collections/all" style={{ marginTop: 60 }} />
       <div className={styles.productGrid}>
         {blendProducts.map((p) => (
           <ProductCard key={p.name} {...p} />
@@ -160,7 +160,7 @@ export default function HomePage() {
       <RedMarquee />
       <GuidesEditorial image="/images/CAPPERI.jpg" />
 
-      <SectionHeader label="Dispatch" title="From the Blog" viewAllHref="/" viewAllText="More News →" style={{ marginTop: 60 }} />
+      <SectionHeader label="Dal blog" title="Storie e ricette" viewAllHref="/" viewAllText="Tutti gli articoli →" style={{ marginTop: 60 }} />
       <BlogGrid />
     </>
   );
