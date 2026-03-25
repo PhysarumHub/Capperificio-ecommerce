@@ -51,7 +51,9 @@ function mapShopwareProduct(product) {
   const fromOptions = product.options
     ?.map((o) => o.translated?.name || o.name)
     .filter(Boolean);
-  const options = fromConfigurator?.length ? [...new Set(fromConfigurator)] : (fromOptions?.length ? fromOptions : undefined);
+  const options = product._allVariantOptions?.length
+    ? product._allVariantOptions
+    : fromConfigurator?.length ? [...new Set(fromConfigurator)] : (fromOptions?.length ? fromOptions : undefined);
 
   return {
     id: product.id,
@@ -69,12 +71,28 @@ export default function HomePage() {
   // Fetch more products to account for B2B ones being filtered out client-side
   const { products: rawProducts, loading, error } = useProducts({ limit: 24 });
 
-  // Filter out B2B products and variant children — show only parent/standalone products
-  const shopwareProducts = rawProducts.filter(p => {
-    if (p.parentId) return false; // skip variant children
-    if (B2B_CATEGORY_ID && p.categoryTree?.includes(B2B_CATEGORY_ID)) return false;
-    return true;
+  // Separate standalone products from variant children
+  const standaloneProducts = rawProducts.filter(p => !p.parentId);
+  const variantChildren = rawProducts.filter(p => !!p.parentId);
+
+  // Group variant children by parentId, pick first child as representative
+  // and collect all options from siblings
+  const variantGroups = {};
+  variantChildren.forEach(child => {
+    if (!variantGroups[child.parentId]) variantGroups[child.parentId] = [];
+    variantGroups[child.parentId].push(child);
   });
+  const groupRepresentatives = Object.values(variantGroups).map(children => {
+    const allOptions = [...new Set(
+      children.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+    )];
+    return { ...children[0], _allVariantOptions: allOptions };
+  });
+
+  // Combine standalone + one representative per variant group, then exclude B2B
+  const shopwareProducts = [...standaloneProducts, ...groupRepresentatives].filter(p =>
+    !B2B_CATEGORY_ID || !p.categoryTree?.includes(B2B_CATEGORY_ID)
+  );
 
   // If Shopware data is available, split into sections; otherwise use fallbacks
   const hasApiData = !error && !loading && shopwareProducts.length > 0;
