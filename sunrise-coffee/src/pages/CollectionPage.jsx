@@ -196,6 +196,26 @@ function getSortCriteria(sortValue) {
 
 /* ─── Mapping prodotto Shopware ─── */
 
+function groupVariants(rawList) {
+  const standalone = rawList.filter(p => !p.parentId);
+  const children   = rawList.filter(p => !!p.parentId);
+
+  const groups = {};
+  children.forEach(child => {
+    if (!groups[child.parentId]) groups[child.parentId] = [];
+    groups[child.parentId].push(child);
+  });
+
+  const representatives = Object.values(groups).map(siblings => {
+    const allOptions = [...new Set(
+      siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+    )];
+    return { ...siblings[0], _allVariantOptions: allOptions };
+  });
+
+  return [...standalone, ...representatives];
+}
+
 function mapShopwareProduct(product) {
   const price     = product.calculatedPrice || product.price?.[0];
   const listPrice = price?.listPrice;
@@ -205,6 +225,14 @@ function mapShopwareProduct(product) {
   const formato        = props.find((p) => p.group?.name === 'Formato')?.name       || null;
   const conservazione  = props.find((p) => p.group?.name === 'Conservazione')?.name || null;
 
+  const fromConfigurator = product.configuratorSettings
+    ?.map(s => s.option?.translated?.name || s.option?.name).filter(Boolean);
+  const fromOptions = product.options
+    ?.map(o => o.translated?.name || o.name).filter(Boolean);
+  const options = product._allVariantOptions?.length
+    ? product._allVariantOptions
+    : fromConfigurator?.length ? [...new Set(fromConfigurator)] : (fromOptions?.length ? fromOptions : undefined);
+
   return {
     name:           product.translated?.name || product.name,
     slug:           getProductSlug(product),
@@ -212,6 +240,7 @@ function mapShopwareProduct(product) {
     price:          formatPrice(price?.unitPrice),
     oldPrice:       listPrice?.price ? formatPrice(listPrice.price) : undefined,
     badge:          listPrice?.price ? 'Sale' : undefined,
+    options,
     collections:    ['all'],
     tipo,
     formato,
@@ -230,24 +259,24 @@ export default function CollectionPage() {
   const [filters, setFilters]   = useState(EMPTY_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const apiSort    = getSortCriteria(sort);
-  const apiFilters = B2B_CATEGORY_ID
-    ? [{ type: 'not', operator: 'AND', queries: [{ type: 'equals', field: 'categoryTree', value: B2B_CATEGORY_ID }] }]
-    : [];
+  const apiSort = getSortCriteria(sort);
 
-  const { products: shopwareProducts, loading, error } = useProducts({
-    limit:   50,
-    sort:    apiSort,
-    filters: apiFilters,
+  const { products: rawProducts, loading, error } = useProducts({
+    limit: 100,
+    sort:  apiSort,
   });
 
-  const useApi = isShopwareConfigured() && !error && shopwareProducts.length > 0;
+  const useApi = isShopwareConfigured() && !error && rawProducts.length > 0;
 
   const products = useMemo(() => {
     let list;
 
     if (useApi) {
-      list = shopwareProducts.map(mapShopwareProduct);
+      // Filter B2B client-side, group variants, then map
+      const filtered = B2B_CATEGORY_ID
+        ? rawProducts.filter(p => !p.categoryTree?.includes(B2B_CATEGORY_ID))
+        : rawProducts;
+      list = groupVariants(filtered).map(mapShopwareProduct);
     } else {
       list = ALL_PRODUCTS_FALLBACK.filter((p) => p.collections.includes(collectionSlug));
     }
@@ -262,7 +291,7 @@ export default function CollectionPage() {
     else if (sort === 'price-desc') list = [...list].sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
 
     return list;
-  }, [useApi, shopwareProducts, collectionSlug, sort, filters]);
+  }, [useApi, rawProducts, collectionSlug, sort, filters]);
 
   const activeFilterCount =
     (filters.tipo?.length || 0) +
