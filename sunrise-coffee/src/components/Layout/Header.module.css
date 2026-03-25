@@ -177,7 +177,6 @@
   align-items: center;
   justify-content: space-between;
   text-decoration: none;
-  transition: padding-left .2s, opacity .2s;
 }
 .megaLink:last-child { border-bottom: none; }
 
@@ -187,7 +186,6 @@
   font-style: italic;
   font-family: var(--font-serif);
 }
-.megaLink:hover { padding-left: 8px; opacity: .7; }
 
 .megaLinkArrow {
   font-size: var(--text-sm);
