@@ -229,10 +229,11 @@
 .optionChip:hover { background: rgba(216, 64, 50, .06); }
 
 .optionChipSelected {
-  background: #F97316;
-  border-color: #F97316;
+  background: var(--color-red);
+  border-color: var(--color-red);
   color: #fff;
 }
+.optionChipSelected:hover { background: var(--color-red); }
 
 /* Quantity */
 .qtyRow {
