@@ -139,12 +139,14 @@ export default function HomePage() {
         </ProductSlider>
       )}
 
-      <CategoryBanners filterImage="/images/CAPPERI.jpg" espressoImage="/images/CAPPERI.jpg" />
+      <div style={{ background: 'var(--color-light)' }}>
+        <CategoryBanners filterImage="/images/CAPPERI.jpg" espressoImage="/images/CAPPERI.jpg" />
+      </div>
 
       <AboutSection />
 
-      <div style={{ background: 'var(--color-white)' }}>
-        <SectionHeader label="Merch" title="Fits for Drips" count={3} style={{ marginTop: 60 }} />
+      <div style={{ background: 'var(--color-white)', paddingTop: 60 }}>
+        <SectionHeader label="Merch" title="Fits for Drips" count={3} />
         <StorySlider />
       </div>
 
