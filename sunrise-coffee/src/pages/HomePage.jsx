@@ -69,10 +69,12 @@ export default function HomePage() {
   // Fetch more products to account for B2B ones being filtered out client-side
   const { products: rawProducts, loading, error } = useProducts({ limit: 24 });
 
-  // Filter out B2B products client-side (avoids Store API "not" filter compatibility issues)
-  const shopwareProducts = B2B_CATEGORY_ID
-    ? rawProducts.filter(p => !p.categoryTree?.includes(B2B_CATEGORY_ID))
-    : rawProducts;
+  // Filter out B2B products and variant children — show only parent/standalone products
+  const shopwareProducts = rawProducts.filter(p => {
+    if (p.parentId) return false; // skip variant children
+    if (B2B_CATEGORY_ID && p.categoryTree?.includes(B2B_CATEGORY_ID)) return false;
+    return true;
+  });
 
   // If Shopware data is available, split into sections; otherwise use fallbacks
   const hasApiData = !error && !loading && shopwareProducts.length > 0;
