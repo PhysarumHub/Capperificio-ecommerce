@@ -71,6 +71,12 @@ export default function HomePage() {
   // Fetch more products to account for B2B ones being filtered out client-side
   const { products: rawProducts, loading, error } = useProducts({ limit: 24 });
 
+  // Fetch products tagged "Materia prima" for the blends section
+  const { products: rawMateriaPrima } = useProducts({
+    limit: 9,
+    filters: [{ type: 'equals', field: 'tags.name', value: 'Materia prima' }],
+  });
+
   // Group variants: if parent is in the list enrich it, else use first child as representative
   const standaloneProducts = rawProducts.filter(p => !p.parentId);
   const variantChildren    = rawProducts.filter(p => !!p.parentId);
@@ -110,8 +116,8 @@ export default function HomePage() {
     ? shopwareProducts.slice(0, 6).map(mapShopwareProduct)
     : SLIDER_PRODUCTS_FALLBACK;
 
-  const blendProducts = hasApiData
-    ? shopwareProducts.slice(6, 9).map(mapShopwareProduct)
+  const blendProducts = hasApiData && rawMateriaPrima.length > 0
+    ? rawMateriaPrima.slice(0, 3).map(mapShopwareProduct)
     : BLEND_PRODUCTS_FALLBACK;
 
   return (
