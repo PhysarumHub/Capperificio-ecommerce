@@ -226,7 +226,7 @@
   font-family: var(--font-sans);
   transition: background .15s, color .15s;
 }
-.optionChip:hover { background: rgba(216, 64, 50, .06); }
+.optionChip:hover { background: rgba(84, 112, 84, .06); }
 
 .optionChipSelected {
   background: var(--color-red);
@@ -261,7 +261,7 @@
   align-items: center;
   justify-content: center;
 }
-.qty button:hover { background: rgba(216,64,50,.06); }
+.qty button:hover { background: rgba(84, 112, 84, .06); }
 .qty span {
   width: 30px;
   text-align: center;
@@ -329,7 +329,7 @@
 .pdpCartTag {
   width: 100%;
   padding: 16px 24px;
-  background: #2C8843;
+  background: #9CBF8A;
   color: #fff;
   border: none;
   border-radius: 30px;

@@ -40,7 +40,7 @@
   width: 7px;
   height: 7px;
   border-radius: var(--radius-full);
-  background: #D1CEC8;
+  background: #C0D4BC;
   cursor: pointer;
   transition: background .2s;
   border: none;
@@ -65,7 +65,7 @@
 }
 .arrow:hover { color: var(--color-red); }
 .arrow:disabled {
-  color: #D0CDC7;
+  color: #C0D4BC;
   cursor: default;
 }
 

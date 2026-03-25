@@ -64,15 +64,15 @@
 /* ─── CSS CUSTOM PROPERTIES (DESIGN TOKENS) ─────────── */
 :root {
   /* Colors */
-  --color-red:        #D84032;
-  --color-red-hover:  #C23928;
+  --color-red:        #547054;
+  --color-red-hover:  #3D5A3D;
   --color-dark:       #1A1A1A;
   --color-mid:        #6B6B6B;
-  --color-light:      #F5F3F0;
-  --color-cream:      #EEEBE5;
+  --color-light:      #FCF3DF;
+  --color-cream:      #EAF0E5;
   --color-white:      #FFFFFF;
-  --color-border:     rgba(216, 64, 50, 0.22);
-  --color-card-border: rgba(216, 64, 50, 0.25);
+  --color-border:     rgba(84, 112, 84, 0.22);
+  --color-card-border: rgba(84, 112, 84, 0.25);
 
   /* Typography */
   --font-serif:       'Playfair Display', serif;
@@ -132,7 +132,7 @@ html {
 body {
   font-family: var(--font-sans);
   color: var(--color-dark);
-  background: var(--color-white);
+  background: #FCF3DF;
   font-size: var(--text-lg);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;

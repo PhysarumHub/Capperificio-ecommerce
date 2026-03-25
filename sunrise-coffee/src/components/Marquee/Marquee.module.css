@@ -29,8 +29,8 @@
 /* Products marquee variant */
 .productsMarquee {
   overflow: hidden;
-  border-top: 1px solid rgba(216, 64, 50, 0.2);
-  border-bottom: 1px solid rgba(216, 64, 50, 0.2);
+  border-top: 1px solid rgba(84, 112, 84, 0.2);
+  border-bottom: 1px solid rgba(84, 112, 84, 0.2);
   padding: 11px 0;
   background: var(--color-white);
 }
@@ -53,7 +53,7 @@
 .productsTrack a:hover { text-decoration: underline; }
 
 .sep {
-  color: rgba(216, 64, 50, 0.35);
+  color: rgba(84, 112, 84, 0.35);
   font-size: var(--text-sm);
   padding: 0 4px;
   font-style: normal;
