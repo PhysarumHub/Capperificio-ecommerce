@@ -39,7 +39,7 @@
 }
 
 @media (max-width: 768px) {
-  .section { padding: 40px 0 0; }
+  .section { padding: 40px 0 40px; }
   .label { padding: 0 20px; }
   .quote {
     padding: 0 20px;
@@ -48,7 +48,7 @@
 }
 
 @media (max-width: 480px) {
-  .section { padding: 32px 0 0; }
+  .section { padding: 32px 0 32px; }
   .label { padding: 0 16px; }
   .quote { padding: 0 16px; }
 }
