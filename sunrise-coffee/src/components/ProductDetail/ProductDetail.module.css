@@ -229,8 +229,9 @@
 .optionChip:hover { background: rgba(216, 64, 50, .06); }
 
 .optionChipSelected {
-  background: var(--color-red);
-  color: var(--color-white);
+  background: #F97316;
+  border-color: #F97316;
+  color: #fff;
 }
 
 /* Quantity */
