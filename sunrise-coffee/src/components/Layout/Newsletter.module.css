@@ -51,15 +51,15 @@
   letter-spacing: .1em;
   text-transform: uppercase;
   padding: 10px 20px;
-  border: 1.5px solid var(--color-dark);
+  border: 1.5px solid var(--color-red);
   background: transparent;
-  color: var(--color-dark);
+  color: var(--color-red);
   cursor: pointer;
   white-space: nowrap;
   transition: background var(--duration-base), color var(--duration-base);
 }
 .button:hover {
-  background: var(--color-dark);
+  background: var(--color-red);
   color: var(--color-white);
 }
 

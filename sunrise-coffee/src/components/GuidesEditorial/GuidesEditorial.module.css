@@ -56,12 +56,12 @@
 .btn {
   display: inline-block;
   padding: 10px 24px;
-  border: 1.5px solid var(--color-dark);
+  border: 1.5px solid var(--color-red);
   font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: .1em;
   text-transform: uppercase;
-  color: var(--color-dark);
+  color: var(--color-red);
   background: transparent;
   border-radius: var(--radius-pill);
   align-self: flex-start;
@@ -69,7 +69,7 @@
   cursor: pointer;
   text-decoration: none;
 }
-.btn:hover { background: var(--color-dark); color: var(--color-white); }
+.btn:hover { background: var(--color-red); color: var(--color-white); }
 
 .photo {
   min-height: 480px;

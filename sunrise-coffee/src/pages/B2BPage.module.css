@@ -155,10 +155,10 @@
 .btnPrimary {
   width: 100%;
   padding: 13px;
-  background: var(--color-dark);
+  background: var(--color-red);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-pill);
   font-size: 14px;
   font-weight: 700;
   letter-spacing: .04em;
@@ -169,7 +169,7 @@
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: var(--color-red);
+  background: var(--color-red-hover);
 }
 
 .btnPrimary:disabled {

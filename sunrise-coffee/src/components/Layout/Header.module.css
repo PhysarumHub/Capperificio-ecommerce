@@ -51,15 +51,15 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .1em;
-  color: var(--color-dark);
+  color: var(--color-red);
   text-decoration: none;
-  border: 1.5px solid var(--color-dark);
+  border: 1.5px solid var(--color-red);
   border-radius: var(--radius-pill);
   padding: 4px 10px;
   transition: background .15s, color .15s;
 }
 .b2bLink:hover {
-  background: var(--color-dark);
+  background: var(--color-red);
   color: #fff;
 }
 
