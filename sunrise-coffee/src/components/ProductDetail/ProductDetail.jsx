@@ -236,7 +236,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const purchasePanel = (
     <>
       <h1 className={styles.pdpTitle}>{productName}</h1>
-      {shopwareProduct?.customFields?.capperificio_calibro && (
+      {shopwareProduct?.customFields?.capperificio_calibro && !hasConfigurator && (
         <span className={styles.calibroTag}>
           {shopwareProduct.customFields.capperificio_calibro}
         </span>
@@ -246,25 +246,23 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
       </div>
 
       {hasApiProduct && hasConfigurator && (
-        Object.entries(configuratorGroups).map(([groupName, options]) => (
-          <div key={groupName}>
-            <div className={styles.optionLabel}>{groupName}:</div>
-            <div className={styles.options}>
-              {options.map((opt) => (
-                <label key={opt.id} className={styles.option}>
-                  <input
-                    type="radio"
-                    name={groupName}
-                    value={opt.id}
-                    checked={selectedOptions[groupName] === opt.id}
-                    onChange={() => setSelectedOptions((prev) => ({ ...prev, [groupName]: opt.id }))}
-                  />
-                  <span>{opt.name}</span>
-                </label>
-              ))}
+        <div className={styles.optionGroups}>
+          {Object.entries(configuratorGroups).map(([groupName, options]) => (
+            <div key={groupName} className={styles.optionGroup}>
+              <div className={styles.optionChips}>
+                {options.map((opt) => (
+                  <button
+                    key={opt.id}
+                    className={`${styles.optionChip} ${selectedOptions[groupName] === opt.id ? styles.optionChipSelected : ''}`}
+                    onClick={() => setSelectedOptions((prev) => ({ ...prev, [groupName]: opt.id }))}
+                  >
+                    {opt.name}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
 
       {showControl ? (
