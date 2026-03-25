@@ -22,10 +22,10 @@
   justify-content: center;
 }
 
-.navSun {
-  width: 44px;
-  height: 28px;
-  color: var(--color-red);
+.navLogo {
+  height: 44px;
+  width: auto;
+  display: block;
 }
 
 .navRight {
@@ -242,7 +242,7 @@
   .header { padding: 10px 12px; }
   .navLink { font-size: var(--text-xs); }
   .shopTrigger { font-size: var(--text-xs); }
-  .navSun { width: 36px; height: 22px; }
+  .navLogo { height: 36px; }
   .navLeft { gap: 8px; }
   .navRight { gap: 8px; }
 }

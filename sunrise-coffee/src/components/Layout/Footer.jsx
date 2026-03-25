@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { SunLogo, FacebookIcon, InstagramIcon, TikTokIcon, YouTubeIcon, WhatsAppIcon, EmailIcon } from '../Icons';
+import { FacebookIcon, InstagramIcon, TikTokIcon, YouTubeIcon, WhatsAppIcon, EmailIcon } from '../Icons';
 import styles from './Footer.module.css';
 
 const PAYMENT_METHODS = [
@@ -27,9 +27,6 @@ export default function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={styles.top}>
-        <div className={styles.logoCol}>
-          <SunLogo className={styles.sun} size="footer" />
-        </div>
 
         <p className={styles.desc}>
           This is a demo store. All coffee mockups are designed by <a href="#">Switch</a>.
@@ -70,7 +67,7 @@ export default function Footer() {
       </div>
 
       <div className={styles.tagline}>
-        <span>Honestly Good Coffee.</span>
+        <img src="/images/Scritta_caro.svg" alt="Caro" className={styles.scrittaCaro} />
       </div>
     </footer>
   );

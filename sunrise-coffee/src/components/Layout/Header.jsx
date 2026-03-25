@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { SunLogo } from '../Icons';
+
 import { useCartContext, useCustomerContext } from '../../context/ShopwareContext';
 import CartDrawer from '../CartDrawer/CartDrawer';
 import AuthDrawer from '../AuthDrawer/AuthDrawer';
@@ -70,7 +70,7 @@ export default function Header() {
 
         <div className={styles.navCenter}>
           <Link to="/">
-            <SunLogo className={styles.navSun} />
+            <img src="/images/Logo_icona.svg" alt="Capperificio" className={styles.navLogo} />
           </Link>
         </div>
 

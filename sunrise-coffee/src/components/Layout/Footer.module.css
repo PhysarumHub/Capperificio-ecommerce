@@ -5,21 +5,12 @@
 
 .top {
   display: grid;
-  grid-template-columns: auto 1.4fr 1fr 1fr auto;
+  grid-template-columns: 1.4fr 1fr 1fr auto;
   gap: 48px;
   align-items: start;
 }
 
-.logoCol {
-  display: flex;
-  align-items: flex-start;
-}
 
-.sun {
-  width: 56px;
-  height: 56px;
-  color: var(--color-red);
-}
 
 .desc {
   font-size: var(--text-base);
@@ -113,15 +104,11 @@
 .tagline {
   overflow: hidden;
   padding: 20px 0 0;
-  line-height: .85;
 }
-.tagline span {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 500;
-  color: var(--color-red);
-  font-size: 18vw;
-  white-space: nowrap;
+
+.scrittaCaro {
+  width: 100%;
+  height: auto;
   display: block;
 }
 
