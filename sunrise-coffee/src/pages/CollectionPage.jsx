@@ -200,20 +200,34 @@ function groupVariants(rawList) {
   const standalone = rawList.filter(p => !p.parentId);
   const children   = rawList.filter(p => !!p.parentId);
 
+  // Group children by parentId
   const groups = {};
   children.forEach(child => {
     if (!groups[child.parentId]) groups[child.parentId] = [];
     groups[child.parentId].push(child);
   });
 
-  const representatives = Object.values(groups).map(siblings => {
+  const parentIds = new Set(Object.keys(groups));
+
+  // If the parent is already in the list, enrich it with children's options
+  const result = standalone.map(p => {
+    if (!parentIds.has(p.id)) return p;
+    const allOptions = [...new Set(
+      groups[p.id].flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+    )];
+    return { ...p, _allVariantOptions: allOptions };
+  });
+
+  // Only add a representative for children whose parent is NOT in the list
+  Object.entries(groups).forEach(([parentId, siblings]) => {
+    if (standalone.some(p => p.id === parentId)) return;
     const allOptions = [...new Set(
       siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
     )];
-    return { ...siblings[0], _allVariantOptions: allOptions };
+    result.push({ ...siblings[0], _allVariantOptions: allOptions });
   });
 
-  return [...standalone, ...representatives];
+  return result;
 }
 
 function mapShopwareProduct(product) {
