@@ -1,15 +1,12 @@
 .card {
   position: relative;
-  border: 1px solid var(--color-card-border);
-  margin-right: -1px;
-  margin-bottom: -1px;
+  outline: 1px solid var(--color-card-border);
   background: var(--color-white);
   overflow: hidden;
   padding: 10px;
   text-decoration: none;
   display: flex;
   flex-direction: column;
-  height: 100%;
   color: inherit;
 }
 
