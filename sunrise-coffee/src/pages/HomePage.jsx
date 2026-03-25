@@ -143,8 +143,10 @@ export default function HomePage() {
 
       <AboutSection />
 
-      <SectionHeader label="Merch" title="Fits for Drips" count={3} style={{ marginTop: 60 }} />
-      <StorySlider />
+      <div style={{ background: 'var(--color-white)' }}>
+        <SectionHeader label="Merch" title="Fits for Drips" count={3} style={{ marginTop: 60 }} />
+        <StorySlider />
+      </div>
 
       <SectionHeader label="Latest Blends" title="Let's Mix Things Up" count={8} viewAllHref="/collections/blend" style={{ marginTop: 60 }} />
       <div className={styles.productGrid}>

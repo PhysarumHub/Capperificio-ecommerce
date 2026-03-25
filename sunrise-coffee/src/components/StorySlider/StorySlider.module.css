@@ -1,6 +1,7 @@
 .wrapper {
   display: flex;
   overflow-x: auto;
+  background: var(--color-white);
   scrollbar-width: none;
   cursor: grab;
   user-select: none;

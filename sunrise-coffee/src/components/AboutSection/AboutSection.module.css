@@ -1,5 +1,6 @@
 .section {
   padding: 60px 0 0;
+  background: var(--color-white);
 }
 
 .label {

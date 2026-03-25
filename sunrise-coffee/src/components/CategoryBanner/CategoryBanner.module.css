@@ -11,7 +11,7 @@
   aspect-ratio: 4 / 3;
   cursor: pointer;
   padding: 10px;
-  background: var(--color-white);
+  background: var(--color-light);
   margin-right: -1px;
   text-decoration: none;
   display: block;
