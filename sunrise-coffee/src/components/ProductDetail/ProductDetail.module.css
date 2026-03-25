@@ -385,10 +385,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 12px 20px;
+  gap: 12px;
+  padding: 12px 16px;
   background: var(--color-light);
   border-top: 1px solid var(--color-border);
+}
+
+.mobileStickyInner > div {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .mobileStickyName {
@@ -563,4 +569,12 @@
   .mobileInfo { padding: 20px 16px 100px; }
   .alsoLikeGrid { grid-template-columns: 1fr 1fr; }
   .alsoLikeSection { padding: 40px 0 80px; }
+
+  .mobileStickyInner { gap: 8px; padding: 10px 12px; }
+  .mobileStickyBtn {
+    padding: 10px 14px;
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+  .mobileStickyName { font-size: var(--text-sm); }
 }
