@@ -248,6 +248,7 @@ function mapShopwareProduct(product) {
     : fromConfigurator?.length ? [...new Set(fromConfigurator)] : (fromOptions?.length ? fromOptions : undefined);
 
   return {
+    id:             product.id,
     name:           product.translated?.name || product.name,
     slug:           getProductSlug(product),
     image:          getProductImage(product),
@@ -379,6 +380,7 @@ export default function CollectionPage() {
               {products.map((p) => (
                 <ProductCard
                   key={p.slug}
+                  id={p.id}
                   name={p.name}
                   slug={p.slug}
                   image={p.image}
@@ -386,7 +388,7 @@ export default function CollectionPage() {
                   oldPrice={p.oldPrice}
                   badge={p.badge}
                   badgeColor={p.badgeColor}
-                  stars={p.stars}
+                  options={p.options}
                 />
               ))}
             </div>
