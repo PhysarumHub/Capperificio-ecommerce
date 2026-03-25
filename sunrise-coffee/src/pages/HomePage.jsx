@@ -39,6 +39,37 @@ const MERCH_PRODUCTS_FALLBACK = [
   { name: 'Sunrise Cap', image: '/images/PRODUCTSTILL.jpg', price: '$40.00' },
 ];
 
+function groupVariants(rawList) {
+  const standalone = rawList.filter(p => !p.parentId);
+  const children   = rawList.filter(p => !!p.parentId);
+
+  const groups = {};
+  children.forEach(child => {
+    if (!groups[child.parentId]) groups[child.parentId] = [];
+    groups[child.parentId].push(child);
+  });
+
+  const parentIds = new Set(Object.keys(groups));
+
+  const result = standalone.map(p => {
+    if (!parentIds.has(p.id)) return p;
+    const allOptions = [...new Set(
+      groups[p.id].flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+    )];
+    return { ...p, _allVariantOptions: allOptions };
+  });
+
+  Object.entries(groups).forEach(([parentId, siblings]) => {
+    if (standalone.some(p => p.id === parentId)) return;
+    const allOptions = [...new Set(
+      siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+    )];
+    result.push({ ...siblings[0], _allVariantOptions: allOptions });
+  });
+
+  return result;
+}
+
 function mapShopwareProduct(product) {
   const price = product.calculatedPrice || product.price?.[0];
   const listPrice = price?.listPrice;
@@ -77,35 +108,7 @@ export default function HomePage() {
     filters: [{ type: 'equals', field: 'tags.name', value: 'Materia prima' }],
   });
 
-  // Group variants: if parent is in the list enrich it, else use first child as representative
-  const standaloneProducts = rawProducts.filter(p => !p.parentId);
-  const variantChildren    = rawProducts.filter(p => !!p.parentId);
-
-  const variantGroups = {};
-  variantChildren.forEach(child => {
-    if (!variantGroups[child.parentId]) variantGroups[child.parentId] = [];
-    variantGroups[child.parentId].push(child);
-  });
-
-  const parentIds = new Set(Object.keys(variantGroups));
-
-  const grouped = standaloneProducts.map(p => {
-    if (!parentIds.has(p.id)) return p;
-    const allOptions = [...new Set(
-      variantGroups[p.id].flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
-    )];
-    return { ...p, _allVariantOptions: allOptions };
-  });
-
-  Object.entries(variantGroups).forEach(([parentId, siblings]) => {
-    if (standaloneProducts.some(p => p.id === parentId)) return;
-    const allOptions = [...new Set(
-      siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
-    )];
-    grouped.push({ ...siblings[0], _allVariantOptions: allOptions });
-  });
-
-  const shopwareProducts = grouped.filter(p =>
+  const shopwareProducts = groupVariants(rawProducts).filter(p =>
     !B2B_CATEGORY_ID || !p.categoryTree?.includes(B2B_CATEGORY_ID)
   );
 
@@ -117,7 +120,7 @@ export default function HomePage() {
     : SLIDER_PRODUCTS_FALLBACK;
 
   const blendProducts = hasApiData && rawMateriaPrima.length > 0
-    ? rawMateriaPrima.slice(0, 3).map(mapShopwareProduct)
+    ? groupVariants(rawMateriaPrima).slice(0, 3).map(mapShopwareProduct)
     : BLEND_PRODUCTS_FALLBACK;
 
   return (
