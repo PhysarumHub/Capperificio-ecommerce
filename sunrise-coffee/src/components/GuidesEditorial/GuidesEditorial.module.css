@@ -10,7 +10,7 @@
   flex-direction: column;
   justify-content: center;
   padding: 72px 64px;
-  background: var(--color-white);
+  background: var(--color-light);
   border-right: 1px solid var(--color-card-border);
 }
 
@@ -73,7 +73,7 @@
 
 .photo {
   min-height: 480px;
-  background: var(--color-white);
+  background: var(--color-light);
   overflow: hidden;
   padding: 10px;
 }

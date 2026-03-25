@@ -1,6 +1,6 @@
 .shipping-bar {
   overflow: hidden;
-  background: var(--color-white);
+  background: var(--color-light);
   border-bottom: 1.5px solid var(--color-red);
   padding: 7px 0;
   position: relative;
