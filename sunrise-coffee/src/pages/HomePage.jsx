@@ -145,7 +145,7 @@ export default function HomePage() {
 
       <AboutSection />
 
-      <div style={{ background: 'var(--color-white)', paddingTop: 60 }}>
+      <div style={{ background: 'var(--color-light)', paddingTop: 60 }}>
         <SectionHeader label="La nostra storia" title="Dal campo alla tavola" count={3} />
         <StorySlider />
       </div>
