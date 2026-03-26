@@ -52,7 +52,7 @@
   justify-content: center;
   overflow: hidden;
   border-radius: 20px;
-  background: #EAF0E5;
+  background: var(--color-white);
 }
 
 .pdpImg {
@@ -330,7 +330,7 @@
 .pdpCartTag {
   width: 100%;
   padding: 16px 24px;
-  background: #9CBF8A;
+  background: var(--color-white);
   color: #fff;
   border: none;
   border-radius: 30px;
@@ -479,7 +479,7 @@
     aspect-ratio: 1 / 1;
     overflow: hidden;
     border-radius: 16px;
-    background: #EAF0E5;
+    background: var(--color-white);
   }
 
   .mobileSlideImg {

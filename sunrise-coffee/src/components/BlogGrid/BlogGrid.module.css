@@ -16,7 +16,7 @@
   aspect-ratio: 4 / 3;
   border-radius: var(--radius-card);
   overflow: hidden;
-  background: #EAF0E5;
+  background: var(--color-white);
   margin-bottom: 0;
 }
 
