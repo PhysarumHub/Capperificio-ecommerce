@@ -60,10 +60,58 @@ services:
       - capperificio_net
     restart: unless-stopped
 
+  # ── PostgreSQL per Strapi ────────────────────────────────
+  strapi-db:
+    image: postgres:16-alpine
+    container_name: capperificio-strapi-db
+    environment:
+      POSTGRES_DB: strapi
+      POSTGRES_USER: strapi
+      POSTGRES_PASSWORD: ${STRAPI_DB_PASSWORD}
+    volumes:
+      - strapi_db_data:/var/lib/postgresql/data
+    networks:
+      - capperificio_net
+    restart: unless-stopped
+
+  # ── Strapi CMS ───────────────────────────────────────────
+  strapi:
+    image: node:20-alpine
+    container_name: capperificio-strapi
+    working_dir: /srv/app
+    command: sh -c "npm install && npm run build && npm start"
+    ports:
+      - "1337:1337"
+    environment:
+      NODE_ENV: production
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: strapi-db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: strapi
+      DATABASE_USERNAME: strapi
+      DATABASE_PASSWORD: ${STRAPI_DB_PASSWORD}
+      APP_KEYS: ${STRAPI_APP_KEYS}
+      API_TOKEN_SALT: ${STRAPI_API_TOKEN_SALT}
+      ADMIN_JWT_SECRET: ${STRAPI_ADMIN_JWT_SECRET}
+      JWT_SECRET: ${STRAPI_JWT_SECRET}
+      URL: ${STRAPI_URL:-http://localhost:1337}
+    volumes:
+      - ./strapi:/srv/app
+      - strapi_uploads:/srv/app/public/uploads
+    depends_on:
+      - strapi-db
+    networks:
+      - capperificio_net
+    restart: unless-stopped
+
 networks:
   capperificio_net:
     driver: bridge
 
 volumes:
   shopware_data:
+    driver: local
+  strapi_db_data:
+    driver: local
+  strapi_uploads:
     driver: local
