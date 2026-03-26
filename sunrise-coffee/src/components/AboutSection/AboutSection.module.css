@@ -1,6 +1,14 @@
 .section {
-  padding: 60px 0 40px;
+  padding: 60px 40px;
+  background: var(--color-light);
+}
+
+.content {
   background: var(--color-white);
+  border-radius: var(--radius-card-lg);
+  padding: 60px 40px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .label {
@@ -14,7 +22,6 @@
   letter-spacing: .12em;
   color: var(--color-red);
   margin-bottom: 20px;
-  padding: 0 40px;
 }
 
 .dot {
@@ -35,20 +42,14 @@
   text-align: center;
   max-width: 780px;
   margin: 0 auto;
-  padding: 0 40px;
 }
 
 @media (max-width: 768px) {
-  .section { padding: 40px 0 40px; }
-  .label { padding: 0 20px; }
-  .quote {
-    padding: 0 20px;
-    margin-bottom: 28px;
-  }
+  .section { padding: 40px 20px; }
+  .content { padding: 40px 24px; }
 }
 
 @media (max-width: 480px) {
-  .section { padding: 32px 0 32px; }
-  .label { padding: 0 16px; }
-  .quote { padding: 0 16px; }
+  .section { padding: 32px 16px; }
+  .content { padding: 32px 20px; }
 }
