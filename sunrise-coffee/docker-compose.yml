@@ -47,6 +47,8 @@ services:
         - VITE_PAYPAL_CLIENT_ID=${VITE_PAYPAL_CLIENT_ID}
         - VITE_B2B_CATEGORY_ID=${VITE_B2B_CATEGORY_ID}
         - VITE_B2B_GROUP_NAME=${VITE_B2B_GROUP_NAME:-B2B}
+        - VITE_STRAPI_URL=${VITE_STRAPI_URL:-http://localhost:1337}
+        - VITE_STRAPI_TOKEN=${VITE_STRAPI_TOKEN}
     container_name: capperificio-frontend
     ports:
       - "3001:80"    # Frontend (nginx)

@@ -1,0 +1,22 @@
+{
+  "name": "capperificio-strapi",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Capperificio di Racale — Blog CMS",
+  "scripts": {
+    "develop": "strapi develop",
+    "start": "strapi start",
+    "build": "strapi build",
+    "strapi": "strapi"
+  },
+  "dependencies": {
+    "@strapi/strapi": "^5.0.0",
+    "@strapi/plugin-users-permissions": "^5.0.0",
+    "@strapi/plugin-i18n": "^5.0.0",
+    "pg": "^8.11.3"
+  },
+  "engines": {
+    "node": ">=18.0.0 <=22.x.x",
+    "npm": ">=6.0.0"
+  }
+}
