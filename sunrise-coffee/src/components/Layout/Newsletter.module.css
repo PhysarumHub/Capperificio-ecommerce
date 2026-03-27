@@ -21,7 +21,7 @@
 }
 
 .sub {
-  font-size: var(--text-md);
+  font-size: 16px;
   color: var(--color-red);
 }
 
@@ -33,16 +33,18 @@
 
 .input {
   font-family: var(--font-sans);
-  font-size: var(--text-md);
+  font-size: 16px;
   padding: 10px 16px;
-  border: none;
-  border-bottom: 1.5px solid var(--color-dark);
-  background: transparent;
+  border: 1.5px solid #3A6B35;
+  border-radius: var(--radius-card);
+  background: var(--color-light);
   color: var(--color-dark);
   width: 260px;
   outline: none;
+  transition: border-color var(--duration-base);
 }
-.input::placeholder { color: #999; }
+.input:focus { border-color: var(--color-dark); }
+.input::placeholder { color: #aaa; }
 
 .button {
   font-family: var(--font-sans);
@@ -81,7 +83,7 @@
     gap: 10px;
   }
   .input {
-    border-bottom: 1.5px solid var(--color-dark);
+    border: 1.5px solid #3A6B35;
   }
   .button {
     width: 100%;

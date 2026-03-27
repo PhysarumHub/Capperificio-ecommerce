@@ -150,6 +150,33 @@ img {
   display: block;
 }
 
+input,
+textarea,
+select {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  background: var(--color-light);
+  border: 1.5px solid #3A6B35;
+  border-radius: var(--radius-card);
+  padding: 10px 14px;
+  color: var(--color-dark);
+  outline: none;
+  transition: border-color var(--duration-base);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-dark);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #aaa;
+}
+
 button {
   cursor: pointer;
   font-family: var(--font-sans);
