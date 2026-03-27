@@ -7,6 +7,7 @@ import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import AccountPage from './pages/AccountPage';
 import B2BPage from './pages/B2BPage';
+import BlogPage from './pages/BlogPage';
 import BlogArticlePage from './pages/BlogArticlePage';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/account/login" element={<AccountPage />} />
         <Route path="/account/register" element={<AccountPage />} />
         <Route path="/b2b" element={<B2BPage />} />
+        <Route path="/blog" element={<BlogPage />} />
         <Route path="/blog/:slug" element={<BlogArticlePage />} />
       </Route>
     </Routes>
