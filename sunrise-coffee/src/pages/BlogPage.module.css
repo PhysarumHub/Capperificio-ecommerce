@@ -33,13 +33,13 @@
   font-style: italic;
   font-size: var(--text-5xl);
   font-weight: 500;
-  color: var(--color-dark);
+  color: #3A6B35;
   margin: 0 0 12px;
 }
 
 .bannerDesc {
   font-size: var(--text-lg);
-  color: var(--color-mid);
+  color: #5A8C55;
   max-width: 520px;
   margin: 0 auto;
   line-height: 1.6;
@@ -112,7 +112,7 @@
   font-style: italic;
   font-size: 17px;
   font-weight: 500;
-  color: var(--color-dark);
+  color: #3A6B35;
   line-height: 1.35;
   margin-bottom: 10px;
 }
@@ -120,7 +120,7 @@
 .excerpt {
   font-size: 13px;
   line-height: 1.65;
-  color: #888;
+  color: #5A8C55;
   margin-bottom: 16px;
   flex: 1;
 }
