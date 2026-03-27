@@ -85,33 +85,39 @@ export default function BlogArticlePage() {
   }
 
   return (
-    <article className={styles.article}>
-      <header className={styles.header}>
-        {post.category && (
-          <span className={styles.category}>{post.category}</span>
+    <div className={styles.pageGrid}>
+      <div className={styles.sideCol} />
+
+      <article className={styles.article}>
+        <header className={styles.header}>
+          {post.category && (
+            <span className={styles.category}>{post.category}</span>
+          )}
+          <h1 className={styles.title}>{post.title}</h1>
+          {post.excerpt && (
+            <p className={styles.excerpt}>{post.excerpt}</p>
+          )}
+          <div className={styles.meta}>
+            {post.date && <time>{formatDate(post.date)}</time>}
+          </div>
+        </header>
+
+        {post.image && (
+          <div className={styles.coverWrap}>
+            <img src={post.image} alt={post.title} className={styles.cover} />
+          </div>
         )}
-        <h1 className={styles.title}>{post.title}</h1>
-        {post.excerpt && (
-          <p className={styles.excerpt}>{post.excerpt}</p>
-        )}
-        <div className={styles.meta}>
-          {post.date && <time>{formatDate(post.date)}</time>}
+
+        <div className={styles.body}>
+          {renderBlocks(post.content)}
         </div>
-      </header>
 
-      {post.image && (
-        <div className={styles.coverWrap}>
-          <img src={post.image} alt={post.title} className={styles.cover} />
+        <div className={styles.footer}>
+          <Link to="/" className={styles.back}>← Torna alla home</Link>
         </div>
-      )}
+      </article>
 
-      <div className={styles.body}>
-        {renderBlocks(post.content)}
-      </div>
-
-      <div className={styles.footer}>
-        <Link to="/" className={styles.back}>← Torna alla home</Link>
-      </div>
-    </article>
+      <div className={styles.sideCol} />
+    </div>
   );
 }
