@@ -8,13 +8,15 @@ function inputStyle(hasError) {
   return {
     width: '100%',
     padding: '11px 14px',
-    border: `1.5px solid ${hasError ? 'var(--color-red)' : 'var(--color-border)'}`,
+    border: `1.5px solid ${hasError ? 'var(--color-red)' : '#3A6B35'}`,
     borderRadius: 8,
-    fontSize: 15,
+    fontSize: 16,
     boxSizing: 'border-box',
     fontFamily: 'var(--font-sans)',
     outline: 'none',
     transition: 'border-color .2s',
+    background: 'var(--color-light)',
+    color: 'var(--color-dark)',
     WebkitAppearance: 'none',
   };
 }
@@ -24,7 +26,7 @@ function Field({ label, error, children, required }) {
     <div style={{ marginBottom: 0 }}>
       <label style={{
         display: 'block', fontSize: 11, fontWeight: 600,
-        color: error ? 'var(--color-red)' : '#777',
+        color: error ? 'var(--color-red)' : '#6B8A6B',
         marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em',
       }}>
         {label}{required && <span style={{ color: 'var(--color-red)', marginLeft: 2 }}>*</span>}
@@ -49,8 +51,9 @@ function StepBar({ step }) {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, minWidth: 56 }}>
               <div style={{
                 width: 32, height: 32, borderRadius: '50%',
-                background: done ? '#2C8843' : active ? 'var(--color-red)' : '#e8e8e8',
-                color: done || active ? '#fff' : '#aaa',
+                background: done ? '#2C4A2C' : active ? '#3A6B35' : '#FCF3DF',
+                border: done || active ? 'none' : '1.5px solid #3A6B35',
+                color: done || active ? '#fff' : '#3A6B35',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: done ? 13 : 12, fontWeight: 700, transition: 'all .3s',
               }}>
@@ -58,7 +61,7 @@ function StepBar({ step }) {
               </div>
               <span style={{
                 fontSize: 9, fontWeight: active ? 700 : 400,
-                color: active ? 'var(--color-red)' : done ? '#2C8843' : '#aaa',
+                color: active ? '#3A6B35' : done ? '#2C4A2C' : '#6B8A6B',
                 letterSpacing: '.04em', textTransform: 'uppercase',
               }}>
                 {label}
@@ -67,7 +70,7 @@ function StepBar({ step }) {
             {i < steps.length - 1 && (
               <div style={{
                 flex: 1, height: 2,
-                background: done ? '#2C8843' : '#e8e8e8',
+                background: done ? '#2C4A2C' : 'rgba(84, 112, 84, 0.22)',
                 margin: '0 6px', marginBottom: 18,
                 transition: 'background .3s',
               }} />
@@ -133,7 +136,7 @@ function LoginForm({ onSuccess }) {
         disabled={loading}
         style={{
           padding: '14px 0',
-          background: loading ? '#bbb' : 'var(--color-red)',
+          background: loading ? '#6B8A6B' : 'var(--color-red)',
           color: '#fff',
           border: 'none',
           borderRadius: 'var(--radius-pill)',
@@ -261,26 +264,26 @@ function RegisterForm({ onSuccess }) {
   if (success) {
     return (
       <div style={{ textAlign: 'center', padding: '40px 0' }}>
-        <div style={{ fontSize: 48, color: '#2C8843', marginBottom: 16 }}>✓</div>
+        <div style={{ fontSize: 48, color: '#2C4A2C', marginBottom: 16 }}>✓</div>
         <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-2xl)', marginBottom: 8 }}>
           Account creato!
         </h2>
-        <p style={{ color: '#666', fontSize: 14 }}>Accesso in corso...</p>
+        <p style={{ color: '#6B8A6B', fontSize: 14 }}>Accesso in corso...</p>
       </div>
     );
   }
 
   const primaryBtn = (disabled) => ({
-    padding: '13px 0', background: disabled ? '#bbb' : 'var(--color-red)',
+    padding: '13px 0', background: disabled ? '#6B8A6B' : 'var(--color-red)',
     color: '#fff', border: 'none', borderRadius: 'var(--radius-pill)',
-    fontSize: 15, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer',
+    fontSize: 16, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer',
     fontFamily: 'var(--font-sans)', flex: 1,
   });
 
   const outlineBtn = {
-    padding: '13px 0', background: '#fff', color: '#555',
-    border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-pill)',
-    fontSize: 15, fontWeight: 600, cursor: 'pointer',
+    padding: '13px 0', background: 'var(--color-light)', color: 'var(--color-dark)',
+    border: '1.5px solid #3A6B35', borderRadius: 'var(--radius-pill)',
+    fontSize: 16, fontWeight: 600, cursor: 'pointer',
     fontFamily: 'var(--font-sans)', flex: '0 0 auto', minWidth: 100,
   };
 
