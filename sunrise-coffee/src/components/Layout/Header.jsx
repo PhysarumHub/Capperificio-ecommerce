@@ -12,6 +12,7 @@ const MEGA_LINKS = [
   { label: 'Cucunci',          href: '/collections/cucunci' },
   { label: 'Foglie',           href: '/collections/foglie' },
   { label: 'Polvere',          href: '/collections/polvere' },
+  { label: 'Blog',             href: '/blog' },
   { label: 'Area B2B',         href: '/b2b', b2b: true },
 ];
 
