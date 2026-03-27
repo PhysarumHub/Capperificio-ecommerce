@@ -1,7 +1,7 @@
 /* ── Grid a 3 colonne ────────────────────────────────────────────────────────── */
 .pageGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 2fr 1fr;
   min-height: 80vh;
   border-top: 1px solid var(--color-card-border);
 }
