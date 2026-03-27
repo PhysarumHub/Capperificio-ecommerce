@@ -71,8 +71,9 @@ function StepBar({ step, isMobile }) {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, minWidth: isMobile ? 44 : 60 }}>
               <div style={{
                 width: isMobile ? 28 : 36, height: isMobile ? 28 : 36, borderRadius: '50%',
-                background: done ? '#2C8843' : active ? 'var(--color-red)' : '#e8e8e8',
-                color: done || active ? '#fff' : '#aaa',
+                background: done ? '#2C4A2C' : active ? '#3A6B35' : '#FCF3DF',
+                border: done || active ? 'none' : '1.5px solid #3A6B35',
+                color: done || active ? '#fff' : '#3A6B35',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: done ? 13 : 12, fontWeight: 700, transition: 'all .3s',
               }}>
@@ -81,7 +82,7 @@ function StepBar({ step, isMobile }) {
               {!isMobile && (
                 <span style={{
                   fontSize: 10, fontWeight: active ? 700 : 400,
-                  color: active ? 'var(--color-red)' : done ? '#2C8843' : '#aaa',
+                  color: active ? '#3A6B35' : done ? '#2C4A2C' : '#6B8A6B',
                   letterSpacing: '.04em', textTransform: 'uppercase',
                 }}>
                   {label}
@@ -91,7 +92,7 @@ function StepBar({ step, isMobile }) {
             {i < steps.length - 1 && (
               <div style={{
                 flex: 1, height: 2,
-                background: done ? '#2C8843' : '#e8e8e8',
+                background: done ? '#2C4A2C' : 'rgba(84, 112, 84, 0.22)',
                 margin: isMobile ? '0 6px' : '0 8px',
                 marginBottom: isMobile ? 0 : 20,
                 transition: 'background .3s',
