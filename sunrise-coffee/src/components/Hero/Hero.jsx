@@ -10,6 +10,12 @@ export default function Hero({ image, alt = 'Hero' }) {
   return (
     <section className={styles.hero}>
       {image && <img src={image} alt={alt} className={styles.heroImg} />}
+      <div className={styles.overlay}>
+        <p className={styles.overlayLabel}>Capperificio di Racale</p>
+        <h1 className={styles.overlayTitle}>
+          Produttori di capperi.<br />Da 3 generazioni.
+        </h1>
+      </div>
       <div className={styles.marquee}>
         <div className={styles.track}>{marqueeItems}</div>
       </div>
