@@ -109,8 +109,10 @@ def get_delivery_time_id():
     return resp.json()["data"]["id"]
 
 def create_shipping_method(name, description, delivery_time_id, active=True):
+    technical_name = name.lower().replace(" ", "_").replace("à", "a").replace("è", "e").replace("ì", "i").replace("ò", "o").replace("ù", "u")
     resp = session.post(f"{SHOPWARE_URL}/api/shipping-method", json={
         "name": name,
+        "technicalName": technical_name,
         "description": description,
         "active": active,
         "trackingUrl": None,
