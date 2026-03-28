@@ -45,6 +45,7 @@ export function useCart() {
         const fresh = await cartApi.getCart();
         setCart(fresh);
       } catch {}
+      throw err; // rilancia così i caller possono fare rollback ottimistico
     } finally {
       setLoading(false);
     }

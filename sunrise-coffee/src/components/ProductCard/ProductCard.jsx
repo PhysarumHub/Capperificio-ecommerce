@@ -47,20 +47,19 @@ export default function ProductCard({
   const handleAdd = async (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!id) return; // prodotto senza ID (fallback) — non fare nulla
     const next = qty + 1;
     setQty(next);
     setShowControl(true);
     setShowTag(false);
-    if (id) {
-      try {
-        await addItem(id, 1);
-      } catch {
-        // rollback ottimistico se l'API fallisce
-        setQty(qty);
-        if (qty === 0) { setShowControl(false); setShowTag(false); }
-      }
+    try {
+      await addItem(id, 1);
+      scheduleCollapse(next);
+    } catch {
+      // rollback se l'API fallisce
+      setQty(qty);
+      if (qty === 0) { setShowControl(false); setShowTag(false); }
     }
-    scheduleCollapse(next);
   };
 
   const handleDecrease = async (e) => {
