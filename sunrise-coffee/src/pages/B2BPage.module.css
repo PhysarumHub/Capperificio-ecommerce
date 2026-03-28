@@ -138,8 +138,9 @@
 .input {
   width: 100%;
   padding: 11px 14px;
-  border: 1.5px solid #3A6B35;
-  border-radius: 8px;
+  border: none;
+  border-bottom: 1.5px solid #3A6B35;
+  border-radius: 0;
   font-size: 16px;
   font-family: var(--font-sans);
   box-sizing: border-box;
@@ -149,7 +150,7 @@
 }
 
 .input:focus {
-  border-color: var(--color-dark);
+  border-bottom-color: var(--color-dark);
 }
 
 .btnPrimary {

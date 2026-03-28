@@ -8,8 +8,9 @@ function inputStyle(hasError) {
   return {
     width: '100%',
     padding: '11px 14px',
-    border: `1.5px solid ${hasError ? 'var(--color-red)' : '#3A6B35'}`,
-    borderRadius: 8,
+    border: 'none',
+    borderBottom: `1.5px solid ${hasError ? 'var(--color-red)' : '#3A6B35'}`,
+    borderRadius: 0,
     fontSize: 16,
     boxSizing: 'border-box',
     fontFamily: 'var(--font-sans)',

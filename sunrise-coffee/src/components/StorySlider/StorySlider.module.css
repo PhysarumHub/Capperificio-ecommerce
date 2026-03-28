@@ -50,7 +50,7 @@
 
 @media (max-width: 768px) {
   .wrapper {
-    touch-action: pan-x;
+    touch-action: pan-x pan-y;
     scroll-snap-type: x mandatory;
   }
   .textCell,

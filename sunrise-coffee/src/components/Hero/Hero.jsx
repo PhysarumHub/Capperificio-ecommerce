@@ -2,7 +2,7 @@ import styles from './Hero.module.css';
 
 export default function Hero({ image, alt = 'Hero' }) {
   const marqueeItems = Array.from({ length: 12 }, (_, i) => (
-    <span key={i} className={i % 2 === 0 ? styles.dark : styles.white}>
+    <span key={i} className={styles.white}>
       Produttori di capperi. Da 3 generazioni.
     </span>
   ));

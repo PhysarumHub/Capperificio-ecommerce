@@ -35,15 +35,16 @@
   font-family: var(--font-sans);
   font-size: 16px;
   padding: 10px 16px;
-  border: 1.5px solid #3A6B35;
-  border-radius: var(--radius-card);
+  border: none;
+  border-bottom: 1.5px solid #3A6B35;
+  border-radius: 0;
   background: var(--color-light);
   color: var(--color-dark);
   width: 260px;
   outline: none;
   transition: border-color var(--duration-base);
 }
-.input:focus { border-color: var(--color-dark); }
+.input:focus { border-bottom-color: var(--color-dark); }
 .input::placeholder { color: #aaa; }
 
 .button {
@@ -52,17 +53,18 @@
   font-weight: 600;
   letter-spacing: .1em;
   text-transform: uppercase;
-  padding: 10px 20px;
-  border: 1.5px solid var(--color-red);
-  background: transparent;
-  color: var(--color-red);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background var(--duration-base), color var(--duration-base);
-}
-.button:hover {
+  padding: 10px 24px;
+  border: none;
+  border-radius: var(--radius-pill);
   background: var(--color-red);
   color: var(--color-white);
+  cursor: pointer;
+  white-space: nowrap;
+  margin-left: 8px;
+  transition: background var(--duration-base);
+}
+.button:hover {
+  background: var(--color-red-hover);
 }
 
 @media (max-width: 768px) {
