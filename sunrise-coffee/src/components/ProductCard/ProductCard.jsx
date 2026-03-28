@@ -51,7 +51,15 @@ export default function ProductCard({
     setQty(next);
     setShowControl(true);
     setShowTag(false);
-    if (id) try { await addItem(id, 1); } catch {}
+    if (id) {
+      try {
+        await addItem(id, 1);
+      } catch {
+        // rollback ottimistico se l'API fallisce
+        setQty(qty);
+        if (qty === 0) { setShowControl(false); setShowTag(false); }
+      }
+    }
     scheduleCollapse(next);
   };
 
