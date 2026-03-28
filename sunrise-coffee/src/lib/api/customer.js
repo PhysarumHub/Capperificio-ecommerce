@@ -56,7 +56,7 @@ export async function getOrders({ page = 1, limit = 10 } = {}) {
 }
 
 /**
- * Get list of active countries for address forms.
+ * Get all countries (active + inactive) for address forms.
  * Paginates because Store API max limit is 100 per request.
  */
 export async function getCountries() {
@@ -66,6 +66,10 @@ export async function getCountries() {
       sort: [{ field: 'name', order: 'ASC' }],
       limit: pageSize,
       page,
+      filter: [{ type: 'multi', operator: 'OR', queries: [
+        { type: 'equals', field: 'active', value: true },
+        { type: 'equals', field: 'active', value: false },
+      ]}],
     }).catch(() => null)
   ));
   return pages.flatMap((r) => r?.elements || []);

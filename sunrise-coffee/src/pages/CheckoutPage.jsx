@@ -126,16 +126,18 @@ function Field({ label, error, children, full, required }) {
   );
 }
 
-const inputStyle = (hasError, isMobile) => ({
+const inputStyle = (hasError, _isMobile) => ({
   width: '100%',
-  padding: isMobile ? '13px 14px' : '11px 14px',
-  border: `1.5px solid ${hasError ? 'var(--color-red)' : 'var(--color-border)'}`,
-  borderRadius: 8,
-  fontSize: isMobile ? 16 : 15, // 16px evita lo zoom automatico su iOS
+  padding: '11px 0',
+  border: 'none',
+  borderBottom: `1.5px solid ${hasError ? 'var(--color-red)' : '#3A6B35'}`,
+  borderRadius: 0,
+  background: 'var(--color-light)',
+  fontSize: 16,
   boxSizing: 'border-box',
   fontFamily: 'var(--font-sans)',
   outline: 'none',
-  transition: 'border-color .2s',
+  transition: 'border-bottom-color .2s',
   WebkitAppearance: 'none',
 });
 
@@ -145,9 +147,9 @@ function MethodCard({ method, selected, onSelect, name, isMobile }) {
     <label style={{
       display: 'flex', alignItems: 'center', gap: 14,
       padding: isMobile ? '16px 14px' : '14px 18px',
-      border: `1.5px solid ${selected ? 'var(--color-red)' : 'var(--color-border)'}`,
+      border: `1.5px solid ${selected ? '#3A6B35' : 'var(--color-border)'}`,
       borderRadius: 10, cursor: 'pointer',
-      background: selected ? 'rgba(216,64,50,0.04)' : '#fff',
+      background: selected ? 'rgba(58,107,53,0.06)' : '#fff',
       transition: 'all .2s',
     }}>
       <input
@@ -413,13 +415,18 @@ export default function CheckoutPage() {
   // Chiamata dopo che il pagamento (Stripe o PayPal) è stato confermato
   const handlePlaceOrder = async () => {
     setOrderError(null);
-    if (!resolvedCountryId) {
-      setOrderError(`"${selectedCountryName}" non è disponibile per la spedizione. Seleziona un altro paese.`);
-      return;
-    }
     setPlacing(true);
     try {
       if (!isLoggedIn) {
+        const billingAddress = {
+          firstName: address.firstName,
+          lastName: address.lastName,
+          street: address.street,
+          zipcode: address.zipcode,
+          city: address.city,
+          salutationId,
+          ...(resolvedCountryId ? { countryId: resolvedCountryId } : {}),
+        };
         await register({
           guest: true,
           email: address.email,
@@ -427,15 +434,7 @@ export default function CheckoutPage() {
           lastName: address.lastName,
           salutationId,
           storefrontUrl: import.meta.env.VITE_SHOPWARE_STOREFRONT_URL || window.location.origin,
-          billingAddress: {
-            firstName: address.firstName,
-            lastName: address.lastName,
-            street: address.street,
-            zipcode: address.zipcode,
-            city: address.city,
-            countryId: resolvedCountryId,
-            salutationId,
-          },
+          billingAddress,
         });
       }
       const paymentMethodId = paymentTab === 'paypal' ? paypalPaymentMethodId : stripePaymentMethodId;
@@ -573,7 +572,7 @@ export default function CheckoutPage() {
                       onChange={(e) => setCountrySearch(e.target.value)}
                       onFocus={() => setCountrySearch('')}
                       onBlur={() => setTimeout(() => setCountrySearch(''), 200)}
-                      style={{ ...inputStyle(false, isMobile), paddingRight: 36 }}
+                      style={{ ...inputStyle(false, isMobile), paddingRight: 24 }}
                     />
                     <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#aaa', fontSize: 12 }}>▾</span>
                     {countrySearch !== '' && (
@@ -591,7 +590,7 @@ export default function CheckoutPage() {
                               onMouseDown={() => { setAddress((p) => ({ ...p, countryIso: c.iso })); setCountrySearch(''); }}
                               style={{
                                 padding: '12px 14px', cursor: 'pointer', fontSize: 15,
-                                background: c.iso === address.countryIso ? 'rgba(216,64,50,0.06)' : '#fff',
+                                background: c.iso === address.countryIso ? 'rgba(58,107,53,0.06)' : '#fff',
                                 fontWeight: c.iso === address.countryIso ? 600 : 400,
                                 borderBottom: '1px solid var(--color-border)',
                                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -607,9 +606,9 @@ export default function CheckoutPage() {
                       </div>
                     )}
                   </div>
-                  {resolvedCountryId === null && swCountries.length > 0 && (
+                  {!resolvedCountryId && swCountries.length > 0 && (
                     <p style={{ fontSize: 12, color: '#f0a000', marginTop: 6 }}>
-                      ⚠ Paese non attivo per la spedizione. Scegline un altro.
+                      ⚠ Paese non trovato nel sistema. Continua comunque o scegli un altro paese.
                     </p>
                   )}
                 </Field>
@@ -663,11 +662,11 @@ export default function CheckoutPage() {
                           key={key}
                           onClick={() => setPaymentTab(key)}
                           style={{
-                            flex: 1, padding: '10px 0', border: `1.5px solid ${paymentTab === key ? 'var(--color-red)' : 'var(--color-border)'}`,
-                            borderRadius: 8, background: paymentTab === key ? 'rgba(216,64,50,0.05)' : '#fff',
+                            flex: 1, padding: '10px 0', border: `1.5px solid ${paymentTab === key ? '#3A6B35' : 'var(--color-border)'}`,
+                            borderRadius: 8, background: paymentTab === key ? 'rgba(58,107,53,0.06)' : '#fff',
                             fontWeight: paymentTab === key ? 700 : 400, fontSize: 14,
                             cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                            color: paymentTab === key ? 'var(--color-red)' : '#444',
+                            color: paymentTab === key ? '#3A6B35' : '#444',
                             transition: 'all .2s',
                           }}
                         >
