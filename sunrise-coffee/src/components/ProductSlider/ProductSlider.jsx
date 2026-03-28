@@ -7,7 +7,7 @@ export default function ProductSlider({ children, slideWidth = 100 / 3.35 }) {
   const trackRef = useRef(null);
   const [idx, setIdx] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   const startXRef = useRef(0);
   const curTxRef = useRef(0);
   const prevTxRef = useRef(0);
@@ -99,7 +99,7 @@ export default function ProductSlider({ children, slideWidth = 100 / 3.35 }) {
         ref={wrapperRef}
         className={`${styles.wrapper} ${isMobile ? styles.mobileWrapper : ''} ${dragging ? styles.grabbing : ''}`}
         onMouseDown={handlePointerDown}
-        onTouchStart={handlePointerDown}
+        onTouchStart={isMobile ? undefined : handlePointerDown}
       >
         <div ref={trackRef} className={`${styles.track} ${isMobile ? styles.mobileTrack : ''}`}>
           {Array.isArray(children) && children.map((child, i) => (
