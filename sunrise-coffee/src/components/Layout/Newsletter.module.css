@@ -85,7 +85,8 @@
     gap: 10px;
   }
   .input {
-    border: 1.5px solid #3A6B35;
+    border: none;
+    border-bottom: 1.5px solid #3A6B35;
   }
   .button {
     width: 100%;
