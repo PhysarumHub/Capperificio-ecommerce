@@ -83,16 +83,16 @@ export default function ProductCard({
 
   const control = showControl ? (
     <div className={styles.qtyControl} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-      <button className={styles.qtyBtn} onClick={handleDecrease} aria-label="Decrease">−</button>
+      <button className={styles.qtyBtn} onClick={handleDecrease} aria-label="Riduci">−</button>
       <span className={styles.qtyNum}>{qty}</span>
-      <button className={styles.qtyBtn} onClick={handleAdd} aria-label="Increase">+</button>
+      <button className={styles.qtyBtn} onClick={handleAdd} aria-label="Aumenta">+</button>
     </div>
   ) : showTag ? (
-    <button className={styles.cartTag} onClick={handleTagClick} aria-label="In cart">
-      In cart · {qty}
+    <button className={styles.cartTag} onClick={handleTagClick} aria-label="Nel carrello">
+      Nel carrello · {qty}
     </button>
   ) : (
-    <button className={styles.addToCart} onClick={handleAdd} aria-label="Add to cart">+</button>
+    <button className={styles.addToCart} onClick={handleAdd} aria-label="Aggiungi al carrello">+</button>
   );
 
   if (variant === 'merch') {

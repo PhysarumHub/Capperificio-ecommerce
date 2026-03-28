@@ -66,7 +66,7 @@ export default function Header() {
             Menu{' '}
             <span className={styles.triggerIcon}>+</span>
           </button>
-          <Link to="/" className={styles.navLink}>About</Link>
+          <Link to="/" className={styles.navLink}>Chi siamo</Link>
         </nav>
 
         <div className={styles.navCenter}>
@@ -80,11 +80,11 @@ export default function Header() {
             <Link to="/account" className={styles.navLink}>Account</Link>
           ) : (
             <button className={styles.navLink} onClick={openAuth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-              Login
+              Accedi
             </button>
           )}
           <button className={styles.navLink} onClick={openCart} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            Cart ({itemCount})
+            Carrello ({itemCount})
           </button>
         </nav>
       </header>
