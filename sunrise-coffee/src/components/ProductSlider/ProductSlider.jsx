@@ -93,20 +93,34 @@ export default function ProductSlider({ children, slideWidth = 100 / 3.35 }) {
     };
   }, [dragging, idx, goTo, getSlideWidth, isMobile]);
 
+  // Su mobile: DOM pulito senza nessun handler JS — identico al productGrid
+  // Qualsiasi onMouseDown/onTouchStart sul wrapper causa problemi con i click
+  // sui bottoni figlio su iOS Safari (synthetic mouse events da touch)
+  if (isMobile) {
+    return (
+      <div className={styles.mobileWrapper}>
+        <div className={styles.mobileTrack}>
+          {Array.isArray(children) && children.map((child, i) => (
+            <div key={i} className={styles.mobileSlide}>{child}</div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div
         ref={wrapperRef}
-        className={`${styles.wrapper} ${isMobile ? styles.mobileWrapper : ''} ${dragging ? styles.grabbing : ''}`}
+        className={`${styles.wrapper} ${dragging ? styles.grabbing : ''}`}
         onMouseDown={handlePointerDown}
-        onTouchStart={isMobile ? undefined : handlePointerDown}
       >
-        <div ref={trackRef} className={`${styles.track} ${isMobile ? styles.mobileTrack : ''}`}>
+        <div ref={trackRef} className={styles.track}>
           {Array.isArray(children) && children.map((child, i) => (
             <div
               key={i}
-              className={`${styles.slide} ${isMobile ? styles.mobileSlide : ''}`}
-              style={!isMobile ? { flex: `0 0 ${slideWidth}%` } : undefined}
+              className={styles.slide}
+              style={{ flex: `0 0 ${slideWidth}%` }}
             >
               {child}
             </div>
@@ -114,24 +128,22 @@ export default function ProductSlider({ children, slideWidth = 100 / 3.35 }) {
         </div>
       </div>
 
-      {!isMobile && (
-        <div className={styles.footer}>
-          <div className={styles.dots}>
-            {Array.from({ length: dotCount }, (_, i) => (
-              <button
-                key={i}
-                className={`${styles.dot} ${i === idx ? styles.dotActive : ''}`}
-                onClick={() => goTo(i)}
-                aria-label={`Go to slide ${i + 1}`}
-              />
-            ))}
-          </div>
-          <div className={styles.arrows}>
-            <button className={styles.arrow} onClick={() => goTo(idx - 1)} disabled={idx <= 0} aria-label="Previous">←</button>
-            <button className={styles.arrow} onClick={() => goTo(idx + 1)} disabled={idx >= maxIdx} aria-label="Next">→</button>
-          </div>
+      <div className={styles.footer}>
+        <div className={styles.dots}>
+          {Array.from({ length: dotCount }, (_, i) => (
+            <button
+              key={i}
+              className={`${styles.dot} ${i === idx ? styles.dotActive : ''}`}
+              onClick={() => goTo(i)}
+              aria-label={`Slide ${i + 1}`}
+            />
+          ))}
         </div>
-      )}
+        <div className={styles.arrows}>
+          <button className={styles.arrow} onClick={() => goTo(idx - 1)} disabled={idx <= 0} aria-label="Precedente">←</button>
+          <button className={styles.arrow} onClick={() => goTo(idx + 1)} disabled={idx >= maxIdx} aria-label="Successivo">→</button>
+        </div>
+      </div>
     </>
   );
 }
