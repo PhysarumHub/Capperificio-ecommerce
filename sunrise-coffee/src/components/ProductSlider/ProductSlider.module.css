@@ -81,6 +81,8 @@
 .mobileWrapper::-webkit-scrollbar { display: none; }
 
 .mobileTrack {
+  display: flex;
+  align-items: stretch;
   transform: none !important;
   transition: none !important;
 }
