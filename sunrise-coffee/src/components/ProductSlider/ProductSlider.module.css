@@ -69,13 +69,11 @@
   cursor: default;
 }
 
-/* Mobile native scroll classes */
+/* Mobile native scroll classes — identico a productGrid che funziona */
 .mobileWrapper {
   overflow-x: auto;
-  overflow-y: hidden;
   scroll-snap-type: x mandatory;
-  touch-action: pan-x pan-y;
-  cursor: default;
+  touch-action: pan-x;
   scrollbar-width: none;
 }
 .mobileWrapper::-webkit-scrollbar { display: none; }
