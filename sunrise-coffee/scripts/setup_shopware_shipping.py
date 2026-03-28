@@ -23,7 +23,7 @@ import json
 # ── Configurazione ──────────────────────────────────────────────────────────
 SHOPWARE_URL  = "http://SHOPWARE_HOST_REDACTED:8090"   # URL del tuo Shopware
 ADMIN_USER    = "admin"
-ADMIN_PASS    = "INSERISCI_PASSWORD_ADMIN"
+ADMIN_PASS    = "shopware"
 
 # ── Paesi europei divisi per zona ───────────────────────────────────────────
 EUROPA_OVEST = [
