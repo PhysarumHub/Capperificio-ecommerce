@@ -25,7 +25,10 @@ export default function StripePaymentForm({ onSuccess, totalPrice, isMobile }) {
     // Confirm payment — Stripe verifica la carta
     const { error: confirmError } = await stripe.confirmPayment({
       elements,
-      redirect: 'if_required', // evita redirect per carte normali
+      confirmParams: {
+        return_url: `${window.location.origin}/checkout`,
+      },
+      redirect: 'if_required',
     });
 
     if (confirmError) {

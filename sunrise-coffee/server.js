@@ -21,7 +21,7 @@ app.post('/api/stripe/create-payment-intent', async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // Stripe vuole i centesimi
       currency,
-      automatic_payment_methods: { enabled: true },
+      automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
     });
 
     res.json({ clientSecret: paymentIntent.client_secret });
