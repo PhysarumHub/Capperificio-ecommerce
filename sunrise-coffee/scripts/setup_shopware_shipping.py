@@ -94,18 +94,27 @@ def create_rule(name, description, priority=1):
         return resp.headers.get("Location", "").split("/")[-1]
     resp.raise_for_status()
 
-def create_shipping_method(name, description, active=True):
+def get_delivery_time_id():
+    times = get_all("delivery-time")
+    if times:
+        return times[0]["id"]
+    # Crea un delivery time se non esiste
+    resp = session.post(f"{SHOPWARE_URL}/api/delivery-time", json={
+        "name": "3-7 giorni",
+        "min": 3,
+        "max": 7,
+        "unit": "day",
+    })
+    resp.raise_for_status()
+    return resp.json()["data"]["id"]
+
+def create_shipping_method(name, description, delivery_time_id, active=True):
     resp = session.post(f"{SHOPWARE_URL}/api/shipping-method", json={
         "name": name,
         "description": description,
         "active": active,
         "trackingUrl": None,
-        "deliveryTime": {
-            "name": "3-7 giorni",
-            "min": 3,
-            "max": 7,
-            "unit": "day",
-        },
+        "deliveryTimeId": delivery_time_id,
     })
     if resp.status_code in (200, 204):
         method_id = resp.json().get("data", {}).get("id")
@@ -198,10 +207,13 @@ def main():
     west_ids = ids_for([c for c in EUROPA_OVEST if c != "IT"])
     east_ids = ids_for(EUROPA_EST)
 
-    # ── Metodo 1: Italia ───────────────────────────────────────────────────
-    print("📦 Creazione metodo: Spedizione Standard Italia...")
+    delivery_time_id = get_delivery_time_id()
+    print(f"  Delivery time ID: {delivery_time_id}\n")
+
     existing = get_existing_shipping_methods()
 
+    # ── Metodo 1: Italia ───────────────────────────────────────────────────
+    print("📦 Creazione metodo: Spedizione Standard Italia...")
     if "Spedizione Standard Italia" in existing:
         method_it_id = existing["Spedizione Standard Italia"]
         print(f"  → Già esistente: {method_it_id}")
@@ -209,6 +221,7 @@ def main():
         method_it_id = create_shipping_method(
             "Spedizione Standard Italia",
             f"Consegna in 3-5 giorni lavorativi. Gratuita sopra €{SOGLIA_GRATUITA:.0f}.",
+            delivery_time_id,
         )
         print(f"  → Creato: {method_it_id}")
 
@@ -221,6 +234,7 @@ def main():
         method_west_id = create_shipping_method(
             "Spedizione Europa Ovest",
             f"Consegna in 5-7 giorni lavorativi verso Francia, Germania, Spagna e altri paesi dell'Europa Occidentale.",
+            delivery_time_id,
         )
         print(f"  → Creato: {method_west_id}")
 
@@ -233,6 +247,7 @@ def main():
         method_east_id = create_shipping_method(
             "Spedizione Europa Est",
             f"Consegna in 7-10 giorni lavorativi verso Polonia, Romania, Ungheria e altri paesi dell'Europa Orientale.",
+            delivery_time_id,
         )
         print(f"  → Creato: {method_east_id}")
 
