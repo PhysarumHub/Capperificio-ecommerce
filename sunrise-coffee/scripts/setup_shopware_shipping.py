@@ -119,6 +119,7 @@ def create_shipping_method(name, description, delivery_time_id, active=True):
     if resp.status_code in (200, 204):
         method_id = resp.json().get("data", {}).get("id")
         return method_id
+    print(f"  ❌ Errore {resp.status_code}: {resp.text}")
     resp.raise_for_status()
 
 def get_existing_shipping_methods():
