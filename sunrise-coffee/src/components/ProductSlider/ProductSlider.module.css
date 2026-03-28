@@ -69,8 +69,10 @@
   cursor: default;
 }
 
-/* Mobile native scroll classes — identico a productGrid che funziona */
+/* Mobile: struttura identica a .productGrid — display:flex direttamente sul container */
 .mobileWrapper {
+  display: flex;
+  align-items: stretch;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   touch-action: pan-x;
@@ -78,15 +80,8 @@
 }
 .mobileWrapper::-webkit-scrollbar { display: none; }
 
-.mobileTrack {
-  display: flex;
-  align-items: stretch;
-  transform: none !important;
-  transition: none !important;
-}
-
 .mobileSlide {
-  flex: 0 0 calc(100% / 1.5) !important;
+  flex: 0 0 calc(100% / 1.5);
   scroll-snap-align: start;
   display: flex;
   align-items: stretch;
