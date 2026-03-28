@@ -30,24 +30,37 @@ export default function BlogGrid() {
   return (
     <div className={styles.grid}>
       {posts.map((post) => (
-        <div key={post.slug || post.title} className={styles.card}>
-          <div className={styles.img}>
-            {post.image ? (
-              <img src={post.image} alt={post.title} className={styles.postImg} />
-            ) : (
-              <div className={styles.imgPlaceholder} />
-            )}
-          </div>
-          <div className={styles.body}>
-            <h3 className={styles.title}>{post.title}</h3>
-            <p className={styles.excerpt}>{post.excerpt}</p>
-            {post.slug ? (
-              <Link to={`/blog/${post.slug}`} className={styles.link}>Leggi →</Link>
-            ) : (
+        post.slug ? (
+          <Link key={post.slug} to={`/blog/${post.slug}`} className={styles.card}>
+            <div className={styles.img}>
+              {post.image ? (
+                <img src={post.image} alt={post.title} className={styles.postImg} />
+              ) : (
+                <div className={styles.imgPlaceholder} />
+              )}
+            </div>
+            <div className={styles.body}>
+              <h3 className={styles.title}>{post.title}</h3>
+              <p className={styles.excerpt}>{post.excerpt}</p>
               <span className={styles.link}>Leggi →</span>
-            )}
+            </div>
+          </Link>
+        ) : (
+          <div key={post.title} className={styles.card}>
+            <div className={styles.img}>
+              {post.image ? (
+                <img src={post.image} alt={post.title} className={styles.postImg} />
+              ) : (
+                <div className={styles.imgPlaceholder} />
+              )}
+            </div>
+            <div className={styles.body}>
+              <h3 className={styles.title}>{post.title}</h3>
+              <p className={styles.excerpt}>{post.excerpt}</p>
+              <span className={styles.link}>Leggi →</span>
+            </div>
           </div>
-        </div>
+        )
       ))}
     </div>
   );

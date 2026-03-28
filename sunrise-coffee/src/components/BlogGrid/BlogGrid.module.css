@@ -4,11 +4,14 @@
 }
 
 .card {
+  display: block;
   border: 1px solid var(--color-card-border);
   margin-right: -1px;
   background: var(--color-light);
   overflow: hidden;
   padding: 10px 10px 0;
+  text-decoration: none;
+  color: inherit;
 }
 
 .img {
