@@ -118,9 +118,15 @@ def create_shipping_method(name, description, delivery_time_id, active=True):
         "trackingUrl": None,
         "deliveryTimeId": delivery_time_id,
     })
-    if resp.status_code in (200, 204):
-        method_id = resp.json().get("data", {}).get("id")
-        return method_id
+    if resp.status_code in (200, 201, 204):
+        # 204 = creato senza body, recupera l'ID cercando per nome
+        if resp.status_code == 204 or not resp.text.strip():
+            methods = get_all("shipping-method")
+            for m in methods:
+                if m["attributes"]["name"] == name:
+                    return m["id"]
+            return None
+        return resp.json().get("data", {}).get("id")
     print(f"  ❌ Errore {resp.status_code}: {resp.text}")
     resp.raise_for_status()
 
