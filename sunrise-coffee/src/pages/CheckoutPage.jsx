@@ -130,16 +130,17 @@ function Field({ label, error, children, full, required }) {
 
 const inputStyle = (hasError, _isMobile) => ({
   width: '100%',
-  padding: '12px 14px',
-  border: `1.5px solid ${hasError ? 'var(--color-red)' : 'var(--color-border)'}`,
-  borderRadius: 8,
-  background: 'var(--color-light)',
+  padding: '11px 0',
+  border: 'none',
+  borderBottom: `1.5px solid ${hasError ? 'var(--color-red)' : 'var(--color-dark)'}`,
+  borderRadius: 0,
+  background: 'transparent',
   fontSize: 15,
   boxSizing: 'border-box',
   fontFamily: 'var(--font-sans)',
   color: 'var(--color-dark)',
   outline: 'none',
-  transition: 'border-color .2s',
+  transition: 'border-bottom-color .2s',
   WebkitAppearance: 'none',
 });
 
@@ -148,11 +149,11 @@ function MethodCard({ method, selected, onSelect, name, isMobile }) {
   return (
     <label style={{
       display: 'flex', alignItems: 'center', gap: 14,
-      padding: isMobile ? '16px 14px' : '14px 18px',
-      border: `1.5px solid ${selected ? 'var(--color-red)' : 'var(--color-border)'}`,
-      borderRadius: 10, cursor: 'pointer',
-      background: selected ? 'var(--color-cream)' : 'var(--color-light)',
-      transition: 'all .2s',
+      padding: '14px 0',
+      borderBottom: `1.5px solid ${selected ? 'var(--color-dark)' : 'var(--color-border)'}`,
+      cursor: 'pointer',
+      background: 'transparent',
+      transition: 'border-color .2s',
     }}>
       <input
         type="radio" name={name} value={method.id}
@@ -189,8 +190,8 @@ function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, s
   return (
     <div style={{
       background: 'var(--color-light)',
-      border: '1px solid var(--color-border)',
-      borderRadius: 14,
+      borderLeft: isMobile ? 'none' : '1px solid var(--color-border)',
+      borderTop: isMobile ? '1px solid var(--color-border)' : 'none',
       overflow: 'hidden',
       position: isMobile ? 'static' : 'sticky',
       top: 80,
@@ -596,7 +597,7 @@ export default function CheckoutPage() {
 
           {/* STEP 0: Contatti */}
           {step === 0 && (
-            <div style={{ background: 'var(--color-light)', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '32px 28px' }}>
+            <div style={{ padding: isMobile ? '4px 0 0' : '4px 0 0' }}>
               <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 6, marginTop: 0, color: 'var(--color-dark)' }}>
                 Informazioni di contatto
               </h2>
@@ -629,7 +630,7 @@ export default function CheckoutPage() {
 
           {/* STEP 1: Indirizzo */}
           {step === 1 && (
-            <div style={{ background: 'var(--color-light)', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '32px 28px' }}>
+            <div style={{ padding: isMobile ? '4px 0 0' : '4px 0 0' }}>
               <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 6, marginTop: 0, color: 'var(--color-dark)' }}>
                 Indirizzo di spedizione
               </h2>
@@ -645,7 +646,7 @@ export default function CheckoutPage() {
                     value={addrQuery}
                     onChange={(e) => setAddrQuery(e.target.value)}
                     placeholder="🔍  Cerca indirizzo… (es. Via Roma 1, Milano)"
-                    style={{ ...inputStyle(false, isMobile), background: 'var(--color-cream)', fontWeight: addrQuery ? 400 : 400 }}
+                    style={{ ...inputStyle(false, isMobile), borderBottomColor: 'var(--color-red)' }}
                   />
                   {addrLoading && (
                     <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--color-mid)' }}>⏳</span>
@@ -774,14 +775,14 @@ export default function CheckoutPage() {
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {loadingMethods ? (
-                <div style={{ color: 'var(--color-mid)', padding: '40px 0', textAlign: 'center', background: 'var(--color-light)', border: '1px solid var(--color-border)', borderRadius: 14 }}>
+                <div style={{ color: 'var(--color-mid)', padding: '40px 0', textAlign: 'center' }}>
                   <div style={{ fontSize: 28, marginBottom: 12 }}>⏳</div>
                   Caricamento metodi...
                 </div>
               ) : (
                 <>
                   {shippingMethods.length > 0 && (
-                    <div style={{ background: 'var(--color-light)', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '28px 28px' }}>
+                    <div style={{ padding: isMobile ? '4px 0 0' : '4px 0 0' }}>
                       <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 14, marginTop: 0, color: 'var(--color-dark)' }}>
                         Spedizione
                       </h2>
@@ -793,13 +794,13 @@ export default function CheckoutPage() {
                     </div>
                   )}
                   {/* ── Pagamento ──────────────────────────── */}
-                  <div style={{ background: 'var(--color-light)', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '28px 28px' }}>
+                  <div style={{ padding: isMobile ? '4px 0 0' : '4px 0 0' }}>
                     <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 14, marginTop: 0, color: 'var(--color-dark)' }}>
                       Pagamento
                     </h2>
 
                     {/* Tab Stripe | PayPal */}
-                    <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                    <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: '1.5px solid var(--color-border)' }}>
                       {[
                         { key: 'stripe', label: '💳 Carta di credito' },
                         { key: 'paypal', label: '🅿 PayPal' },
@@ -808,8 +809,11 @@ export default function CheckoutPage() {
                           key={key}
                           onClick={() => setPaymentTab(key)}
                           style={{
-                            flex: 1, padding: '12px 0', border: `1.5px solid ${paymentTab === key ? 'var(--color-red)' : 'var(--color-border)'}`,
-                            borderRadius: 8, background: paymentTab === key ? 'var(--color-cream)' : 'var(--color-light)',
+                            flex: 1, padding: '10px 0',
+                            border: 'none',
+                            borderBottom: `2px solid ${paymentTab === key ? 'var(--color-dark)' : 'transparent'}`,
+                            marginBottom: -1.5,
+                            background: 'transparent',
                             fontWeight: paymentTab === key ? 700 : 400, fontSize: 14,
                             cursor: 'pointer', fontFamily: 'var(--font-sans)',
                             color: paymentTab === key ? 'var(--color-dark)' : 'var(--color-mid)',
@@ -830,24 +834,27 @@ export default function CheckoutPage() {
                             clientSecret: stripeClientSecret,
                             locale: 'it',
                             appearance: {
-                              theme: 'stripe',
+                              theme: 'none',
                               variables: {
-                                colorPrimary: '#547054',
+                                colorPrimary: '#2C4A2C',
                                 colorBackground: '#FCF3DF',
                                 colorText: '#2C4A2C',
                                 colorDanger: '#547054',
                                 fontFamily: 'system-ui, -apple-system, sans-serif',
-                                borderRadius: '8px',
+                                borderRadius: '0px',
                                 spacingUnit: '4px',
                               },
                               rules: {
                                 '.Input': {
-                                  border: '1.5px solid rgba(84,112,84,0.22)',
+                                  border: 'none',
+                                  borderBottom: '1.5px solid #2C4A2C',
                                   boxShadow: 'none',
-                                  padding: '12px 14px',
+                                  padding: '11px 0',
+                                  background: 'transparent',
                                 },
                                 '.Input:focus': {
-                                  border: '1.5px solid #547054',
+                                  border: 'none',
+                                  borderBottom: '1.5px solid #547054',
                                   boxShadow: 'none',
                                   outline: 'none',
                                 },
@@ -857,6 +864,18 @@ export default function CheckoutPage() {
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.06em',
                                   color: '#6B8A6B',
+                                  marginBottom: '6px',
+                                },
+                                '.Tab': {
+                                  border: 'none',
+                                  borderBottom: '1.5px solid rgba(84,112,84,0.22)',
+                                  borderRadius: '0',
+                                  boxShadow: 'none',
+                                  background: 'transparent',
+                                },
+                                '.Tab--selected': {
+                                  borderBottom: '2px solid #2C4A2C',
+                                  boxShadow: 'none',
                                 },
                               },
                             },
