@@ -149,7 +149,7 @@ export default function HomePage() {
 
   return (
     <>
-      <Hero image="/images/HERO.jpeg" />
+      <Hero image="/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp" />
       <FilterTags />
 
       <SectionHeader label="I più amati" title="I nostri Bestseller" count={sliderProducts.length} viewAllHref="/collections/all" />
