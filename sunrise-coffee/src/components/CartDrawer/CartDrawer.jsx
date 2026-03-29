@@ -16,7 +16,6 @@ function getVariantLabel(item) {
 export default function CartDrawer({ open, onClose }) {
   const { cart, loading, updateQuantity, removeItem, optimisticMerge, mergeUpdate, removeItems, itemCount, totalPrice, positionPrice } = useCartContext();
   const { isB2B } = useCustomerContext();
-  const totalTax = (cart?.price?.calculatedTaxes ?? []).reduce((s, t) => s + (t.tax ?? 0), 0);
 
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden';
@@ -31,6 +30,8 @@ export default function CartDrawer({ open, onClose }) {
   }, [onClose]);
 
   const rawItems = (cart?.lineItems || []).filter((item) => item.type === 'product');
+  const totalTax = rawItems.reduce((sum, item) =>
+    sum + (item.price?.calculatedTaxes ?? []).reduce((s, t) => s + (t.tax ?? 0), 0), 0);
 
   const groupedMap = {};
   rawItems.forEach((item) => {
@@ -169,9 +170,9 @@ export default function CartDrawer({ open, onClose }) {
               <span className={styles.subtotalPrice}>{formatPrice(positionPrice)}</span>
             </div>
             {isB2B && totalTax > 0 && (
-              <div className={styles.subtotal}>
+              <div className={styles.taxRow}>
                 <span>IVA</span>
-                <span className={styles.subtotalPrice}>{formatPrice(totalTax)}</span>
+                <span className={styles.taxRowPrice}>{formatPrice(totalTax)}</span>
               </div>
             )}
             <p className={styles.taxNote}>Spedizione calcolata al checkout</p>

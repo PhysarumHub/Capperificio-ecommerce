@@ -256,6 +256,20 @@
   color: var(--color-red);
 }
 
+.taxRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-sm);
+  color: var(--color-mid);
+  margin-top: -4px;
+}
+
+.taxRowPrice {
+  font-size: var(--text-sm);
+  color: var(--color-mid);
+}
+
 .taxNote {
   font-size: var(--text-sm);
   color: var(--color-mid);
