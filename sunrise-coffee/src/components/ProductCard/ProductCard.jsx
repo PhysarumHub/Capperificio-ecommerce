@@ -14,6 +14,7 @@ export default function ProductCard({
   badgeColor,
   options,
   sizes,
+  variantMap = {},
   variant = 'default',
   children,
 }) {
@@ -32,7 +33,12 @@ export default function ProductCard({
   const handleVariantClick = (e, v) => {
     e.preventDefault();
     e.stopPropagation();
+    if (v === selectedVariant) return;
     setSelectedVariant(v);
+    setQty(0);
+    setShowControl(false);
+    setShowTag(false);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
   };
 
   const scheduleCollapse = (currentQty) => {
@@ -47,13 +53,14 @@ export default function ProductCard({
   const handleAdd = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!id) return; // prodotto senza ID (fallback) — non fare nulla
+    const cartId = (selectedVariant && variantMap[selectedVariant]) || id;
+    if (!cartId) return; // prodotto senza ID (fallback) — non fare nulla
     const next = qty + 1;
     setQty(next);
     setShowControl(true);
     setShowTag(false);
     try {
-      await addItem(id, 1);
+      await addItem(cartId, 1);
       scheduleCollapse(next);
     } catch {
       // rollback se l'API fallisce
