@@ -176,10 +176,11 @@ function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, s
   const [open, setOpen] = useState(!isMobile);
   useEffect(() => { setOpen(!isMobile); }, [isMobile]);
 
-  const shippingCost = (totalPrice || 0) - (positionPrice || 0);
+  const shippingCost = cart?.deliveries?.[0]?.shippingCosts?.totalPrice ?? 0;
   const hasFreeShipping = shippingCost <= 0;
-  const calculatedTaxes = cart?.price?.calculatedTaxes ?? [];
-  const totalTax = calculatedTaxes.reduce((sum, t) => sum + (t.tax ?? 0), 0);
+  const productItems = (cart?.lineItems ?? []).filter((i) => i.type === 'product');
+  const totalTax = productItems.reduce((sum, item) =>
+    sum + (item.price?.calculatedTaxes ?? []).reduce((s, t) => s + (t.tax ?? 0), 0), 0);
 
   const row = (label, value, opts = {}) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: opts.large ? 16 : 14, fontWeight: opts.bold ? 700 : 400, color: opts.accent ? 'var(--color-red)' : 'var(--color-dark)' }}>
@@ -251,6 +252,7 @@ function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, s
           {/* Breakdown costi */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
             {row('Subtotale', formatPrice(positionPrice || 0))}
+            {isB2B && totalTax > 0 && row('IVA', formatPrice(totalTax))}
             {row(
               'Spedizione',
               hasFreeShipping ? <span style={{ color: 'var(--color-red)', fontWeight: 600 }}>Gratuita</span> : formatPrice(shippingCost)
@@ -259,16 +261,7 @@ function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, s
 
           <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '14px 0' }} />
 
-          {isB2B ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {row('Totale imponibile', formatPrice(positionPrice))}
-              {row('IVA', formatPrice(totalTax))}
-              <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '4px 0' }} />
-              {row('Totale IVA inclusa', formatPrice(totalPrice), { bold: true, large: true, accent: true })}
-            </div>
-          ) : (
-            row('Totale', formatPrice(totalPrice), { bold: true, large: true, accent: true })
-          )}
+          {row('Totale', formatPrice(totalPrice), { bold: true, large: true, accent: true })}
 
           {/* Info indirizzo */}
           {step >= 1 && address.email && (
