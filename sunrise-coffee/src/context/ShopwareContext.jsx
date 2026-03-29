@@ -22,7 +22,7 @@ export function useCustomerContext() {
 
 export default function ShopwareProvider({ children }) {
   const cartState = useCart();
-  const customerState = useCustomer();
+  const customerState = useCustomer({ onAuthChange: cartState.fetchCart });
   const isB2B = customerState.customer?.group?.name === B2B_GROUP_NAME;
 
   // Initialize cart and customer session on mount

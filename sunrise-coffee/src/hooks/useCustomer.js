@@ -5,7 +5,7 @@ import { isShopwareConfigured } from '../lib/shopware-client';
 /**
  * Hook for customer authentication state.
  */
-export function useCustomer() {
+export function useCustomer({ onAuthChange } = {}) {
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -34,16 +34,17 @@ export function useCustomer() {
     setError(null);
     try {
       await customerApi.login(email, password);
-      // Fetch full customer profile after login
       const data = await customerApi.getCustomer();
       setCustomer(data);
+      // Ricarica carrello per aggiornare prezzi (es. B2B advanced pricing)
+      onAuthChange?.();
     } catch (err) {
       setError(err.message || 'Login failed');
       throw err;
     } finally {
       setLoading(false);
     }
-  }, [configured]);
+  }, [configured, onAuthChange]);
 
   const logout = useCallback(async () => {
     if (!configured) return;
@@ -65,17 +66,17 @@ export function useCustomer() {
     setError(null);
     try {
       await customerApi.register(data);
-      // Shopware non logga automaticamente dopo /account/register — serve login esplicito
       await customerApi.login(data.email, data.password);
       const profile = await customerApi.getCustomer();
       setCustomer(profile);
+      onAuthChange?.();
     } catch (err) {
       setError(err.message || 'Registration failed');
       throw err;
     } finally {
       setLoading(false);
     }
-  }, [configured]);
+  }, [configured, onAuthChange]);
 
   return {
     customer,
