@@ -99,9 +99,7 @@ export default function ProductSlider({ children, slideWidth = 100 / 3.35 }) {
   if (isMobile) {
     return (
       <div className={styles.mobileWrapper}>
-        {Array.isArray(children) && children.map((child, i) => (
-          <div key={i} className={styles.mobileSlide}>{child}</div>
-        ))}
+        {children}
       </div>
     );
   }

@@ -69,21 +69,16 @@
   cursor: default;
 }
 
-/* Mobile: struttura identica a .productGrid — display:flex direttamente sul container */
+/* Mobile: identico a .productGrid in HomePage.module.css */
 .mobileWrapper {
   display: flex;
-  align-items: stretch;
   overflow-x: auto;
+  scrollbar-width: none;
   scroll-snap-type: x mandatory;
   touch-action: pan-x;
-  scrollbar-width: none;
 }
 .mobileWrapper::-webkit-scrollbar { display: none; }
-
-.mobileSlide {
+.mobileWrapper > * {
   flex: 0 0 calc(100% / 1.5);
   scroll-snap-align: start;
-  display: flex;
-  align-items: stretch;
-  touch-action: manipulation;
 }
