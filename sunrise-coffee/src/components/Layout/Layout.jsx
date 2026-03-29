@@ -7,9 +7,12 @@ import Footer from './Footer';
 export default function Layout() {
   return (
     <>
+      <a href="#main-content" className="sr-only">Vai al contenuto principale</a>
       <ShippingBar />
       <Header />
-      <Outlet />
+      <main id="main-content">
+        <Outlet />
+      </main>
       <Newsletter />
       <Footer />
     </>

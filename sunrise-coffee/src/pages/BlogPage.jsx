@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useBlogPosts } from '../hooks/useBlogPosts';
+import { useSEO } from '../hooks/useSEO';
 import styles from './BlogPage.module.css';
 
 const POSTS_FALLBACK = [
@@ -33,7 +34,20 @@ function formatDate(dateStr) {
   });
 }
 
+const BLOG_JSON_LD = {
+  '@type': 'Blog',
+  name: 'Blog — Capperificio di Racale',
+  description: 'Storie, ricette e guide dal mondo dei capperi di Racale.',
+};
+
 export default function BlogPage() {
+  useSEO({
+    title: 'Blog — Storie e Ricette',
+    description: 'Storie, ricette e guide sul mondo dei capperi di Racale. Scopri come utilizzare e conservare i capperi artigianali dal Salento.',
+    path: '/blog',
+    jsonLd: BLOG_JSON_LD,
+  });
+
   const { posts: apiPosts, loading } = useBlogPosts({ limit: 20 });
   const posts = !loading && apiPosts.length > 0 ? apiPosts : POSTS_FALLBACK;
 
@@ -55,7 +69,7 @@ export default function BlogPage() {
           <div key={post.slug || post.title} className={styles.card}>
             <div className={styles.img}>
               {post.image ? (
-                <img src={post.image} alt={post.title} className={styles.postImg} />
+                <img src={post.image} alt={post.title} className={styles.postImg} loading="lazy" />
               ) : (
                 <div className={styles.imgPlaceholder} />
               )}

@@ -340,7 +340,7 @@ def setup_shipping(r_avail, r_it_lt50, r_it_gte50, r_eu):
 
 
 # ── STEP 5: Sales Channel ─────────────────────────────────────────────────────
-def setup_sales_channel(method_id):
+def setup_sales_channel(method_id, it_id=None, eu_ids=None):
     _step(5, 'Associazione al canale di vendita')
 
     channels = api('GET', '/sales-channel', params='?limit=10')
@@ -370,6 +370,16 @@ def setup_sales_channel(method_id):
         _warn(f'Set default shipping: {r2.get("msg", "")[:150]}')
     else:
         _ok('Impostato come metodo spedizione default')
+
+    # Associa i paesi IT + EU al Sales Channel (necessario per Store API /country)
+    if it_id and eu_ids is not None:
+        country_ids = [it_id] + eu_ids
+        added = 0
+        for cid in country_ids:
+            r3 = api('POST', f'/sales-channel/{channel_id}/countries', {'id': cid})
+            if 'error' not in r3 or r3.get('error') == 409:
+                added += 1
+        _ok(f'Paesi associati al Sales Channel: {added}/{len(country_ids)}')
 
     return channel_id
 
@@ -531,7 +541,7 @@ def main():
         sys.exit(1)
     method_id, eur_id = result
 
-    channel_id = setup_sales_channel(method_id)
+    channel_id = setup_sales_channel(method_id, it_id=it_id, eu_ids=eu_ids)
     if not channel_id:
         _fail('Sales channel non trovato')
         sys.exit(1)

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useCartContext } from '../context/ShopwareContext';
+import { useSEO } from '../hooks/useSEO';
 import { formatPrice } from '../lib/utils/price';
 import { getProductImage, proxyUrl } from '../lib/utils/image';
 
@@ -10,6 +11,8 @@ function getVariantLabel(item) {
 }
 
 export default function CartPage() {
+  useSEO({ title: 'Carrello', path: '/cart', noindex: true });
+
   const { cart, loading, error, updateQuantity, removeItem, mergeUpdate, removeItems, clearCart, itemCount, positionPrice } = useCartContext();
 
   if (loading && !cart) {

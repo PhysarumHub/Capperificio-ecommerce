@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useCustomerContext } from '../context/ShopwareContext';
 import { getOrders, submitReview } from '../lib/api/customer';
+import { useSEO } from '../hooks/useSEO';
 import { formatPrice } from '../lib/utils/price';
 import { proxyUrl } from '../lib/utils/image';
 
 export default function AccountPage() {
+  useSEO({ title: 'Il mio Account', path: '/account', noindex: true });
+
   const { isLoggedIn, loading, logout, customer } = useCustomerContext();
   if (loading) return null;
   if (!isLoggedIn) return <Navigate to="/" replace />;

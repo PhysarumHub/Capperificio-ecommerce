@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCustomerContext } from '../context/ShopwareContext';
+import { useSEO } from '../hooks/useSEO';
 import { useProducts } from '../hooks/useProducts';
 import ProductCard from '../components/ProductCard/ProductCard';
 import ShopFilter from '../components/ShopFilter/ShopFilter';
@@ -45,6 +46,13 @@ function mapB2BProduct(p) {
 ══════════════════════════════════════════════════════════════════════ */
 
 export default function B2BPage() {
+  useSEO({
+    title: 'Area B2B — Per Professionisti',
+    description: 'Prezzi netti dedicati, formati industriali e ordini flessibili per ristoratori, grossisti e rivenditori di capperi artigianali.',
+    path: '/b2b',
+    noindex: true,
+  });
+
   const { customer, isLoggedIn, loading } = useCustomerContext();
 
   if (loading) return null;

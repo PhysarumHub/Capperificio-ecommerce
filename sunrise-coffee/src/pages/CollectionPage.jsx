@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useState, useMemo } from 'react';
+import { useSEO } from '../hooks/useSEO';
 
 const B2B_CATEGORY_ID = import.meta.env.VITE_B2B_CATEGORY_ID || null;
 import ProductCard from '../components/ProductCard/ProductCard';
@@ -269,6 +270,25 @@ export default function CollectionPage() {
   const { slug }          = useParams();
   const collection        = COLLECTIONS[slug] || COLLECTIONS.all;
   const collectionSlug    = COLLECTIONS[slug] ? slug : 'all';
+
+  const collectionJsonLd = useMemo(() => ({
+    '@type': 'CollectionPage',
+    name: collection.title,
+    description: collection.description,
+  }), [collection.title, collection.description]);
+
+  const collectionBreadcrumbs = useMemo(() => [
+    { name: 'Home', path: '/' },
+    { name: collection.title, path: `/collections/${collectionSlug}` },
+  ], [collection.title, collectionSlug]);
+
+  useSEO({
+    title: collection.title,
+    description: collection.description,
+    path: `/collections/${collectionSlug}`,
+    jsonLd: collectionJsonLd,
+    breadcrumbs: collectionBreadcrumbs,
+  });
 
   const [sort, setSort]         = useState('featured');
   const [filters, setFilters]   = useState(EMPTY_FILTERS);

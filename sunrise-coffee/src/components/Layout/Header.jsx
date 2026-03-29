@@ -56,7 +56,7 @@ export default function Header() {
   return (
     <>
       <header className={styles.header}>
-        <nav className={styles.navLeft}>
+        <nav className={styles.navLeft} aria-label="Menu principale">
           <button
             className={styles.shopTrigger}
             onClick={menuOpen ? closeMenu : openMenu}
@@ -75,7 +75,7 @@ export default function Header() {
           </Link>
         </div>
 
-        <nav className={styles.navRight}>
+        <nav className={styles.navRight} aria-label="Account e carrello">
           {isLoggedIn ? (
             <Link to="/account" className={styles.navLink}>Account</Link>
           ) : (

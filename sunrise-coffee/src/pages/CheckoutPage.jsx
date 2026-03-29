@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCartContext, useCustomerContext } from '../context/ShopwareContext';
 import { getShippingMethods, getPaymentMethods, updateContext, placeOrder } from '../lib/api/checkout';
 import { getCountries, getSalutations, register } from '../lib/api/customer';
+import { useSEO } from '../hooks/useSEO';
 import { formatPrice } from '../lib/utils/price';
 import { isShopwareConfigured } from '../lib/shopware-client';
 import { loadStripe } from '@stripe/stripe-js';
@@ -298,6 +299,8 @@ function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, s
 
 // ── Checkout principale ────────────────────────────────────────────
 export default function CheckoutPage() {
+  useSEO({ title: 'Checkout', path: '/checkout', noindex: true });
+
   const isMobile = useIsMobile();
   const { cart, itemCount, totalPrice, positionPrice, fetchCart } = useCartContext();
   const { isLoggedIn, customer, isB2B } = useCustomerContext();

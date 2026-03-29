@@ -9,7 +9,7 @@ export default function Hero({ image, alt = 'Hero' }) {
 
   return (
     <section className={styles.hero}>
-      {image && <img src={image} alt={alt} className={styles.heroImg} />}
+      {image && <img src={image} alt={alt} className={styles.heroImg} fetchPriority="high" />}
       <div className={styles.marquee}>
         <div className={styles.track}>{marqueeItems}</div>
       </div>

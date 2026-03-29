@@ -9,6 +9,7 @@ import GuidesEditorial from '../components/GuidesEditorial/GuidesEditorial';
 import StorySlider from '../components/StorySlider/StorySlider';
 import BlogGrid from '../components/BlogGrid/BlogGrid';
 import { useProducts } from '../hooks/useProducts';
+import { useSEO } from '../hooks/useSEO';
 import { formatPrice } from '../lib/utils/price';
 import { getProductImage, getProductSlug } from '../lib/utils/image';
 import styles from './HomePage.module.css';
@@ -107,7 +108,20 @@ function mapShopwareProduct(product) {
   };
 }
 
+const HOME_JSON_LD = {
+  '@type': 'WebPage',
+  name: 'Capperificio di Racale — Home',
+  description: 'E-commerce di capperi artigianali dal Salento.',
+};
+
 export default function HomePage() {
+  useSEO({
+    title: 'Capperi Artigianali dal Salento',
+    description: 'Scopri i capperi, cucunci e foglie di Racale: prodotti artigianali dal Salento, raccolti a mano e conservati secondo tradizione. Tre generazioni di qualità.',
+    path: '/',
+    jsonLd: HOME_JSON_LD,
+  });
+
   // Fetch more products to account for B2B ones being filtered out client-side
   const { products: rawProducts, loading, error } = useProducts({ limit: 24 });
 

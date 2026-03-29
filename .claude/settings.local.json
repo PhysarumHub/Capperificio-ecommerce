@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -r \"getProductVariants\\\\|getProductImage\\\\|getProductSlug\" '/c/Users/Riccardo/OneDrive/Desktop/Capperificio ecommerce/sunrise-coffee/src/lib' --include=*.js --include=*.jsx)",
+      "Read(//c/Users/Riccardo/.ssh/**)",
+      "Bash(find 'c:\\\\Users\\\\Riccardo\\\\OneDrive\\\\Desktop\\\\Capperificio ecommerce\\\\sunrise-coffee\\\\src' -name ProductSlider* -o -name *Slider*)",
+      "Bash(grep -r \"#[0-9A-Fa-f]\\\\{3,6\\\\}\" \"c:\\\\Users\\\\Riccardo\\\\OneDrive\\\\Desktop\\\\Capperificio ecommerce\\\\sunrise-coffee\\\\src\" --include=\"*.css\")",
+      "Bash(grep -n \"#[0-9A-Fa-f]\\\\{3,6\\\\}\" \"c:\\\\Users\\\\Riccardo\\\\OneDrive\\\\Desktop\\\\Capperificio ecommerce\\\\sunrise-coffee\\\\src/components/BlogGrid/BlogGrid.module.css\")",
+      "Bash(grep -E '\\\\$\\\\{.*\\\\}' \"c:\\\\Users\\\\Riccardo\\\\OneDrive\\\\Desktop\\\\Capperificio ecommerce\\\\sunrise-coffee\\\\docker-compose.yml\")",
+      "Bash(grep -E \"\\\\.\\(jsx?|tsx?\\)$\")",
+      "Bash(grep -r \"blog\\\\|article\\\\|Article\" '/c/Users/Riccardo/OneDrive/Desktop/Capperificio ecommerce/sunrise-coffee/src/pages' --include=*.jsx --include=*.js)"
+    ]
+  }
+}

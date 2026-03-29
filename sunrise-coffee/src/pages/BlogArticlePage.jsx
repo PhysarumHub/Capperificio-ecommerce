@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useBlogPost } from '../hooks/useBlogPost';
+import { useSEO } from '../hooks/useSEO';
 import styles from './BlogArticlePage.module.css';
 
 function renderBlocks(blocks) {
@@ -67,6 +69,28 @@ export default function BlogArticlePage() {
   const { slug } = useParams();
   const { post, loading, error } = useBlogPost(slug);
 
+  const jsonLd = useMemo(() => {
+    if (!post) return null;
+    return {
+      '@type': 'Article',
+      headline: post.title,
+      description: post.excerpt || '',
+      image: post.image || undefined,
+      datePublished: post.date || undefined,
+      author: { '@type': 'Organization', name: 'Capperificio di Racale' },
+      publisher: { '@type': 'Organization', name: 'Capperificio di Racale' },
+    };
+  }, [post]);
+
+  useSEO({
+    title: post?.title || 'Articolo',
+    description: post?.excerpt || 'Leggi questo articolo dal blog del Capperificio di Racale.',
+    path: `/blog/${slug}`,
+    image: post?.image,
+    type: 'article',
+    jsonLd,
+  });
+
   if (loading) {
     return (
       <div className={styles.loading}>
@@ -104,7 +128,7 @@ export default function BlogArticlePage() {
 
         {post.image && (
           <div className={styles.coverWrap}>
-            <img src={post.image} alt={post.title} className={styles.cover} />
+            <img src={post.image} alt={post.title} className={styles.cover} loading="lazy" />
           </div>
         )}
 
