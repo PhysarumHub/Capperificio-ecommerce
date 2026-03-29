@@ -262,13 +262,7 @@ function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, s
           {isB2B ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {row('Totale imponibile', formatPrice(netPrice))}
-              {calculatedTaxes.map((t) => (
-                <div key={t.taxRate} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: 'var(--color-dark)' }}>
-                  <span>IVA {t.taxRate}%</span>
-                  <span>{formatPrice(t.tax)}</span>
-                </div>
-              ))}
-              {calculatedTaxes.length === 0 && row(`IVA`, formatPrice(totalTax))}
+              {row('IVA', formatPrice(totalTax))}
               <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '4px 0' }} />
               {row('Totale IVA inclusa', formatPrice(totalPrice), { bold: true, large: true, accent: true })}
             </div>
