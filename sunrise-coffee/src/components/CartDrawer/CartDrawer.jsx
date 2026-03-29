@@ -30,8 +30,10 @@ export default function CartDrawer({ open, onClose }) {
   }, [onClose]);
 
   const rawItems = (cart?.lineItems || []).filter((item) => item.type === 'product');
-  const totalTax = rawItems.reduce((sum, item) =>
-    sum + (item.price?.calculatedTaxes ?? []).reduce((s, t) => s + (t.tax ?? 0), 0), 0);
+  const allTax = (cart?.price?.calculatedTaxes ?? []).reduce((s, t) => s + (t.tax ?? 0), 0);
+  const shippingTax = (cart?.deliveries ?? []).reduce((sum, d) =>
+    sum + (d.shippingCosts?.calculatedTaxes ?? []).reduce((s, t) => s + (t.tax ?? 0), 0), 0);
+  const totalTax = allTax - shippingTax;
 
   const groupedMap = {};
   rawItems.forEach((item) => {
