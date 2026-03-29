@@ -168,13 +168,7 @@ export default function CartDrawer({ open, onClose }) {
               <span>Subtotale</span>
               <span className={styles.subtotalPrice}>{formatPrice(positionPrice)}</span>
             </div>
-            {isB2B && totalTax > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--color-mid)', marginTop: -4 }}>
-                <span>di cui IVA</span>
-                <span>{formatPrice(totalTax)}</span>
-              </div>
-            )}
-            <p className={styles.taxNote}>Spedizione calcolata al checkout</p>
+            <p className={styles.taxNote}>IVA · Spedizione calcolata al checkout</p>
             <Link to="/checkout" className={styles.checkoutBtn} onClick={onClose}>
               Checkout →
             </Link>
