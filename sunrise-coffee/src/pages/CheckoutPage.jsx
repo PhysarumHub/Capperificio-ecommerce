@@ -301,7 +301,7 @@ function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, s
 export default function CheckoutPage() {
   const isMobile = useIsMobile();
   const { cart, itemCount, totalPrice, positionPrice, fetchCart } = useCartContext();
-  const { isLoggedIn, customer } = useCustomerContext();
+  const { isLoggedIn, customer, isB2B } = useCustomerContext();
 
   const [step, setStep] = useState(isLoggedIn ? 1 : 0);
   const [shippingMethods, setShippingMethods] = useState([]);
@@ -529,7 +529,7 @@ export default function CheckoutPage() {
         <div style={{ marginBottom: 28 }}>
           <OrderSummary
             cart={cart} totalPrice={totalPrice} positionPrice={positionPrice}
-            isB2B={customer?.group?.name === B2B_GROUP_NAME}
+            isB2B={isB2B}
             address={address} step={step}
             selectedCountryName={selectedCountryName}
             placing={placing} isMobile={isMobile}
@@ -785,7 +785,7 @@ export default function CheckoutPage() {
         {!isMobile && (
           <OrderSummary
             cart={cart} totalPrice={totalPrice} positionPrice={positionPrice}
-            isB2B={customer?.group?.name === B2B_GROUP_NAME}
+            isB2B={isB2B}
             address={address} step={step}
             selectedCountryName={selectedCountryName} orderError={orderError}
             placing={placing} onPlaceOrder={handlePlaceOrder} isMobile={false}

@@ -1,7 +1,9 @@
-import { createContext, useContext, useEffect } from 'react';
+import { createContext, useContext, useEffect, useMemo } from 'react';
 import { useCart } from '../hooks/useCart';
 import { useCustomer } from '../hooks/useCustomer';
 import { isShopwareConfigured } from '../lib/shopware-client';
+
+const B2B_GROUP_NAME = import.meta.env.VITE_B2B_GROUP_NAME || 'B2B';
 
 const CartContext = createContext(null);
 const CustomerContext = createContext(null);
@@ -21,6 +23,7 @@ export function useCustomerContext() {
 export default function ShopwareProvider({ children }) {
   const cartState = useCart();
   const customerState = useCustomer();
+  const isB2B = customerState.customer?.group?.name === B2B_GROUP_NAME;
 
   // Initialize cart and customer session on mount
   useEffect(() => {
@@ -30,7 +33,7 @@ export default function ShopwareProvider({ children }) {
   }, []);
 
   return (
-    <CustomerContext.Provider value={customerState}>
+    <CustomerContext.Provider value={{ ...customerState, isB2B }}>
       <CartContext.Provider value={cartState}>
         {children}
       </CartContext.Provider>

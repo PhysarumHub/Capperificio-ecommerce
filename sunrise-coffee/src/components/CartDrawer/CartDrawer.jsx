@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useCartContext } from '../../context/ShopwareContext';
+import { useCartContext, useCustomerContext } from '../../context/ShopwareContext';
 import { formatPrice } from '../../lib/utils/price';
 import { getProductImage, proxyUrl } from '../../lib/utils/image';
 import styles from './CartDrawer.module.css';
@@ -15,6 +15,10 @@ function getVariantLabel(item) {
 
 export default function CartDrawer({ open, onClose }) {
   const { cart, loading, updateQuantity, removeItem, optimisticMerge, mergeUpdate, removeItems, itemCount, totalPrice, positionPrice } = useCartContext();
+  const { isB2B } = useCustomerContext();
+  const netPrice = cart?.price?.netPrice ?? 0;
+  const totalTax = (cart?.price?.calculatedTaxes ?? []).reduce((s, t) => s + (t.tax ?? 0), 0);
+  const displayTotal = isB2B ? netPrice : positionPrice;
 
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden';
@@ -137,7 +141,7 @@ export default function CartDrawer({ open, onClose }) {
                   {getVariantLabel(item) && (
                     <span className={styles.itemVariant}>{getVariantLabel(item)}</span>
                   )}
-                  <span className={styles.itemPrice}>{formatPrice(item.price?.unitPrice)}</span>
+                  <span className={styles.itemPrice}>{formatPrice(isB2B ? item.price?.unitPrice / (1 + (item.price?.taxRules?.[0]?.taxRate ?? 22) / 100) : item.price?.unitPrice)}</span>
                   <div className={styles.itemQty}>
                     <button
                       className={styles.qtyBtn}
@@ -153,7 +157,7 @@ export default function CartDrawer({ open, onClose }) {
                     Rimuovi
                   </button>
                 </div>
-                <span className={styles.itemTotal}>{formatPrice(item._totalPrice)}</span>
+                <span className={styles.itemTotal}>{formatPrice(isB2B ? item.price?.netPrice * item.quantity : item._totalPrice)}</span>
               </div>
             ))
           )}
@@ -163,10 +167,16 @@ export default function CartDrawer({ open, onClose }) {
         {lineItems.length > 0 && (
           <div className={styles.footer}>
             <div className={styles.subtotal}>
-              <span>Subtotale</span>
-              <span className={styles.subtotalPrice}>{formatPrice(positionPrice)}</span>
+              <span>{isB2B ? 'Subtotale (netto)' : 'Subtotale'}</span>
+              <span className={styles.subtotalPrice}>{formatPrice(displayTotal)}</span>
             </div>
-            <p className={styles.taxNote}>Tasse e spedizione calcolate al checkout</p>
+            {isB2B && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--color-mid)', marginTop: -6 }}>
+                <span>IVA</span>
+                <span>{formatPrice(totalTax)}</span>
+              </div>
+            )}
+            <p className={styles.taxNote}>{isB2B ? 'Prezzi IVA esclusa · spedizione calcolata al checkout' : 'Tasse e spedizione calcolate al checkout'}</p>
             <Link to="/checkout" className={styles.checkoutBtn} onClick={onClose}>
               Checkout →
             </Link>
