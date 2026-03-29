@@ -73,9 +73,9 @@ function StepBar({ step, isMobile }) {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, minWidth: isMobile ? 44 : 60 }}>
               <div style={{
                 width: isMobile ? 28 : 36, height: isMobile ? 28 : 36, borderRadius: '50%',
-                background: done ? '#2C4A2C' : active ? '#3A6B35' : '#FCF3DF',
-                border: done || active ? 'none' : '1.5px solid #3A6B35',
-                color: done || active ? '#fff' : '#3A6B35',
+                background: done ? 'var(--color-dark)' : active ? 'var(--color-red)' : 'var(--color-light)',
+                border: done || active ? 'none' : '1.5px solid var(--color-red)',
+                color: done || active ? '#fff' : 'var(--color-red)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: done ? 13 : 12, fontWeight: 700, transition: 'all .3s',
               }}>
@@ -84,7 +84,7 @@ function StepBar({ step, isMobile }) {
               {!isMobile && (
                 <span style={{
                   fontSize: 10, fontWeight: active ? 700 : 400,
-                  color: active ? '#3A6B35' : done ? '#2C4A2C' : '#6B8A6B',
+                  color: active ? 'var(--color-red)' : done ? 'var(--color-dark)' : 'var(--color-mid)',
                   letterSpacing: '.04em', textTransform: 'uppercase',
                 }}>
                   {label}
@@ -94,7 +94,7 @@ function StepBar({ step, isMobile }) {
             {i < steps.length - 1 && (
               <div style={{
                 flex: 1, height: 2,
-                background: done ? '#2C4A2C' : 'rgba(84, 112, 84, 0.22)',
+                background: done ? 'var(--color-dark)' : 'var(--color-border)',
                 margin: isMobile ? '0 6px' : '0 8px',
                 marginBottom: isMobile ? 0 : 20,
                 transition: 'background .3s',
@@ -113,7 +113,7 @@ function Field({ label, error, children, full, required }) {
     <div data-error={error ? 'true' : undefined} style={{ gridColumn: full ? '1 / -1' : undefined }}>
       <label style={{
         display: 'block', fontSize: 11, fontWeight: 600,
-        color: error ? 'var(--color-red)' : '#777',
+        color: error ? 'var(--color-red)' : 'var(--color-mid)',
         marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em',
       }}>
         {label}{required && <span style={{ color: 'var(--color-red)', marginLeft: 2 }}>*</span>}
@@ -130,16 +130,16 @@ function Field({ label, error, children, full, required }) {
 
 const inputStyle = (hasError, _isMobile) => ({
   width: '100%',
-  padding: '11px 0',
-  border: 'none',
-  borderBottom: `1.5px solid ${hasError ? 'var(--color-red)' : '#3A6B35'}`,
-  borderRadius: 0,
-  background: 'var(--color-light)',
-  fontSize: 16,
+  padding: '12px 14px',
+  border: `1.5px solid ${hasError ? 'var(--color-red)' : 'var(--color-border)'}`,
+  borderRadius: 8,
+  background: '#fff',
+  fontSize: 15,
   boxSizing: 'border-box',
   fontFamily: 'var(--font-sans)',
+  color: 'var(--color-dark)',
   outline: 'none',
-  transition: 'border-bottom-color .2s',
+  transition: 'border-color .2s',
   WebkitAppearance: 'none',
 });
 
@@ -149,9 +149,9 @@ function MethodCard({ method, selected, onSelect, name, isMobile }) {
     <label style={{
       display: 'flex', alignItems: 'center', gap: 14,
       padding: isMobile ? '16px 14px' : '14px 18px',
-      border: `1.5px solid ${selected ? '#3A6B35' : 'var(--color-border)'}`,
+      border: `1.5px solid ${selected ? 'var(--color-red)' : 'var(--color-border)'}`,
       borderRadius: 10, cursor: 'pointer',
-      background: selected ? 'rgba(58,107,53,0.06)' : '#fff',
+      background: selected ? 'var(--color-cream)' : '#fff',
       transition: 'all .2s',
     }}>
       <input
@@ -160,9 +160,9 @@ function MethodCard({ method, selected, onSelect, name, isMobile }) {
         style={{ accentColor: 'var(--color-red)', width: 18, height: 18, flexShrink: 0 }}
       />
       <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 600, fontSize: 14 }}>{method.translated?.name || method.name}</div>
+        <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-dark)' }}>{method.translated?.name || method.name}</div>
         {method.translated?.description && (
-          <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>{method.translated.description}</div>
+          <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 2 }}>{method.translated.description}</div>
         )}
       </div>
     </label>
@@ -312,6 +312,9 @@ export default function CheckoutPage() {
   const [orderError, setOrderError] = useState(null);
   const [orderNumber, setOrderNumber] = useState(null);
   const [countrySearch, setCountrySearch] = useState('');
+  const [addrQuery, setAddrQuery] = useState('');
+  const [addrSuggestions, setAddrSuggestions] = useState([]);
+  const [addrLoading, setAddrLoading] = useState(false);
   const [paymentTab, setPaymentTab] = useState('stripe'); // 'stripe' | 'paypal'
   const [stripePaymentMethodId, setStripePaymentMethodId] = useState('');
   const [paypalPaymentMethodId, setPaypalPaymentMethodId] = useState('');
@@ -363,6 +366,47 @@ export default function CheckoutPage() {
       .catch(() => setOrderError('Impossibile inizializzare il pagamento con carta. Riprova o usa PayPal.'))
       .finally(() => setStripeLoading(false));
   }, [step, paymentTab, stripeClientSecret, totalPrice]);
+
+  // Ricerca indirizzo con Nominatim (OpenStreetMap, gratuito)
+  useEffect(() => {
+    if (addrQuery.length < 4) { setAddrSuggestions([]); return; }
+    const timer = setTimeout(async () => {
+      setAddrLoading(true);
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addrQuery)}&format=json&addressdetails=1&limit=6`,
+          { headers: { 'Accept-Language': 'it' } }
+        );
+        const data = await res.json();
+        setAddrSuggestions(data);
+      } catch {
+        setAddrSuggestions([]);
+      } finally {
+        setAddrLoading(false);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [addrQuery]);
+
+  const applyAddrSuggestion = (result) => {
+    const a = result.address || {};
+    const road = a.road || a.pedestrian || a.footway || '';
+    const num = a.house_number || '';
+    const street = road && num ? `${road}, ${num}` : road;
+    const city = a.city || a.town || a.village || a.municipality || a.county || '';
+    const zipcode = a.postcode || '';
+    const countryIso = (a.country_code || '').toUpperCase();
+    setAddress((p) => ({
+      ...p,
+      ...(street && { street }),
+      ...(city && { city }),
+      ...(zipcode && { zipcode }),
+      ...(countryIso && { countryIso }),
+    }));
+    setTouched((p) => ({ ...p, street: true, city: true, zipcode: true }));
+    setAddrQuery('');
+    setAddrSuggestions([]);
+  };
 
   const setField = (key) => (e) => {
     setAddress((p) => ({ ...p, [key]: e.target.value }));
@@ -488,12 +532,12 @@ export default function CheckoutPage() {
   // ── Ordine confermato ──────────────────────────────────────────
   if (orderNumber) return (
     <div style={{ padding: isMobile ? '60px 24px' : '80px 40px', textAlign: 'center', maxWidth: 520, margin: '0 auto' }}>
-      <div style={{ fontSize: 56, color: '#2C8843', marginBottom: 16 }}>✓</div>
+      <div style={{ fontSize: 56, color: 'var(--color-red)', marginBottom: 16 }}>✓</div>
       <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: isMobile ? 'var(--text-3xl)' : 'var(--text-4xl)', marginBottom: 12 }}>
         Ordine confermato!
       </h1>
-      <p style={{ color: '#888', fontSize: 15, marginBottom: 6 }}>Ordine #{orderNumber}</p>
-      <p style={{ color: '#888', fontSize: 14, marginBottom: 36, lineHeight: 1.6 }}>
+      <p style={{ color: 'var(--color-mid)', fontSize: 15, marginBottom: 6 }}>Ordine #{orderNumber}</p>
+      <p style={{ color: 'var(--color-mid)', fontSize: 14, marginBottom: 36, lineHeight: 1.6 }}>
         Grazie per il tuo acquisto. Riceverai una email di conferma a breve.
       </p>
       <Link to="/" style={{
@@ -509,7 +553,7 @@ export default function CheckoutPage() {
   if (!itemCount) return (
     <div style={{ padding: '80px 24px', textAlign: 'center' }}>
       <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-4xl)', marginBottom: 16 }}>Checkout</h1>
-      <p style={{ color: '#888', marginBottom: 24 }}>Il carrello è vuoto.</p>
+      <p style={{ color: 'var(--color-mid)', marginBottom: 24 }}>Il carrello è vuoto.</p>
       <Link to="/collections/all" style={{ color: 'var(--color-red)', textDecoration: 'underline' }}>Vai allo shop</Link>
     </div>
   );
@@ -550,10 +594,14 @@ export default function CheckoutPage() {
 
           {/* STEP 0: Contatti */}
           {step === 0 && (
-            <div>
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 20, marginTop: 0 }}>
+            <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '32px 28px' }}>
+              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 6, marginTop: 0, color: 'var(--color-dark)' }}>
                 Informazioni di contatto
               </h2>
+              <p style={{ fontSize: 13, color: 'var(--color-mid)', marginBottom: 24, marginTop: 0 }}>
+                Hai già un account?{' '}
+                <Link to="/account/login" style={{ color: 'var(--color-red)', fontWeight: 600 }}>Accedi</Link>
+              </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <Field label="Email" error={err('email')} required>
                   <input
@@ -562,10 +610,6 @@ export default function CheckoutPage() {
                     placeholder="mario@esempio.it" style={is('email')}
                   />
                 </Field>
-                <p style={{ fontSize: 13, color: '#aaa' }}>
-                  Hai già un account?{' '}
-                  <Link to="/account/login" style={{ color: 'var(--color-red)' }}>Accedi</Link>
-                </p>
               </div>
               <style>{`@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}`}</style>
               <button onClick={goNext} style={{ ...primaryBtn(isMobile), animation: shake ? 'shake 0.5s ease' : 'none' }}>Continua →</button>
@@ -575,10 +619,61 @@ export default function CheckoutPage() {
 
           {/* STEP 1: Indirizzo */}
           {step === 1 && (
-            <div>
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 20, marginTop: 0 }}>
+            <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '32px 28px' }}>
+              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 6, marginTop: 0, color: 'var(--color-dark)' }}>
                 Indirizzo di spedizione
               </h2>
+              <p style={{ fontSize: 13, color: 'var(--color-mid)', marginBottom: 20, marginTop: 0 }}>
+                Cerca il tuo indirizzo o compilalo manualmente
+              </p>
+
+              {/* Ricerca indirizzo automatica */}
+              <div style={{ position: 'relative', marginBottom: 24 }}>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    value={addrQuery}
+                    onChange={(e) => setAddrQuery(e.target.value)}
+                    placeholder="🔍  Cerca indirizzo… (es. Via Roma 1, Milano)"
+                    style={{ ...inputStyle(false, isMobile), background: 'var(--color-cream)', fontWeight: addrQuery ? 400 : 400 }}
+                  />
+                  {addrLoading && (
+                    <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--color-mid)' }}>⏳</span>
+                  )}
+                </div>
+                {addrSuggestions.length > 0 && (
+                  <div style={{
+                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 300,
+                    background: '#fff', border: '1.5px solid var(--color-border)', borderRadius: 10,
+                    maxHeight: 220, overflowY: 'auto',
+                    boxShadow: '0 8px 28px rgba(0,0,0,.13)',
+                    marginTop: 4,
+                  }}>
+                    {addrSuggestions.map((s, i) => (
+                      <div
+                        key={i}
+                        onMouseDown={() => applyAddrSuggestion(s)}
+                        style={{
+                          padding: '12px 16px', cursor: 'pointer', fontSize: 14,
+                          borderBottom: i < addrSuggestions.length - 1 ? '1px solid var(--color-border)' : 'none',
+                          color: 'var(--color-dark)', lineHeight: 1.4,
+                          transition: 'background .15s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-cream)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
+                      >
+                        <div style={{ fontWeight: 500 }}>
+                          {[s.address?.road, s.address?.house_number].filter(Boolean).join(', ') || s.display_name.split(',')[0]}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 2 }}>
+                          {[s.address?.postcode, s.address?.city || s.address?.town || s.address?.village, s.address?.country].filter(Boolean).join(' · ')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
                 <Field label="Nome" error={err('firstName')} required>
                   <input autoComplete="given-name" value={address.firstName} onChange={setField('firstName')} onBlur={blur('firstName')} style={is('firstName')} />
@@ -608,7 +703,7 @@ export default function CheckoutPage() {
                       onBlur={() => setTimeout(() => setCountrySearch(''), 200)}
                       style={{ ...inputStyle(false, isMobile), paddingRight: 24 }}
                     />
-                    <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#aaa', fontSize: 12 }}>▾</span>
+                    <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--color-mid)', fontSize: 14 }}>▾</span>
                     {countrySearch !== '' && (
                       <div style={{
                         position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200,
@@ -617,14 +712,14 @@ export default function CheckoutPage() {
                         boxShadow: '0 8px 24px rgba(0,0,0,.12)',
                       }}>
                         {countryList.length === 0
-                          ? <div style={{ padding: '12px 14px', color: '#aaa', fontSize: 14 }}>Nessun paese trovato</div>
+                          ? <div style={{ padding: '12px 14px', color: 'var(--color-mid)', fontSize: 14 }}>Nessun paese trovato</div>
                           : countryList.map((c) => (
                             <div
                               key={c.iso}
                               onMouseDown={() => { setAddress((p) => ({ ...p, countryIso: c.iso })); setCountrySearch(''); }}
                               style={{
                                 padding: '12px 14px', cursor: 'pointer', fontSize: 15,
-                                background: c.iso === address.countryIso ? 'rgba(58,107,53,0.06)' : '#fff',
+                                background: c.iso === address.countryIso ? 'var(--color-cream)' : '#fff',
                                 fontWeight: c.iso === address.countryIso ? 600 : 400,
                                 borderBottom: '1px solid var(--color-border)',
                                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -660,17 +755,17 @@ export default function CheckoutPage() {
 
           {/* STEP 2: Spedizione & Pagamento */}
           {step === 2 && (
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {loadingMethods ? (
-                <div style={{ color: '#aaa', padding: '40px 0', textAlign: 'center' }}>
+                <div style={{ color: 'var(--color-mid)', padding: '40px 0', textAlign: 'center', background: '#fff', border: '1px solid var(--color-border)', borderRadius: 14 }}>
                   <div style={{ fontSize: 28, marginBottom: 12 }}>⏳</div>
                   Caricamento metodi...
                 </div>
               ) : (
                 <>
                   {shippingMethods.length > 0 && (
-                    <div style={{ marginBottom: 32 }}>
-                      <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 14, marginTop: 0 }}>
+                    <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '28px 28px' }}>
+                      <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 14, marginTop: 0, color: 'var(--color-dark)' }}>
                         Spedizione
                       </h2>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -681,8 +776,8 @@ export default function CheckoutPage() {
                     </div>
                   )}
                   {/* ── Pagamento ──────────────────────────── */}
-                  <div style={{ marginBottom: 32 }}>
-                    <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 14, marginTop: 0 }}>
+                  <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '28px 28px' }}>
+                    <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 14, marginTop: 0, color: 'var(--color-dark)' }}>
                       Pagamento
                     </h2>
 
@@ -696,11 +791,11 @@ export default function CheckoutPage() {
                           key={key}
                           onClick={() => setPaymentTab(key)}
                           style={{
-                            flex: 1, padding: '10px 0', border: `1.5px solid ${paymentTab === key ? '#3A6B35' : 'var(--color-border)'}`,
-                            borderRadius: 8, background: paymentTab === key ? 'rgba(58,107,53,0.06)' : '#fff',
+                            flex: 1, padding: '12px 0', border: `1.5px solid ${paymentTab === key ? 'var(--color-red)' : 'var(--color-border)'}`,
+                            borderRadius: 8, background: paymentTab === key ? 'var(--color-cream)' : '#fff',
                             fontWeight: paymentTab === key ? 700 : 400, fontSize: 14,
                             cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                            color: paymentTab === key ? '#3A6B35' : '#444',
+                            color: paymentTab === key ? 'var(--color-dark)' : 'var(--color-mid)',
                             transition: 'all .2s',
                           }}
                         >
@@ -712,9 +807,43 @@ export default function CheckoutPage() {
                     {/* Stripe Elements */}
                     {paymentTab === 'stripe' && (
                       stripeLoading || !stripeClientSecret
-                        ? <div style={{ textAlign: 'center', padding: '32px 0', color: '#aaa' }}>⏳ Caricamento pagamento...</div>
+                        ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--color-mid)' }}>⏳ Caricamento pagamento...</div>
                         : stripePromise && (
-                          <Elements stripe={stripePromise} options={{ clientSecret: stripeClientSecret, locale: 'it' }}>
+                          <Elements stripe={stripePromise} options={{
+                            clientSecret: stripeClientSecret,
+                            locale: 'it',
+                            appearance: {
+                              theme: 'stripe',
+                              variables: {
+                                colorPrimary: '#547054',
+                                colorBackground: '#ffffff',
+                                colorText: '#2C4A2C',
+                                colorDanger: '#547054',
+                                fontFamily: 'system-ui, -apple-system, sans-serif',
+                                borderRadius: '8px',
+                                spacingUnit: '4px',
+                              },
+                              rules: {
+                                '.Input': {
+                                  border: '1.5px solid rgba(84,112,84,0.22)',
+                                  boxShadow: 'none',
+                                  padding: '12px 14px',
+                                },
+                                '.Input:focus': {
+                                  border: '1.5px solid #547054',
+                                  boxShadow: 'none',
+                                  outline: 'none',
+                                },
+                                '.Label': {
+                                  fontSize: '11px',
+                                  fontWeight: '600',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.06em',
+                                  color: '#6B8A6B',
+                                },
+                              },
+                            },
+                          }}>
                             <StripePaymentForm
                               onSuccess={handlePlaceOrder}
                               totalPrice={totalPrice}
@@ -724,7 +853,7 @@ export default function CheckoutPage() {
                         )
                     )}
                     {paymentTab === 'stripe' && !stripePromise && (
-                      <p style={{ color: '#aaa', fontSize: 13 }}>
+                      <p style={{ color: 'var(--color-mid)', fontSize: 13 }}>
                         Configura <code>VITE_STRIPE_PUBLIC_KEY</code> nel file <code>.env</code> per abilitare il pagamento con carta.
                       </p>
                     )}
@@ -759,7 +888,7 @@ export default function CheckoutPage() {
                           </PayPalScriptProvider>
                         )
                         : (
-                          <p style={{ color: '#aaa', fontSize: 13 }}>
+                          <p style={{ color: 'var(--color-mid)', fontSize: 13 }}>
                             Configura <code>VITE_PAYPAL_CLIENT_ID</code> nel file <code>.env</code> per abilitare PayPal.
                           </p>
                         )
@@ -797,8 +926,8 @@ export default function CheckoutPage() {
 
 function primaryBtn(isMobile) {
   return {
-    width: '100%', padding: isMobile ? '16px 0' : '14px 0',
-    marginTop: 8, background: 'var(--color-red)', color: '#fff', border: 'none',
+    width: '100%', padding: isMobile ? '16px 0' : '15px 0',
+    marginTop: 24, background: 'var(--color-red)', color: '#fff', border: 'none',
     borderRadius: 'var(--radius-pill)', fontSize: isMobile ? 16 : 15,
     fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)',
     letterSpacing: '.04em', minHeight: 52,
@@ -808,7 +937,7 @@ function primaryBtn(isMobile) {
 function secondaryBtn(isMobile) {
   return {
     padding: isMobile ? '14px 20px' : '12px 22px',
-    background: '#fff', color: '#444', border: '1.5px solid var(--color-border)',
+    background: '#fff', color: 'var(--color-dark)', border: '1.5px solid var(--color-border)',
     borderRadius: 'var(--radius-pill)', fontSize: 14, fontWeight: 600,
     cursor: 'pointer', fontFamily: 'var(--font-sans)',
   };
