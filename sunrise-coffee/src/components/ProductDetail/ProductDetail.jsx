@@ -63,6 +63,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const [imgIndex, setImgIndex] = useState(0);
   const [stickyVisible, setStickyVisible] = useState(true);
   const debounceRef = useRef(null);
+  const cancelAddRef = useRef(false);
   const touchStartX = useRef(null);
   const alsoLikeSectionRef = useRef(null);
   const { addItem } = useCartContext();
@@ -77,6 +78,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   };
 
   const handleAdd = async () => {
+    cancelAddRef.current = false;
     const next = cartQty + 1;
     setCartQty(next);
     setShowControl(true);
@@ -85,7 +87,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
       const itemId = activeVariant?.id || shopwareProduct.id;
       try { await addItem(itemId, 1); } catch {}
     }
-    scheduleCollapse(next);
+    if (!cancelAddRef.current) scheduleCollapse(next);
   };
 
   const handleDecrease = () => {
@@ -256,6 +258,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
                     className={`${styles.optionChip} ${selectedOptions[groupName] === opt.id ? styles.optionChipSelected : ''}`}
                     onClick={() => {
                       setSelectedOptions((prev) => ({ ...prev, [groupName]: opt.id }));
+                      cancelAddRef.current = true;
                       setCartQty(0);
                       setShowControl(false);
                       setShowTag(false);
