@@ -65,7 +65,8 @@ export function useCustomer() {
     setError(null);
     try {
       await customerApi.register(data);
-      // Auto-login after registration
+      // Shopware non logga automaticamente dopo /account/register — serve login esplicito
+      await customerApi.login(data.email, data.password);
       const profile = await customerApi.getCustomer();
       setCustomer(profile);
     } catch (err) {

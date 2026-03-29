@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCustomerContext } from '../../context/ShopwareContext';
-import { getCountries, getSalutations, register } from '../../lib/api/customer';
+import { getCountries, getSalutations } from '../../lib/api/customer';
 import styles from './AuthDrawer.module.css';
 
 // ── Helpers ────────────────────────────────────────────────
@@ -156,6 +156,7 @@ function LoginForm({ onSuccess }) {
 
 // ── Register form (multistep) ──────────────────────────────
 function RegisterForm({ onSuccess }) {
+  const { register } = useCustomerContext();
   const [step, setStep] = useState(0);
   const [countries, setCountries] = useState([]);
   const [salutations, setSalutations] = useState([]);
