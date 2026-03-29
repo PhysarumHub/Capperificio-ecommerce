@@ -131,6 +131,15 @@
   line-height: 1.3;
 }
 
+.itemVariant {
+  font-size: var(--text-xs);
+  color: var(--color-mid);
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+  align-self: flex-start;
+}
+
 .itemPrice {
   font-size: var(--text-sm);
   color: var(--color-mid);

@@ -7,6 +7,12 @@ import styles from './CartDrawer.module.css';
 
 const FREE_SHIPPING_THRESHOLD = 50;
 
+function getVariantLabel(item) {
+  const options = item.payload?.options;
+  if (!options?.length) return null;
+  return options.map((o) => o.option).filter(Boolean).join(' · ');
+}
+
 export default function CartDrawer({ open, onClose }) {
   const { cart, loading, updateQuantity, removeItem, optimisticMerge, mergeUpdate, removeItems, itemCount, totalPrice, positionPrice } = useCartContext();
 
@@ -128,6 +134,9 @@ export default function CartDrawer({ open, onClose }) {
                 />
                 <div className={styles.itemInfo}>
                   <span className={styles.itemName}>{item.label}</span>
+                  {getVariantLabel(item) && (
+                    <span className={styles.itemVariant}>{getVariantLabel(item)}</span>
+                  )}
                   <span className={styles.itemPrice}>{formatPrice(item.price?.unitPrice)}</span>
                   <div className={styles.itemQty}>
                     <button

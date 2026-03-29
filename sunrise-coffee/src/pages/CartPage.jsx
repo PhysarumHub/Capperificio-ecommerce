@@ -3,8 +3,14 @@ import { useCartContext } from '../context/ShopwareContext';
 import { formatPrice } from '../lib/utils/price';
 import { getProductImage, proxyUrl } from '../lib/utils/image';
 
+function getVariantLabel(item) {
+  const options = item.payload?.options;
+  if (!options?.length) return null;
+  return options.map((o) => o.option).filter(Boolean).join(' · ');
+}
+
 export default function CartPage() {
-  const { cart, loading, error, updateQuantity, removeItem, mergeUpdate, removeItems, clearCart, itemCount, totalPrice } = useCartContext();
+  const { cart, loading, error, updateQuantity, removeItem, mergeUpdate, removeItems, clearCart, itemCount, positionPrice } = useCartContext();
 
   if (loading && !cart) {
     return (
@@ -96,6 +102,14 @@ export default function CartPage() {
               <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-lg)', marginBottom: 4 }}>
                 {item.label}
               </h3>
+              {getVariantLabel(item) && (
+                <span style={{
+                  display: 'inline-block', fontSize: 12, color: '#666',
+                  background: '#eee', borderRadius: 20, padding: '2px 10px', marginBottom: 4,
+                }}>
+                  {getVariantLabel(item)}
+                </span>
+              )}
               <p style={{ color: '#666', fontSize: 14 }}>
                 {formatPrice(item.price?.unitPrice)}
               </p>
@@ -139,7 +153,7 @@ export default function CartPage() {
         <div style={{ textAlign: 'right' }}>
           <p style={{ fontSize: 14, color: '#666', marginBottom: 4 }}>Subtotale</p>
           <p style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-2xl)', fontWeight: 700 }}>
-            {formatPrice(totalPrice)}
+            {formatPrice(positionPrice)}
           </p>
         </div>
       </div>
