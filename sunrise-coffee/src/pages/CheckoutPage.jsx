@@ -176,7 +176,6 @@ function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, s
 
   const shippingCost = (totalPrice || 0) - (positionPrice || 0);
   const hasFreeShipping = shippingCost <= 0;
-  const netPrice = cart?.price?.netPrice ?? 0;
   const calculatedTaxes = cart?.price?.calculatedTaxes ?? [];
   const totalTax = calculatedTaxes.reduce((sum, t) => sum + (t.tax ?? 0), 0);
 
@@ -261,7 +260,7 @@ function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, s
 
           {isB2B ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {row('Totale imponibile', formatPrice(netPrice))}
+              {row('Totale imponibile', formatPrice(positionPrice))}
               {row('IVA', formatPrice(totalTax))}
               <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '4px 0' }} />
               {row('Totale IVA inclusa', formatPrice(totalPrice), { bold: true, large: true, accent: true })}

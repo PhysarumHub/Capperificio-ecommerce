@@ -12,9 +12,7 @@ function getVariantLabel(item) {
 export default function CartPage() {
   const { cart, loading, error, updateQuantity, removeItem, mergeUpdate, removeItems, clearCart, itemCount, positionPrice } = useCartContext();
   const { isB2B } = useCustomerContext();
-  const netPrice = cart?.price?.netPrice ?? 0;
   const totalTax = (cart?.price?.calculatedTaxes ?? []).reduce((s, t) => s + (t.tax ?? 0), 0);
-  const displayTotal = isB2B ? netPrice : positionPrice;
 
   if (loading && !cart) {
     return (
@@ -115,7 +113,7 @@ export default function CartPage() {
                 </span>
               )}
               <p style={{ color: '#666', fontSize: 14 }}>
-                {formatPrice(isB2B ? item.price?.netPrice : item.price?.unitPrice)}
+                {formatPrice(item.price?.unitPrice)}
                 {isB2B && <span style={{ fontSize: 11, color: '#aaa', marginLeft: 4 }}>+ IVA</span>}
               </p>
             </div>
@@ -135,7 +133,7 @@ export default function CartPage() {
               </button>
             </div>
             <div style={{ minWidth: 80, textAlign: 'right', fontWeight: 600 }}>
-              {formatPrice(isB2B ? (item.price?.netPrice ?? 0) * item.quantity : item._totalPrice)}
+              {formatPrice(item._totalPrice)}
             </div>
             <button
               onClick={() => handleRemoveGroup(item)}
@@ -158,7 +156,7 @@ export default function CartPage() {
         <div style={{ textAlign: 'right' }}>
           <p style={{ fontSize: 14, color: '#666', marginBottom: 4 }}>{isB2B ? 'Subtotale (netto)' : 'Subtotale'}</p>
           <p style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-2xl)', fontWeight: 700 }}>
-            {formatPrice(displayTotal)}
+            {formatPrice(positionPrice)}
           </p>
           {isB2B && (
             <p style={{ fontSize: 13, color: '#888', marginTop: 4 }}>
