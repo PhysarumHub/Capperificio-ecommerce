@@ -85,4 +85,5 @@
   scroll-snap-align: start;
   display: flex;
   align-items: stretch;
+  touch-action: manipulation;
 }
