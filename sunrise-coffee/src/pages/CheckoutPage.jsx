@@ -190,8 +190,7 @@ function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, s
   return (
     <div style={{
       background: 'var(--color-light)',
-      borderLeft: isMobile ? 'none' : '1px solid var(--color-border)',
-      borderTop: isMobile ? '1px solid var(--color-border)' : 'none',
+      borderTop: '1px solid var(--color-border)',
       overflow: 'hidden',
       position: isMobile ? 'static' : 'sticky',
       top: 80,
@@ -597,7 +596,7 @@ export default function CheckoutPage() {
 
           {/* STEP 0: Contatti */}
           {step === 0 && (
-            <div style={{ padding: isMobile ? '4px 0 0' : '4px 0 0' }}>
+            <div style={{ paddingBottom: 40 }}>
               <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 6, marginTop: 0, color: 'var(--color-dark)' }}>
                 Informazioni di contatto
               </h2>
@@ -630,7 +629,7 @@ export default function CheckoutPage() {
 
           {/* STEP 1: Indirizzo */}
           {step === 1 && (
-            <div style={{ padding: isMobile ? '4px 0 0' : '4px 0 0' }}>
+            <div style={{ paddingBottom: 40 }}>
               <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 6, marginTop: 0, color: 'var(--color-dark)' }}>
                 Indirizzo di spedizione
               </h2>
@@ -638,51 +637,57 @@ export default function CheckoutPage() {
                 Cerca il tuo indirizzo o compilalo manualmente
               </p>
 
-              {/* Ricerca indirizzo automatica */}
-              <div style={{ position: 'relative', marginBottom: 24 }}>
+              {/* Ricerca indirizzo automatica + CAP */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px', gap: 16, alignItems: 'start', marginBottom: 8 }}>
                 <div style={{ position: 'relative' }}>
                   <input
                     type="text"
                     value={addrQuery}
                     onChange={(e) => setAddrQuery(e.target.value)}
-                    placeholder="🔍  Cerca indirizzo… (es. Via Roma 1, Milano)"
+                    placeholder="🔍  Via e numero civico, città…"
                     style={{ ...inputStyle(false, isMobile), borderBottomColor: 'var(--color-red)' }}
                   />
                   {addrLoading && (
-                    <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--color-mid)' }}>⏳</span>
+                    <span style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--color-mid)' }}>⏳</span>
+                  )}
+                  {addrSuggestions.length > 0 && (
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 300,
+                      background: 'var(--color-light)', border: '1px solid var(--color-border)',
+                      maxHeight: 240, overflowY: 'auto',
+                      boxShadow: '0 8px 28px rgba(0,0,0,.10)',
+                      marginTop: 2,
+                    }}>
+                      {addrSuggestions.map((s, i) => (
+                        <div
+                          key={i}
+                          onMouseDown={() => applyAddrSuggestion(s)}
+                          style={{
+                            padding: '12px 16px', cursor: 'pointer', fontSize: 14,
+                            borderBottom: '1px solid var(--color-border)',
+                            color: 'var(--color-dark)', lineHeight: 1.4,
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-cream)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-light)'}
+                        >
+                          <div style={{ fontWeight: 500 }}>
+                            {[s.address?.road, s.address?.house_number].filter(Boolean).join(', ') || s.display_name.split(',')[0]}
+                          </div>
+                          <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 2 }}>
+                            {[s.address?.postcode, s.address?.city || s.address?.town || s.address?.village, s.address?.country].filter(Boolean).join(' · ')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
-                {addrSuggestions.length > 0 && (
-                  <div style={{
-                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 300,
-                    background: '#fff', border: '1.5px solid var(--color-border)', borderRadius: 10,
-                    maxHeight: 220, overflowY: 'auto',
-                    boxShadow: '0 8px 28px rgba(0,0,0,.13)',
-                    marginTop: 4,
-                  }}>
-                    {addrSuggestions.map((s, i) => (
-                      <div
-                        key={i}
-                        onMouseDown={() => applyAddrSuggestion(s)}
-                        style={{
-                          padding: '12px 16px', cursor: 'pointer', fontSize: 14,
-                          borderBottom: i < addrSuggestions.length - 1 ? '1px solid var(--color-border)' : 'none',
-                          color: 'var(--color-dark)', lineHeight: 1.4,
-                          transition: 'background .15s',
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-cream)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
-                      >
-                        <div style={{ fontWeight: 500 }}>
-                          {[s.address?.road, s.address?.house_number].filter(Boolean).join(', ') || s.display_name.split(',')[0]}
-                        </div>
-                        <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 2 }}>
-                          {[s.address?.postcode, s.address?.city || s.address?.town || s.address?.village, s.address?.country].filter(Boolean).join(' · ')}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <Field label="CAP" error={err('zipcode')} required>
+                  <input
+                    autoComplete="postal-code" inputMode="numeric"
+                    value={address.zipcode} onChange={setField('zipcode')} onBlur={blur('zipcode')}
+                    placeholder="00100" style={is('zipcode')}
+                  />
+                </Field>
               </div>
 
               {/* Toggle manuale */}
@@ -700,9 +705,6 @@ export default function CheckoutPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, marginTop: 4 }}>
                   <Field label="Via e numero civico" error={err('street')} full required>
                     <input autoComplete="street-address" value={address.street} onChange={setField('street')} onBlur={blur('street')} placeholder="Via Roma, 1" style={is('street')} />
-                  </Field>
-                  <Field label="CAP" error={err('zipcode')} required>
-                    <input autoComplete="postal-code" inputMode="numeric" value={address.zipcode} onChange={setField('zipcode')} onBlur={blur('zipcode')} placeholder="00100" style={is('zipcode')} />
                   </Field>
                   <Field label="Città" error={err('city')} required>
                     <input autoComplete="address-level2" value={address.city} onChange={setField('city')} onBlur={blur('city')} placeholder="Roma" style={is('city')} />
@@ -773,7 +775,7 @@ export default function CheckoutPage() {
 
           {/* STEP 2: Spedizione & Pagamento */}
           {step === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
               {loadingMethods ? (
                 <div style={{ color: 'var(--color-mid)', padding: '40px 0', textAlign: 'center' }}>
                   <div style={{ fontSize: 28, marginBottom: 12 }}>⏳</div>
@@ -782,7 +784,7 @@ export default function CheckoutPage() {
               ) : (
                 <>
                   {shippingMethods.length > 0 && (
-                    <div style={{ padding: isMobile ? '4px 0 0' : '4px 0 0' }}>
+                    <div style={{ paddingBottom: 40 }}>
                       <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 14, marginTop: 0, color: 'var(--color-dark)' }}>
                         Spedizione
                       </h2>
@@ -794,7 +796,7 @@ export default function CheckoutPage() {
                     </div>
                   )}
                   {/* ── Pagamento ──────────────────────────── */}
-                  <div style={{ padding: isMobile ? '4px 0 0' : '4px 0 0' }}>
+                  <div style={{ paddingBottom: 40 }}>
                     <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 14, marginTop: 0, color: 'var(--color-dark)' }}>
                       Pagamento
                     </h2>
