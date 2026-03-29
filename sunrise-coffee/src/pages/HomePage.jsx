@@ -2,7 +2,6 @@ import Hero from '../components/Hero/Hero';
 import { ProductsMarquee, RedMarquee } from '../components/Marquee/Marquee';
 import FilterTags from '../components/FilterTags/FilterTags';
 import SectionHeader from '../components/SectionHeader/SectionHeader';
-import ProductSlider from '../components/ProductSlider/ProductSlider';
 import ProductCard from '../components/ProductCard/ProductCard';
 import CategoryBanners from '../components/CategoryBanner/CategoryBanner';
 import AboutSection from '../components/AboutSection/AboutSection';
@@ -132,11 +131,11 @@ export default function HomePage() {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>Caricamento prodotti...</div>
       ) : (
-        <ProductSlider>
+        <div className={styles.productGrid}>
           {sliderProducts.map((p) => (
             <ProductCard key={p.name} {...p} />
           ))}
-        </ProductSlider>
+        </div>
       )}
 
       <div style={{ background: 'var(--color-light)' }}>
