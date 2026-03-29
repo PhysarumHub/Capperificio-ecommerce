@@ -140,14 +140,6 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopwareProduct?.id]);
 
-  // Reset stato carrello quando l'utente cambia variante
-  useEffect(() => {
-    setCartQty(0);
-    setShowControl(false);
-    setShowTag(false);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-  }, [activeVariant?.id]);
-
   // Carica le varianti figlie per abilitare il cart con l'ID corretto
   useEffect(() => {
     if (!shopwareProduct?.configuratorSettings?.length) {
@@ -262,7 +254,13 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
                   <button
                     key={opt.id}
                     className={`${styles.optionChip} ${selectedOptions[groupName] === opt.id ? styles.optionChipSelected : ''}`}
-                    onClick={() => setSelectedOptions((prev) => ({ ...prev, [groupName]: opt.id }))}
+                    onClick={() => {
+                      setSelectedOptions((prev) => ({ ...prev, [groupName]: opt.id }));
+                      setCartQty(0);
+                      setShowControl(false);
+                      setShowTag(false);
+                      if (debounceRef.current) clearTimeout(debounceRef.current);
+                    }}
                   >
                     {opt.name}
                   </button>
