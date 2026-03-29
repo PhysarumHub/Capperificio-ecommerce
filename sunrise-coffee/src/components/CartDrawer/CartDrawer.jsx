@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useCartContext, useCustomerContext } from '../../context/ShopwareContext';
+import { useCartContext } from '../../context/ShopwareContext';
 import { formatPrice } from '../../lib/utils/price';
 import { getProductImage, proxyUrl } from '../../lib/utils/image';
 import styles from './CartDrawer.module.css';
@@ -15,8 +15,6 @@ function getVariantLabel(item) {
 
 export default function CartDrawer({ open, onClose }) {
   const { cart, loading, updateQuantity, removeItem, optimisticMerge, mergeUpdate, removeItems, itemCount, totalPrice, positionPrice } = useCartContext();
-  const { isB2B } = useCustomerContext();
-  const totalTax = (cart?.price?.calculatedTaxes ?? []).reduce((s, t) => s + (t.tax ?? 0), 0);
 
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden';
@@ -165,16 +163,10 @@ export default function CartDrawer({ open, onClose }) {
         {lineItems.length > 0 && (
           <div className={styles.footer}>
             <div className={styles.subtotal}>
-              <span>{isB2B ? 'Subtotale (netto)' : 'Subtotale'}</span>
+              <span>Subtotale</span>
               <span className={styles.subtotalPrice}>{formatPrice(positionPrice)}</span>
             </div>
-            {isB2B && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--color-mid)', marginTop: -6 }}>
-                <span>IVA</span>
-                <span>{formatPrice(totalTax)}</span>
-              </div>
-            )}
-            <p className={styles.taxNote}>{isB2B ? 'Prezzi IVA esclusa · spedizione calcolata al checkout' : 'Tasse e spedizione calcolate al checkout'}</p>
+            <p className={styles.taxNote}>Tasse e spedizione calcolate al checkout</p>
             <Link to="/checkout" className={styles.checkoutBtn} onClick={onClose}>
               Checkout →
             </Link>
