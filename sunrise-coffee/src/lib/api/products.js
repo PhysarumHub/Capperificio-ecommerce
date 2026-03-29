@@ -8,7 +8,13 @@ export async function getProducts({ page = 1, limit = 24, filters = [], sort = [
     page,
     limit,
     associations: {
-      cover: { associations: { media: {} } },
+      cover: {
+        associations: {
+          media: {
+            associations: { thumbnails: {} },
+          },
+        },
+      },
       seoUrls: {},
       categories: {},
       tags: {},
@@ -27,8 +33,8 @@ export async function getProducts({ page = 1, limit = 24, filters = [], sort = [
 }
 
 const PRODUCT_DETAIL_ASSOCIATIONS = {
-  cover: { associations: { media: {} } },
-  media: { associations: { media: {} } },
+  cover: { associations: { media: { associations: { thumbnails: {} } } } },
+  media: { associations: { media: { associations: { thumbnails: {} } } } },
   seoUrls: {},
   categories: {},
   properties: { associations: { group: {} } },
@@ -41,7 +47,7 @@ const PRODUCT_DETAIL_ASSOCIATIONS = {
         associations: {
           product: {
             associations: {
-              cover: { associations: { media: {} } },
+              cover: { associations: { media: { associations: { thumbnails: {} } } } },
               seoUrls: {},
             },
           },

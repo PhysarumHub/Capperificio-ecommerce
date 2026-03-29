@@ -3,6 +3,7 @@ import { ProductsMarquee, RedMarquee } from '../components/Marquee/Marquee';
 import FilterTags from '../components/FilterTags/FilterTags';
 import SectionHeader from '../components/SectionHeader/SectionHeader';
 import ProductCard from '../components/ProductCard/ProductCard';
+import ProductSlider from '../components/ProductSlider/ProductSlider';
 import CategoryBanners from '../components/CategoryBanner/CategoryBanner';
 import AboutSection from '../components/AboutSection/AboutSection';
 import GuidesEditorial from '../components/GuidesEditorial/GuidesEditorial';
@@ -155,11 +156,11 @@ export default function HomePage() {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>Caricamento prodotti...</div>
       ) : (
-        <div className={styles.productGrid}>
+        <ProductSlider>
           {sliderProducts.map((p) => (
             <ProductCard key={p.name} {...p} />
           ))}
-        </div>
+        </ProductSlider>
       )}
 
       <div style={{ background: 'var(--color-light)' }}>
