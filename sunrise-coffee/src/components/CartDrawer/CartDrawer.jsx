@@ -15,6 +15,7 @@ function getVariantLabel(item) {
 
 export default function CartDrawer({ open, onClose }) {
   const { cart, loading, updateQuantity, removeItem, optimisticMerge, mergeUpdate, removeItems, itemCount, totalPrice, positionPrice } = useCartContext();
+  const totalTax = (cart?.price?.calculatedTaxes ?? []).reduce((s, t) => s + (t.tax ?? 0), 0);
 
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden';
@@ -166,7 +167,13 @@ export default function CartDrawer({ open, onClose }) {
               <span>Subtotale</span>
               <span className={styles.subtotalPrice}>{formatPrice(positionPrice)}</span>
             </div>
-            <p className={styles.taxNote}>Tasse e spedizione calcolate al checkout</p>
+            {totalTax > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--color-mid)', marginTop: -4 }}>
+                <span>di cui IVA</span>
+                <span>{formatPrice(totalTax)}</span>
+              </div>
+            )}
+            <p className={styles.taxNote}>Spedizione calcolata al checkout</p>
             <Link to="/checkout" className={styles.checkoutBtn} onClick={onClose}>
               Checkout →
             </Link>
