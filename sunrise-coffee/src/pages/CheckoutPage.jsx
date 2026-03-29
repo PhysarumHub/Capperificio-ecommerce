@@ -136,7 +136,7 @@ const inputStyle = (hasError, _isMobile) => ({
   borderBottom: `1.5px solid ${hasError ? 'var(--color-red)' : 'var(--color-dark)'}`,
   borderRadius: 0,
   background: 'transparent',
-  fontSize: 15,
+  fontSize: _isMobile ? 16 : 15,
   boxSizing: 'border-box',
   fontFamily: 'var(--font-sans)',
   color: 'var(--color-dark)',
