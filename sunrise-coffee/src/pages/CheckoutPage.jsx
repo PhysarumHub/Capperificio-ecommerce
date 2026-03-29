@@ -133,7 +133,7 @@ const inputStyle = (hasError, _isMobile) => ({
   padding: '12px 14px',
   border: `1.5px solid ${hasError ? 'var(--color-red)' : 'var(--color-border)'}`,
   borderRadius: 8,
-  background: '#fff',
+  background: 'var(--color-light)',
   fontSize: 15,
   boxSizing: 'border-box',
   fontFamily: 'var(--font-sans)',
@@ -151,7 +151,7 @@ function MethodCard({ method, selected, onSelect, name, isMobile }) {
       padding: isMobile ? '16px 14px' : '14px 18px',
       border: `1.5px solid ${selected ? 'var(--color-red)' : 'var(--color-border)'}`,
       borderRadius: 10, cursor: 'pointer',
-      background: selected ? 'var(--color-cream)' : '#fff',
+      background: selected ? 'var(--color-cream)' : 'var(--color-light)',
       transition: 'all .2s',
     }}>
       <input
@@ -406,6 +406,7 @@ export default function CheckoutPage() {
     setTouched((p) => ({ ...p, street: true, city: true, zipcode: true }));
     setAddrQuery('');
     setAddrSuggestions([]);
+    setShowManual(true);
   };
 
   const setField = (key) => (e) => {
@@ -448,6 +449,7 @@ export default function CheckoutPage() {
 
   const [formError, setFormError] = useState('');
   const [shake, setShake] = useState(false);
+  const [showManual, setShowManual] = useState(false);
 
   const validateStep = (fields) => {
     const t = {};
@@ -464,15 +466,15 @@ export default function CheckoutPage() {
   const goNext = () => {
     setFormError('');
     if (step === 0) {
-      if (!validateStep(['email'])) {
-        setFormError('Inserisci un indirizzo email valido per continuare.');
+      if (!validateStep(['firstName', 'lastName', 'email'])) {
+        setFormError('Compila tutti i campi obbligatori per continuare.');
         triggerShake();
-        setTimeout(() => document.querySelector('input[type="email"]')?.focus(), 50);
         return;
       }
     }
     if (step === 1) {
-      if (!validateStep(['firstName', 'lastName', 'street', 'zipcode', 'city'])) {
+      if (!validateStep(['street', 'zipcode', 'city'])) {
+        setShowManual(true);
         setFormError('Compila tutti i campi obbligatori prima di continuare.');
         triggerShake();
         setTimeout(() => {
@@ -594,7 +596,7 @@ export default function CheckoutPage() {
 
           {/* STEP 0: Contatti */}
           {step === 0 && (
-            <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '32px 28px' }}>
+            <div style={{ background: 'var(--color-light)', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '32px 28px' }}>
               <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 6, marginTop: 0, color: 'var(--color-dark)' }}>
                 Informazioni di contatto
               </h2>
@@ -603,6 +605,14 @@ export default function CheckoutPage() {
                 <Link to="/account/login" style={{ color: 'var(--color-red)', fontWeight: 600 }}>Accedi</Link>
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  <Field label="Nome" error={err('firstName')} required>
+                    <input autoComplete="given-name" value={address.firstName} onChange={setField('firstName')} onBlur={blur('firstName')} placeholder="Mario" style={is('firstName')} />
+                  </Field>
+                  <Field label="Cognome" error={err('lastName')} required>
+                    <input autoComplete="family-name" value={address.lastName} onChange={setField('lastName')} onBlur={blur('lastName')} placeholder="Rossi" style={is('lastName')} />
+                  </Field>
+                </div>
                 <Field label="Email" error={err('email')} required>
                   <input
                     type="email" inputMode="email" autoComplete="email"
@@ -619,7 +629,7 @@ export default function CheckoutPage() {
 
           {/* STEP 1: Indirizzo */}
           {step === 1 && (
-            <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '32px 28px' }}>
+            <div style={{ background: 'var(--color-light)', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '32px 28px' }}>
               <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 6, marginTop: 0, color: 'var(--color-dark)' }}>
                 Indirizzo di spedizione
               </h2>
@@ -674,74 +684,81 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
-                <Field label="Nome" error={err('firstName')} required>
-                  <input autoComplete="given-name" value={address.firstName} onChange={setField('firstName')} onBlur={blur('firstName')} style={is('firstName')} />
-                </Field>
-                <Field label="Cognome" error={err('lastName')} required>
-                  <input autoComplete="family-name" value={address.lastName} onChange={setField('lastName')} onBlur={blur('lastName')} style={is('lastName')} />
-                </Field>
-                <Field label="Via e numero civico" error={err('street')} full required>
-                  <input autoComplete="street-address" value={address.street} onChange={setField('street')} onBlur={blur('street')} placeholder="Via Roma 1" style={is('street')} />
-                </Field>
-                <Field label="CAP" error={err('zipcode')} required>
-                  <input autoComplete="postal-code" inputMode="numeric" value={address.zipcode} onChange={setField('zipcode')} onBlur={blur('zipcode')} placeholder="00100" style={is('zipcode')} />
-                </Field>
-                <Field label="Città" error={err('city')} required>
-                  <input autoComplete="address-level2" value={address.city} onChange={setField('city')} onBlur={blur('city')} placeholder="Roma" style={is('city')} />
-                </Field>
+              {/* Toggle manuale */}
+              {!showManual && (
+                <button
+                  type="button"
+                  onClick={() => setShowManual(true)}
+                  style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-red)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline', textAlign: 'left', marginBottom: 8 }}
+                >
+                  Inserisci manualmente
+                </button>
+              )}
 
-                {/* Country smart search */}
-                <Field label="Paese" full>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type="text"
-                      autoComplete="country-name"
-                      value={countrySearch !== '' ? countrySearch : selectedCountryName}
-                      onChange={(e) => setCountrySearch(e.target.value)}
-                      onFocus={() => setCountrySearch('')}
-                      onBlur={() => setTimeout(() => setCountrySearch(''), 200)}
-                      style={{ ...inputStyle(false, isMobile), paddingRight: 24 }}
-                    />
-                    <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--color-mid)', fontSize: 14 }}>▾</span>
-                    {countrySearch !== '' && (
-                      <div style={{
-                        position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200,
-                        background: '#fff', border: '1.5px solid var(--color-border)', borderRadius: 8,
-                        maxHeight: 200, overflowY: 'auto',
-                        boxShadow: '0 8px 24px rgba(0,0,0,.12)',
-                      }}>
-                        {countryList.length === 0
-                          ? <div style={{ padding: '12px 14px', color: 'var(--color-mid)', fontSize: 14 }}>Nessun paese trovato</div>
-                          : countryList.map((c) => (
-                            <div
-                              key={c.iso}
-                              onMouseDown={() => { setAddress((p) => ({ ...p, countryIso: c.iso })); setCountrySearch(''); }}
-                              style={{
-                                padding: '12px 14px', cursor: 'pointer', fontSize: 15,
-                                background: c.iso === address.countryIso ? 'var(--color-cream)' : '#fff',
-                                fontWeight: c.iso === address.countryIso ? 600 : 400,
-                                borderBottom: '1px solid var(--color-border)',
-                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                              }}
-                            >
-                              {c.name}
-                              {!c.id && swCountries.length > 0 && (
-                                <span style={{ fontSize: 11, color: '#f0a000' }}>non disp.</span>
-                              )}
-                            </div>
-                          ))
-                        }
-                      </div>
+              {showManual && (
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, marginTop: 4 }}>
+                  <Field label="Via e numero civico" error={err('street')} full required>
+                    <input autoComplete="street-address" value={address.street} onChange={setField('street')} onBlur={blur('street')} placeholder="Via Roma, 1" style={is('street')} />
+                  </Field>
+                  <Field label="CAP" error={err('zipcode')} required>
+                    <input autoComplete="postal-code" inputMode="numeric" value={address.zipcode} onChange={setField('zipcode')} onBlur={blur('zipcode')} placeholder="00100" style={is('zipcode')} />
+                  </Field>
+                  <Field label="Città" error={err('city')} required>
+                    <input autoComplete="address-level2" value={address.city} onChange={setField('city')} onBlur={blur('city')} placeholder="Roma" style={is('city')} />
+                  </Field>
+
+                  {/* Country smart search */}
+                  <Field label="Paese" full>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        autoComplete="country-name"
+                        value={countrySearch !== '' ? countrySearch : selectedCountryName}
+                        onChange={(e) => setCountrySearch(e.target.value)}
+                        onFocus={() => setCountrySearch('')}
+                        onBlur={() => setTimeout(() => setCountrySearch(''), 200)}
+                        style={{ ...inputStyle(false, isMobile), paddingRight: 24 }}
+                      />
+                      <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--color-mid)', fontSize: 14 }}>▾</span>
+                      {countrySearch !== '' && (
+                        <div style={{
+                          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200,
+                          background: '#fff', border: '1.5px solid var(--color-border)', borderRadius: 8,
+                          maxHeight: 200, overflowY: 'auto',
+                          boxShadow: '0 8px 24px rgba(0,0,0,.12)',
+                        }}>
+                          {countryList.length === 0
+                            ? <div style={{ padding: '12px 14px', color: 'var(--color-mid)', fontSize: 14 }}>Nessun paese trovato</div>
+                            : countryList.map((c) => (
+                              <div
+                                key={c.iso}
+                                onMouseDown={() => { setAddress((p) => ({ ...p, countryIso: c.iso })); setCountrySearch(''); }}
+                                style={{
+                                  padding: '12px 14px', cursor: 'pointer', fontSize: 15,
+                                  background: c.iso === address.countryIso ? 'var(--color-cream)' : '#fff',
+                                  fontWeight: c.iso === address.countryIso ? 600 : 400,
+                                  borderBottom: '1px solid var(--color-border)',
+                                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                }}
+                              >
+                                {c.name}
+                                {!c.id && swCountries.length > 0 && (
+                                  <span style={{ fontSize: 11, color: '#f0a000' }}>non disp.</span>
+                                )}
+                              </div>
+                            ))
+                          }
+                        </div>
+                      )}
+                    </div>
+                    {!resolvedCountryId && swCountries.length > 0 && (
+                      <p style={{ fontSize: 12, color: '#f0a000', marginTop: 6 }}>
+                        ⚠ Paese non trovato nel sistema. Continua comunque o scegli un altro paese.
+                      </p>
                     )}
-                  </div>
-                  {!resolvedCountryId && swCountries.length > 0 && (
-                    <p style={{ fontSize: 12, color: '#f0a000', marginTop: 6 }}>
-                      ⚠ Paese non trovato nel sistema. Continua comunque o scegli un altro paese.
-                    </p>
-                  )}
-                </Field>
-              </div>
+                  </Field>
+                </div>
+              )}
 
               <div style={{ display: 'flex', gap: 10, marginTop: 28, flexWrap: 'wrap' }}>
                 {!isLoggedIn && (
@@ -757,14 +774,14 @@ export default function CheckoutPage() {
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {loadingMethods ? (
-                <div style={{ color: 'var(--color-mid)', padding: '40px 0', textAlign: 'center', background: '#fff', border: '1px solid var(--color-border)', borderRadius: 14 }}>
+                <div style={{ color: 'var(--color-mid)', padding: '40px 0', textAlign: 'center', background: 'var(--color-light)', border: '1px solid var(--color-border)', borderRadius: 14 }}>
                   <div style={{ fontSize: 28, marginBottom: 12 }}>⏳</div>
                   Caricamento metodi...
                 </div>
               ) : (
                 <>
                   {shippingMethods.length > 0 && (
-                    <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '28px 28px' }}>
+                    <div style={{ background: 'var(--color-light)', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '28px 28px' }}>
                       <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 14, marginTop: 0, color: 'var(--color-dark)' }}>
                         Spedizione
                       </h2>
@@ -776,7 +793,7 @@ export default function CheckoutPage() {
                     </div>
                   )}
                   {/* ── Pagamento ──────────────────────────── */}
-                  <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '28px 28px' }}>
+                  <div style={{ background: 'var(--color-light)', border: '1px solid var(--color-border)', borderRadius: 14, padding: isMobile ? '24px 20px' : '28px 28px' }}>
                     <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 14, marginTop: 0, color: 'var(--color-dark)' }}>
                       Pagamento
                     </h2>
@@ -792,7 +809,7 @@ export default function CheckoutPage() {
                           onClick={() => setPaymentTab(key)}
                           style={{
                             flex: 1, padding: '12px 0', border: `1.5px solid ${paymentTab === key ? 'var(--color-red)' : 'var(--color-border)'}`,
-                            borderRadius: 8, background: paymentTab === key ? 'var(--color-cream)' : '#fff',
+                            borderRadius: 8, background: paymentTab === key ? 'var(--color-cream)' : 'var(--color-light)',
                             fontWeight: paymentTab === key ? 700 : 400, fontSize: 14,
                             cursor: 'pointer', fontFamily: 'var(--font-sans)',
                             color: paymentTab === key ? 'var(--color-dark)' : 'var(--color-mid)',
@@ -816,7 +833,7 @@ export default function CheckoutPage() {
                               theme: 'stripe',
                               variables: {
                                 colorPrimary: '#547054',
-                                colorBackground: '#ffffff',
+                                colorBackground: '#FCF3DF',
                                 colorText: '#2C4A2C',
                                 colorDanger: '#547054',
                                 fontFamily: 'system-ui, -apple-system, sans-serif',
