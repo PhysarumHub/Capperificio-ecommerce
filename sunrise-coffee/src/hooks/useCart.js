@@ -137,6 +137,7 @@ export function useCart() {
 
   const itemCount = cart?.lineItems?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const totalPrice = cart?.price?.totalPrice ?? 0;
+  const positionPrice = cart?.price?.positionPrice ?? 0;
 
   return {
     cart,
@@ -144,6 +145,7 @@ export function useCart() {
     error,
     itemCount,
     totalPrice,
+    positionPrice,
     fetchCart,
     addItem,
     updateQuantity,

@@ -8,7 +8,7 @@ import styles from './CartDrawer.module.css';
 const FREE_SHIPPING_THRESHOLD = 50;
 
 export default function CartDrawer({ open, onClose }) {
-  const { cart, loading, updateQuantity, removeItem, optimisticMerge, mergeUpdate, removeItems, itemCount, totalPrice } = useCartContext();
+  const { cart, loading, updateQuantity, removeItem, optimisticMerge, mergeUpdate, removeItems, itemCount, totalPrice, positionPrice } = useCartContext();
 
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden';
@@ -50,16 +50,22 @@ export default function CartDrawer({ open, onClose }) {
 
     // Debounce: only fire API once user stops clicking for 350ms
     clearTimeout(apiTimers.current[firstId]);
-    apiTimers.current[firstId] = setTimeout(() => {
+    apiTimers.current[firstId] = setTimeout(async () => {
       const { newQty: qty, duplicates: dups } = latestQty.current[firstId];
-      mergeUpdate(firstId, qty, dups);
       delete apiTimers.current[firstId];
       delete latestQty.current[firstId];
+      await mergeUpdate(firstId, qty, dups);
+      // Se l'utente ha cliccato mentre l'API era in volo, ri-applica l'ottimistico
+      // per evitare che la risposta del server sovrascriva lo stato più recente
+      if (latestQty.current[firstId]) {
+        const { newQty: pendingQty, duplicates: pendingDups } = latestQty.current[firstId];
+        optimisticMerge(firstId, pendingQty, pendingDups);
+      }
     }, 350);
   };
   const handleRemove = (group) => removeItems(group._allIds);
 
-  const remaining = FREE_SHIPPING_THRESHOLD - (totalPrice || 0);
+  const remaining = FREE_SHIPPING_THRESHOLD - (positionPrice || 0);
   const freeShippingUnlocked = remaining <= 0;
 
   return (
@@ -96,7 +102,7 @@ export default function CartDrawer({ open, onClose }) {
           <div className={styles.progressTrack}>
             <div
               className={styles.progressBar}
-              style={{ width: `${Math.min(100, ((totalPrice || 0) / FREE_SHIPPING_THRESHOLD) * 100)}%` }}
+              style={{ width: `${Math.min(100, ((positionPrice || 0) / FREE_SHIPPING_THRESHOLD) * 100)}%` }}
             />
           </div>
         </div>
@@ -149,7 +155,7 @@ export default function CartDrawer({ open, onClose }) {
           <div className={styles.footer}>
             <div className={styles.subtotal}>
               <span>Subtotale</span>
-              <span className={styles.subtotalPrice}>{formatPrice(totalPrice)}</span>
+              <span className={styles.subtotalPrice}>{formatPrice(positionPrice)}</span>
             </div>
             <p className={styles.taxNote}>Tasse e spedizione calcolate al checkout</p>
             <Link to="/checkout" className={styles.checkoutBtn} onClick={onClose}>
