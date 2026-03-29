@@ -278,7 +278,7 @@ function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, s
           {step >= 2 && address.firstName && (
             <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 8, lineHeight: 1.8 }}>
               <div>📦 {address.firstName} {address.lastName}</div>
-              <div>{address.street}, {address.zipcode} {address.city}</div>
+              <div>{[address.street, address.houseNumber].filter(Boolean).join(', ')}, {address.zipcode} {address.city}</div>
               <div>{selectedCountryName}</div>
             </div>
           )}
@@ -325,7 +325,7 @@ export default function CheckoutPage() {
 
   const [address, setAddress] = useState({
     email: '', firstName: '', lastName: '',
-    street: '', zipcode: '', city: '',
+    street: '', houseNumber: '', zipcode: '', city: '',
     countryIso: detectedIso,
   });
   const [touched, setTouched] = useState({});
@@ -390,20 +390,20 @@ export default function CheckoutPage() {
 
   const applyAddrSuggestion = (result) => {
     const a = result.address || {};
-    const road = a.road || a.pedestrian || a.footway || '';
-    const num = a.house_number || '';
-    const street = road && num ? `${road}, ${num}` : road;
+    const street = a.road || a.pedestrian || a.footway || '';
+    const houseNumber = a.house_number || '';
     const city = a.city || a.town || a.village || a.municipality || a.county || '';
     const zipcode = a.postcode || '';
     const countryIso = (a.country_code || '').toUpperCase();
     setAddress((p) => ({
       ...p,
       ...(street && { street }),
+      houseNumber,
       ...(city && { city }),
       ...(zipcode && { zipcode }),
       ...(countryIso && { countryIso }),
     }));
-    setTouched((p) => ({ ...p, street: true, city: true, zipcode: true }));
+    setTouched((p) => ({ ...p, street: true, houseNumber: true, city: true, zipcode: true }));
     setAddrQuery('');
     setAddrSuggestions([]);
     setShowManual(true);
@@ -473,7 +473,7 @@ export default function CheckoutPage() {
       }
     }
     if (step === 1) {
-      if (!validateStep(['street', 'zipcode', 'city'])) {
+      if (!validateStep(['street', 'houseNumber', 'zipcode', 'city'])) {
         setShowManual(true);
         setFormError('Compila tutti i campi obbligatori prima di continuare.');
         triggerShake();
@@ -499,7 +499,7 @@ export default function CheckoutPage() {
         const billingAddress = {
           firstName: address.firstName,
           lastName: address.lastName,
-          street: address.street,
+          street: [address.street, address.houseNumber].filter(Boolean).join(', '),
           zipcode: address.zipcode,
           city: address.city,
           salutationId,
@@ -695,11 +695,11 @@ export default function CheckoutPage() {
               {showManual && (
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, marginTop: 4 }}>
                   <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 110px', gap: 14 }}>
-                    <Field label="Via e numero civico" error={err('street')} required>
-                      <input autoComplete="street-address" value={address.street} onChange={setField('street')} onBlur={blur('street')} placeholder="Via Roma, 1" style={is('street')} />
+                    <Field label="Via" error={err('street')} required>
+                      <input autoComplete="address-line1" value={address.street} onChange={setField('street')} onBlur={blur('street')} placeholder="Via Roma" style={is('street')} />
                     </Field>
-                    <Field label="CAP" error={err('zipcode')} required>
-                      <input autoComplete="postal-code" inputMode="numeric" value={address.zipcode} onChange={setField('zipcode')} onBlur={blur('zipcode')} placeholder="00100" style={is('zipcode')} />
+                    <Field label="Civico" error={err('houseNumber')} required>
+                      <input autoComplete="address-line2" value={address.houseNumber} onChange={setField('houseNumber')} onBlur={blur('houseNumber')} placeholder="1" style={is('houseNumber')} />
                     </Field>
                   </div>
                   <Field label="Città" error={err('city')} required>
