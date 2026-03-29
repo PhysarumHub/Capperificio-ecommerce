@@ -168,22 +168,30 @@ function MethodCard({ method, selected, onSelect, name, isMobile }) {
 }
 
 // ── Order summary collassabile su mobile ───────────────────────────
-function OrderSummary({ cart, totalPrice, address, step, selectedCountryName, placing, isMobile }) {
+function OrderSummary({ cart, totalPrice, positionPrice, address, step, selectedCountryName, placing, isMobile }) {
   const [open, setOpen] = useState(!isMobile);
-
   useEffect(() => { setOpen(!isMobile); }, [isMobile]);
+
+  const shippingCost = (totalPrice || 0) - (positionPrice || 0);
+  const hasFreeShipping = shippingCost <= 0;
+
+  const row = (label, value, opts = {}) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: opts.large ? 16 : 14, fontWeight: opts.bold ? 700 : 400, color: opts.accent ? 'var(--color-red)' : 'var(--color-dark)' }}>
+      <span>{label}</span>
+      <span style={{ fontWeight: opts.bold ? 700 : 500 }}>{value}</span>
+    </div>
+  );
 
   return (
     <div style={{
-      background: '#f9f7f4',
+      background: 'var(--color-light)',
       border: '1px solid var(--color-border)',
       borderRadius: 14,
       overflow: 'hidden',
       position: isMobile ? 'static' : 'sticky',
       top: 80,
     }}>
-      {/* Header collassabile su mobile */}
-      {isMobile ? (
+      {isMobile && (
         <button
           onClick={() => setOpen((o) => !o)}
           style={{
@@ -191,26 +199,28 @@ function OrderSummary({ cart, totalPrice, address, step, selectedCountryName, pl
             background: 'none', border: 'none', cursor: 'pointer',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             fontFamily: 'var(--font-sans)',
+            borderBottom: open ? '1px solid var(--color-border)' : 'none',
           }}
         >
-          <span style={{ fontWeight: 600, fontSize: 14 }}>
+          <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-dark)' }}>
             {open ? 'Nascondi riepilogo' : 'Mostra riepilogo ordine'}
           </span>
           <span style={{ fontWeight: 700, color: 'var(--color-red)', fontSize: 15 }}>
             {open ? '▲' : '▾'} {formatPrice(totalPrice)}
           </span>
         </button>
-      ) : null}
+      )}
 
       {open && (
-        <div style={{ padding: isMobile ? '0 20px 20px' : 28 }}>
+        <div style={{ padding: isMobile ? '16px 20px 20px' : 28 }}>
           {!isMobile && (
-            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 20, marginTop: 0 }}>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', color: 'var(--color-dark)', marginBottom: 20, marginTop: 0 }}>
               Il tuo ordine
             </h2>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+          {/* Prodotti */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 16 }}>
             {Object.values(
               (cart?.lineItems?.filter(i => i.type === 'product') ?? []).reduce((acc, item) => {
                 const key = item.referencedId || item.id;
@@ -219,32 +229,41 @@ function OrderSummary({ cart, totalPrice, address, step, selectedCountryName, pl
                 return acc;
               }, {})
             ).map((item) => (
-              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, gap: 12 }}>
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>
                     {item.label}
                   </div>
-                  <div style={{ color: '#aaa', fontSize: 12 }}>Qtà: {item.quantity}</div>
+                  <div style={{ fontSize: 12, color: 'var(--color-mid)' }}>Qtà: {item.quantity}</div>
                 </div>
-                <span style={{ fontWeight: 700, flexShrink: 0 }}>{formatPrice(item._total)}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-dark)', flexShrink: 0 }}>{formatPrice(item._total)}</span>
               </div>
             ))}
           </div>
 
-          <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '12px 0' }} />
+          <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '14px 0' }} />
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 17, marginBottom: step === 2 ? 20 : 4 }}>
-            <span>Totale</span>
-            <span>{formatPrice(totalPrice)}</span>
+          {/* Breakdown costi */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+            {row('Subtotale', formatPrice(positionPrice || 0))}
+            {row(
+              'Spedizione',
+              hasFreeShipping ? <span style={{ color: 'var(--color-red)', fontWeight: 600 }}>Gratuita</span> : formatPrice(shippingCost)
+            )}
           </div>
 
+          <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '14px 0' }} />
+
+          {row('Totale', formatPrice(totalPrice), { bold: true, large: true, accent: true })}
+
+          {/* Info indirizzo */}
           {step >= 1 && address.email && (
-            <div style={{ fontSize: 12, color: '#888', marginBottom: 10, lineHeight: 1.8 }}>
+            <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 16, lineHeight: 1.8, borderTop: '1px solid var(--color-border)', paddingTop: 14 }}>
               <div>📧 {address.email}</div>
             </div>
           )}
           {step >= 2 && address.firstName && (
-            <div style={{ fontSize: 12, color: '#888', marginBottom: 16, lineHeight: 1.8 }}>
+            <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 8, lineHeight: 1.8 }}>
               <div>📦 {address.firstName} {address.lastName}</div>
               <div>{address.street}, {address.zipcode} {address.city}</div>
               <div>{selectedCountryName}</div>
@@ -252,10 +271,10 @@ function OrderSummary({ cart, totalPrice, address, step, selectedCountryName, pl
           )}
 
           {step === 2 && placing && (
-            <p style={{ color: '#888', fontSize: 13, marginTop: 8 }}>⏳ Completamento ordine...</p>
+            <p style={{ color: 'var(--color-mid)', fontSize: 13, marginTop: 12 }}>⏳ Completamento ordine...</p>
           )}
 
-          <p style={{ fontSize: 11, color: '#bbb', textAlign: 'center', marginTop: 12 }}>
+          <p style={{ fontSize: 11, color: 'var(--color-mid)', textAlign: 'center', marginTop: 16, opacity: .7 }}>
             🔒 Ordine sicuro · Dati protetti
           </p>
         </div>
@@ -267,7 +286,7 @@ function OrderSummary({ cart, totalPrice, address, step, selectedCountryName, pl
 // ── Checkout principale ────────────────────────────────────────────
 export default function CheckoutPage() {
   const isMobile = useIsMobile();
-  const { cart, itemCount, totalPrice, fetchCart } = useCartContext();
+  const { cart, itemCount, totalPrice, positionPrice, fetchCart } = useCartContext();
   const { isLoggedIn, customer } = useCustomerContext();
 
   const [step, setStep] = useState(isLoggedIn ? 1 : 0);
@@ -495,7 +514,7 @@ export default function CheckoutPage() {
       {isMobile && (
         <div style={{ marginBottom: 28 }}>
           <OrderSummary
-            cart={cart} totalPrice={totalPrice} address={address} step={step}
+            cart={cart} totalPrice={totalPrice} positionPrice={positionPrice} address={address} step={step}
             selectedCountryName={selectedCountryName}
             placing={placing} isMobile={isMobile}
           />
@@ -749,7 +768,7 @@ export default function CheckoutPage() {
         {/* ── Order summary desktop ────────────────────────────── */}
         {!isMobile && (
           <OrderSummary
-            cart={cart} totalPrice={totalPrice} address={address} step={step}
+            cart={cart} totalPrice={totalPrice} positionPrice={positionPrice} address={address} step={step}
             selectedCountryName={selectedCountryName} orderError={orderError}
             placing={placing} onPlaceOrder={handlePlaceOrder} isMobile={false}
           />
