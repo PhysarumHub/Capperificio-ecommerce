@@ -8,7 +8,7 @@ const ITEMS = [
   },
   {
     type: 'image',
-    src: '/images/CAPPERI.jpg',
+    src: '/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp',
     alt: 'Capperi di Racale',
   },
   {
@@ -17,7 +17,7 @@ const ITEMS = [
   },
   {
     type: 'image',
-    src: '/images/CAPPERI.jpg',
+    src: '/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp',
     alt: 'Lavorazione capperi artigianale',
   },
 ];

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 const SITE_NAME = 'Capperificio di Racale';
 const BASE_URL = 'https://www.capperificio.it';
-const DEFAULT_IMAGE = `${BASE_URL}/images/CAPPERI.jpg`;
+const DEFAULT_IMAGE = `${BASE_URL}/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp`;
 const DEFAULT_DESCRIPTION = 'Capperi, cucunci e foglie di Racale: prodotti artigianali dal Salento, raccolti a mano e conservati secondo tradizione.';
 
 function setMeta(name, content) {

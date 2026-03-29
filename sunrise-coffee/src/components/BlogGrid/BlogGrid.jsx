@@ -6,19 +6,19 @@ const POSTS_FALLBACK = [
   {
     title: 'Come conservare i capperi sotto sale: guida pratica',
     excerpt: "Il sale marino è il metodo di conservazione più antico e migliore per i capperi. Scopri come mantenerli fragranti e saporiti a lungo, direttamente in dispensa...",
-    image: '/images/CAPPERI.jpg',
+    image: '/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp',
     slug: null,
   },
   {
     title: 'Capperi in cucina: 5 abbinamenti da provare',
     excerpt: "Dal pesce spada alla pasta alla Norma, i capperi di Racale esaltano ogni piatto. Ecco cinque ricette della tradizione pugliese e siciliana da mettere in tavola...",
-    image: '/images/CAPPERI.jpg',
+    image: '/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp',
     slug: null,
   },
   {
     title: 'Lilliput, Lacrimella, Capperone: le differenze',
     excerpt: "Non tutti i capperi sono uguali. La dimensione incide su sapore, consistenza e uso ideale in cucina. Una piccola guida per scegliere il formato giusto...",
-    image: '/images/CAPPERI.jpg',
+    image: '/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp',
     slug: null,
   },
 ];

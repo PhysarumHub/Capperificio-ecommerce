@@ -149,7 +149,7 @@ export default function HomePage() {
 
   return (
     <>
-      <Hero image="/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp" />
+      <Hero image="/images/HERO.jpeg" />
       <FilterTags />
 
       <SectionHeader label="I più amati" title="I nostri Bestseller" count={sliderProducts.length} viewAllHref="/collections/all" />
@@ -164,7 +164,7 @@ export default function HomePage() {
       )}
 
       <div style={{ background: 'var(--color-light)' }}>
-        <CategoryBanners filterImage="/images/CAPPERI.jpg" espressoImage="/images/CAPPERI.jpg" />
+        <CategoryBanners filterImage="/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp" espressoImage="/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp" />
       </div>
 
       <AboutSection />
@@ -182,7 +182,7 @@ export default function HomePage() {
       </div>
 
       <RedMarquee />
-      <GuidesEditorial image="/images/CAPPERI.jpg" />
+      <GuidesEditorial image="/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp" />
 
       <SectionHeader label="Dal blog" title="Storie e ricette" viewAllHref="/" viewAllText="Tutti gli articoli →" style={{ marginTop: 60 }} />
       <BlogGrid />
