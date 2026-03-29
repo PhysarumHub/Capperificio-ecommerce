@@ -14,6 +14,8 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
   : null;
 
+const B2B_GROUP_NAME = import.meta.env.VITE_B2B_GROUP_NAME || 'B2B';
+
 // ── Responsive hook ────────────────────────────────────────────────
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => window.innerWidth < 768);
@@ -168,12 +170,15 @@ function MethodCard({ method, selected, onSelect, name, isMobile }) {
 }
 
 // ── Order summary collassabile su mobile ───────────────────────────
-function OrderSummary({ cart, totalPrice, positionPrice, address, step, selectedCountryName, placing, isMobile }) {
+function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, selectedCountryName, placing, isMobile }) {
   const [open, setOpen] = useState(!isMobile);
   useEffect(() => { setOpen(!isMobile); }, [isMobile]);
 
   const shippingCost = (totalPrice || 0) - (positionPrice || 0);
   const hasFreeShipping = shippingCost <= 0;
+  const netPrice = cart?.price?.netPrice ?? 0;
+  const calculatedTaxes = cart?.price?.calculatedTaxes ?? [];
+  const totalTax = calculatedTaxes.reduce((sum, t) => sum + (t.tax ?? 0), 0);
 
   const row = (label, value, opts = {}) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: opts.large ? 16 : 14, fontWeight: opts.bold ? 700 : 400, color: opts.accent ? 'var(--color-red)' : 'var(--color-dark)' }}>
@@ -254,7 +259,22 @@ function OrderSummary({ cart, totalPrice, positionPrice, address, step, selected
 
           <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '14px 0' }} />
 
-          {row('Totale', formatPrice(totalPrice), { bold: true, large: true, accent: true })}
+          {isB2B ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {row('Totale imponibile', formatPrice(netPrice))}
+              {calculatedTaxes.map((t) => (
+                <div key={t.taxRate} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: 'var(--color-dark)' }}>
+                  <span>IVA {t.taxRate}%</span>
+                  <span>{formatPrice(t.tax)}</span>
+                </div>
+              ))}
+              {calculatedTaxes.length === 0 && row(`IVA`, formatPrice(totalTax))}
+              <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '4px 0' }} />
+              {row('Totale IVA inclusa', formatPrice(totalPrice), { bold: true, large: true, accent: true })}
+            </div>
+          ) : (
+            row('Totale', formatPrice(totalPrice), { bold: true, large: true, accent: true })
+          )}
 
           {/* Info indirizzo */}
           {step >= 1 && address.email && (
@@ -514,7 +534,9 @@ export default function CheckoutPage() {
       {isMobile && (
         <div style={{ marginBottom: 28 }}>
           <OrderSummary
-            cart={cart} totalPrice={totalPrice} positionPrice={positionPrice} address={address} step={step}
+            cart={cart} totalPrice={totalPrice} positionPrice={positionPrice}
+            isB2B={customer?.group?.name === B2B_GROUP_NAME}
+            address={address} step={step}
             selectedCountryName={selectedCountryName}
             placing={placing} isMobile={isMobile}
           />
@@ -768,7 +790,9 @@ export default function CheckoutPage() {
         {/* ── Order summary desktop ────────────────────────────── */}
         {!isMobile && (
           <OrderSummary
-            cart={cart} totalPrice={totalPrice} positionPrice={positionPrice} address={address} step={step}
+            cart={cart} totalPrice={totalPrice} positionPrice={positionPrice}
+            isB2B={customer?.group?.name === B2B_GROUP_NAME}
+            address={address} step={step}
             selectedCountryName={selectedCountryName} orderError={orderError}
             placing={placing} onPlaceOrder={handlePlaceOrder} isMobile={false}
           />
