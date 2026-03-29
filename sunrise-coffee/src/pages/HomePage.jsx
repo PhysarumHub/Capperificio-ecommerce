@@ -55,7 +55,7 @@ function groupVariants(rawList) {
     const allOptions = [...new Set(
       groups[p.id].flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
     )];
-    return { ...p, _allVariantOptions: allOptions };
+    return { ...p, _allVariantOptions: allOptions, _firstVariantId: groups[p.id][0]?.id };
   });
 
   Object.entries(groups).forEach(([parentId, siblings]) => {
@@ -86,7 +86,7 @@ function mapShopwareProduct(product) {
     : fromConfigurator?.length ? [...new Set(fromConfigurator)] : (fromOptions?.length ? fromOptions : undefined);
 
   return {
-    id: product.id,
+    id: product._firstVariantId || product.id,
     name: product.translated?.name || product.name,
     slug: getProductSlug(product),
     image: getProductImage(product),
