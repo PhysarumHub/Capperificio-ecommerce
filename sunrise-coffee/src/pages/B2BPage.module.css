@@ -374,7 +374,7 @@
 }
 
 .filterToggle {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 8px;
   font-size: 12px;
@@ -486,6 +486,7 @@
   .landingRoot { grid-template-columns: 1fr; }
   .landingHero { padding: 56px 32px; min-height: auto; }
   .landingForm { padding: 48px 24px; }
+  .filterToggle { display: flex; }
   .grid { grid-template-columns: repeat(2, 1fr); }
   .layout { display: block; }
 }

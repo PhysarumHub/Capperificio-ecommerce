@@ -60,7 +60,7 @@
 }
 
 .filterToggle {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 8px;
   font-size: 12px;
@@ -203,6 +203,8 @@
 
 @media (max-width: 768px) {
   .banner { padding: 48px 20px 36px; }
+
+  .filterToggle { display: flex; }
 
   .toolbar { padding: 10px 16px; gap: 8px; }
 

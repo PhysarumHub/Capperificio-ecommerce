@@ -32,6 +32,7 @@ function mapB2BProduct(p) {
   const price     = p.calculatedPrice || p.price?.[0];
   const listPrice = price?.listPrice;
   return {
+    id:       p.id,
     name:     p.translated?.name || p.name,
     slug:     getProductSlug(p),
     image:    getProductImage(p),
@@ -300,9 +301,6 @@ function B2BCatalog({ customer }) {
           Filtra
           {activeCount > 0 && <span className={styles.filterBadge}>{activeCount}</span>}
         </button>
-        <span className={styles.resultCount}>
-          {loading ? '…' : `${products.length} prodott${products.length !== 1 ? 'i' : 'o'}`}
-        </span>
       </div>
 
       {/* Layout sidebar + griglia */}
@@ -322,6 +320,7 @@ function B2BCatalog({ customer }) {
               {products.map((p) => (
                 <ProductCard
                   key={p.slug}
+                  id={p.id}
                   name={p.name}
                   slug={p.slug}
                   image={p.image}
