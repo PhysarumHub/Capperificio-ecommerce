@@ -4,7 +4,10 @@ import { storeApiPost, storeApiPatch } from '../shopware-client';
  * Get available payment methods.
  */
 export async function getPaymentMethods() {
-  const result = await storeApiPost('/payment-method', { onlyAvailable: true });
+  const result = await storeApiPost('/payment-method', {
+    onlyAvailable: true,
+    includes: { payment_method: ['id', 'name', 'translated', 'handlerIdentifier'] },
+  });
   return result?.elements || [];
 }
 
