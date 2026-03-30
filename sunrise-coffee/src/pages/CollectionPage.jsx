@@ -365,9 +365,6 @@ export default function CollectionPage() {
           )}
         </button>
 
-        <span className={styles.resultCount}>
-          {loading ? '...' : `${products.length} prodott${products.length !== 1 ? 'i' : 'o'}`}
-        </span>
 
         <div className={styles.sortWrap}>
           <span className={styles.sortLabel}>Ordina</span>
