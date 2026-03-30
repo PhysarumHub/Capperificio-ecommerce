@@ -339,10 +339,18 @@ export default function CheckoutPage() {
     getCountries().then((co) => setSwCountries(co)).catch(() => {});
     getSalutations().then((sa) => { if (sa.length) setSalutationId(sa[0].id); }).catch(() => {});
     getPaymentMethods().then((methods) => {
+      console.log('💳 Payment methods disponibili:', methods.map(m => ({
+        name: m.name,
+        translated: m.translated?.name,
+        handlerIdentifier: m.handlerIdentifier,
+        id: m.id,
+      })));
       const isStripe = (m) => /stripe/i.test(m.handlerIdentifier || '') || /stripe/i.test(m.name || '') || /stripe/i.test(m.translated?.name || '');
       const isPaypal = (m) => /paypal/i.test(m.handlerIdentifier || '') || /paypal/i.test(m.name || '') || /paypal/i.test(m.translated?.name || '');
       const stripePm = methods.find(isStripe);
       const paypalPm = methods.find(isPaypal);
+      console.log('✅ Stripe trovato:', stripePm?.name, stripePm?.id || '❌ NON TROVATO');
+      console.log('✅ PayPal trovato:', paypalPm?.name, paypalPm?.id || '❌ NON TROVATO');
       if (stripePm) setStripePaymentMethodId(stripePm.id);
       if (paypalPm) setPaypalPaymentMethodId(paypalPm.id);
     }).catch(() => {});
