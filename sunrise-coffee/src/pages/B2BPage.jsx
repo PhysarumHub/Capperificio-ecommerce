@@ -28,17 +28,68 @@ const B2B_FALLBACK = [
   { name: 'Mix Capperi Industriale — 5kg',     slug: 'b2b-mix-5kg',   image: '/images/PRODUCTSTILL.jpg', badge: 'B2B', price: '€59.90' },
 ];
 
+function buildVariantMap(children) {
+  const map = {};
+  children.forEach(child => {
+    const name = child.options?.[0]?.translated?.name || child.options?.[0]?.name;
+    if (name) map[name] = child.id;
+  });
+  return map;
+}
+
+function groupB2BVariants(rawList) {
+  const standalone = rawList.filter(p => !p.parentId);
+  const children   = rawList.filter(p => !!p.parentId);
+
+  const groups = {};
+  children.forEach(child => {
+    if (!groups[child.parentId]) groups[child.parentId] = [];
+    groups[child.parentId].push(child);
+  });
+
+  const parentIds = new Set(Object.keys(groups));
+
+  const result = standalone.map(p => {
+    if (!parentIds.has(p.id)) return p;
+    const allOptions = [...new Set(
+      groups[p.id].flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+    )];
+    return { ...p, _allVariantOptions: allOptions, _firstVariantId: groups[p.id][0]?.id, _variantMap: buildVariantMap(groups[p.id]) };
+  });
+
+  Object.entries(groups).forEach(([parentId, siblings]) => {
+    if (standalone.some(p => p.id === parentId)) return;
+    const allOptions = [...new Set(
+      siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+    )];
+    result.push({ ...siblings[0], _allVariantOptions: allOptions, _variantMap: buildVariantMap(siblings) });
+  });
+
+  return result;
+}
+
 function mapB2BProduct(p) {
   const price     = p.calculatedPrice || p.price?.[0];
   const listPrice = price?.listPrice;
+
+  const fromConfigurator = p.configuratorSettings
+    ?.map(s => s.option?.translated?.name || s.option?.name).filter(Boolean);
+  const fromOptions = p.options
+    ?.map(o => o.translated?.name || o.name).filter(Boolean);
+  const options = p._allVariantOptions?.length
+    ? p._allVariantOptions
+    : fromConfigurator?.length ? [...new Set(fromConfigurator)] : (fromOptions?.length ? fromOptions : undefined);
+
   return {
-    id:       p.id,
-    name:     p.translated?.name || p.name,
-    slug:     getProductSlug(p),
-    image:    getProductImage(p),
-    price:    formatPrice(price?.unitPrice),
-    oldPrice: listPrice?.price ? formatPrice(listPrice.price) : undefined,
-    badge:    listPrice?.price ? 'Sale' : undefined,
+    id:         p._firstVariantId || p.id,
+    name:       p.translated?.name || p.name,
+    slug:       getProductSlug(p),
+    image:      getProductImage(p),
+    price:      formatPrice(price?.unitPrice),
+    oldPrice:   listPrice?.price ? formatPrice(listPrice.price) : undefined,
+    badge:      listPrice?.price ? 'Sale' : undefined,
+    options,
+    variantMap: p._variantMap || {},
   };
 }
 
@@ -258,7 +309,7 @@ function B2BCatalog({ customer }) {
   // Se Shopware è connesso usa SOLO i prodotti della categoria B2B — niente fallback misto
   const shopwareActive = isShopwareConfigured() && !error;
   const allProducts = shopwareActive
-    ? apiProducts.map(mapB2BProduct)
+    ? groupB2BVariants(apiProducts).map(mapB2BProduct)
     : B2B_FALLBACK;
   const products  = allProducts.filter((p) => matchesB2BFilters(p, filters));
 
@@ -327,6 +378,8 @@ function B2BCatalog({ customer }) {
                   price={p.price}
                   oldPrice={p.oldPrice}
                   badge={p.badge}
+                  options={p.options}
+                  variantMap={p.variantMap}
                 />
               ))}
             </div>
