@@ -343,9 +343,6 @@ export default function CollectionPage() {
         </div>
         <h1 className={styles.bannerTitle}>{collection.title}</h1>
         <p className={styles.bannerDesc}>{collection.description}</p>
-        <p className={styles.bannerCount}>
-          {loading ? '...' : `${products.length} prodott${products.length !== 1 ? 'i' : 'o'}`}
-        </p>
       </section>
 
       {/* Toolbar */}
