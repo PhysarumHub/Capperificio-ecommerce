@@ -49,11 +49,25 @@ function groupVariants(rawList) {
     return map;
   };
   const result = standalone.map(p => {
-    if (!parentIds.has(p.id)) return p;
-    const allOptions = [...new Set(
-      groups[p.id].flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
-    )];
-    return { ...p, _allVariantOptions: allOptions, _firstVariantId: groups[p.id][0]?.id, _variantMap: buildVariantMap(groups[p.id]) };
+    // 1) children present as siblings in the flat list (classic case)
+    if (parentIds.has(p.id)) {
+      const siblings = groups[p.id];
+      const allOptions = [...new Set(
+        siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+      )];
+      return { ...p, _allVariantOptions: allOptions, _firstVariantId: siblings[0]?.id, _variantMap: buildVariantMap(siblings) };
+    }
+    // 2) children come inline as p.children (from associations.children in the API)
+    if (p.children?.length) {
+      const inlineChildren = p.children.filter(c => c.options?.length);
+      if (inlineChildren.length) {
+        const allOptions = [...new Set(
+          inlineChildren.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+        )];
+        return { ...p, _allVariantOptions: allOptions, _firstVariantId: inlineChildren[0]?.id, _variantMap: buildVariantMap(inlineChildren) };
+      }
+    }
+    return p;
   });
   Object.entries(groups).forEach(([parentId, siblings]) => {
     if (standalone.some(p => p.id === parentId)) return;
