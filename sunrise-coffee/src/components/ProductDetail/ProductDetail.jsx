@@ -68,7 +68,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const cancelAddRef = useRef(false);
   const touchStartX = useRef(null);
   const alsoLikeSectionRef = useRef(null);
-  const [alsoLikeGridRef, alsoLikeGridInView] = useInView({ threshold: 0.05 });
+  const [alsoLikeGridRef, alsoLikeGridInView] = useInView({ threshold: 0.01, rootMargin: '120px' });
   const { addItem } = useCartContext();
 
 
