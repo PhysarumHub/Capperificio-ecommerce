@@ -37,6 +37,43 @@
     <meta name="theme-color" content="#547054" />
     <meta name="msapplication-TileColor" content="#547054" />
 
+    <!-- Google Consent Mode v2 (default) — MUST be before GTM -->
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    (function () {
+      var c = null;
+      try {
+        var r = localStorage.getItem('capperificio_consent');
+        if (r) c = JSON.parse(r);
+      } catch (e) {}
+
+      var a = c && c.analytics ? 'granted' : 'denied';
+      var m = c && c.marketing ? 'granted' : 'denied';
+
+      gtag('consent', 'default', {
+        ad_storage:              m,
+        ad_user_data:            m,
+        ad_personalization:      m,
+        analytics_storage:       a,
+        personalization_storage: m,
+        functionality_storage:   'granted',
+        security_storage:        'granted'
+      });
+    })();
+    </script>
+
+    <!-- TODO: Google Tag Manager — replace GTM-XXXXXXXXX with your container ID -->
+    <!--
+    <script>
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-XXXXXXXXX');
+    </script>
+    -->
+
     <!-- Preconnect & Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

@@ -12,7 +12,7 @@ const PAYMENT_METHODS = [
 ];
 
 const LINKS_COL1 = ['Tutti i prodotti', 'Capperi', 'Cucunci', 'Foglie', 'Polvere'];
-const LINKS_COL2 = ['Chi siamo', 'Contatti', 'FAQ', 'Area B2B'];
+const LINKS_COL2 = ['Chi siamo', 'Contatti', 'FAQ', 'Area B2B', 'Gestione cookie'];
 
 const SOCIAL_ICONS = [
   { Icon: FacebookIcon,  label: 'Facebook' },
@@ -40,7 +40,13 @@ export default function Footer() {
 
         <ul className={styles.links}>
           {LINKS_COL2.map((t) => (
-            <li key={t}><Link to="/">{t}</Link></li>
+            <li key={t}>
+              {t === 'Gestione cookie' ? (
+                <a href="#" onClick={(e) => { e.preventDefault(); window.CapperificioConsent?.openSettings(); }}>{t}</a>
+              ) : (
+                <Link to="/">{t}</Link>
+              )}
+            </li>
           ))}
         </ul>
 

@@ -3,6 +3,7 @@ import ShippingBar from './ShippingBar';
 import Header from './Header';
 import Newsletter from './Newsletter';
 import Footer from './Footer';
+import CookieConsent from '../CookieConsent/CookieConsent';
 
 export default function Layout() {
   return (
@@ -15,6 +16,7 @@ export default function Layout() {
       </main>
       <Newsletter />
       <Footer />
+      <CookieConsent />
     </>
   );
 }
