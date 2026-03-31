@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useCartContext, useCustomerContext } from '../../context/ShopwareContext';
 import CartDrawer from '../CartDrawer/CartDrawer';
 import AuthDrawer from '../AuthDrawer/AuthDrawer';
+import { useDrawerDrag } from '../../hooks/useDrawerDrag';
 import styles from './Header.module.css';
 
 const MEGA_LINKS = [
@@ -22,6 +23,9 @@ export default function Header() {
   const [authOpen, setAuthOpen] = useState(false);
   const { itemCount } = useCartContext();
   const { isLoggedIn } = useCustomerContext();
+
+  const megaMenuRef     = useRef(null);
+  const megaBackdropRef = useRef(null);
 
   const openCart = useCallback(() => {
     setCartOpen(true);
@@ -46,6 +50,9 @@ export default function Header() {
     setMenuOpen(false);
     document.body.style.overflow = '';
   }, []);
+
+  const { onTouchStart: menuTouchStart, onTouchMove: menuTouchMove, onTouchEnd: menuTouchEnd } =
+    useDrawerDrag({ drawerRef: megaMenuRef, backdropRef: megaBackdropRef, onClose: closeMenu });
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') closeMenu(); };
@@ -94,18 +101,25 @@ export default function Header() {
 
       {/* Menu drawer */}
       <div
+        ref={megaBackdropRef}
         className={`${styles.megaBackdrop} ${menuOpen ? styles.megaBackdropOpen : ''}`}
         onClick={closeMenu}
         aria-hidden="true"
       />
       <div
+        ref={megaMenuRef}
         id="megaMenu"
         className={`${styles.megaMenu} ${menuOpen ? styles.megaMenuOpen : ''}`}
         role="dialog"
         aria-label="Navigazione"
         aria-modal="true"
       >
-        <div className={styles.megaDrawerHeader}>
+        <div
+          className={styles.megaDrawerHeader}
+          onTouchStart={menuTouchStart}
+          onTouchMove={menuTouchMove}
+          onTouchEnd={menuTouchEnd}
+        >
           <span className={styles.megaDrawerTitle}>Menu</span>
           <button className={styles.megaCloseBtn} onClick={closeMenu} aria-label="Chiudi menu">✕</button>
         </div>
