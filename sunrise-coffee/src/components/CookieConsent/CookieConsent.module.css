@@ -57,6 +57,7 @@
 
 /* ── Buttons ───────────────────────────────────────────── */
 .btn {
+  flex: 1 1 0;
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 500;
@@ -78,24 +79,10 @@
   transform: scale(0.97);
 }
 
-.btnAccept {
-  flex: 1;
-  background: var(--color-red);
-  color: #fff;
-}
-.btnAccept:hover {
-  background: var(--color-red-hover);
-  border-color: var(--color-red-hover);
-  color: #fff;
-}
-
-.btnReject {
-  flex: 1;
-}
-
+.btnAccept,
+.btnReject,
 .btnSettings {
-  font-size: 12px;
-  padding: 10px 16px;
+  min-width: 0;
 }
 
 /* ── Modal overlay ─────────────────────────────────────── */
