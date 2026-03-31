@@ -10,6 +10,8 @@ import B2BPage from './pages/B2BPage';
 import BlogPage from './pages/BlogPage';
 import BlogArticlePage from './pages/BlogArticlePage';
 import ScrollToTop from './components/ScrollToTop';
+import TestPageA from './pages/TestPageA';
+import TestPageB from './pages/TestPageB';
 
 export default function App() {
   return (
@@ -29,6 +31,10 @@ export default function App() {
         <Route path="/blog" element={<BlogPage />} />
         <Route path="/blog/:slug" element={<BlogArticlePage />} />
       </Route>
+
+      {/* ── View transitions demo (no header/footer) ── */}
+      <Route path="/test-a" element={<TestPageA />} />
+      <Route path="/test-b" element={<TestPageB />} />
     </Routes>
     </>
   );
