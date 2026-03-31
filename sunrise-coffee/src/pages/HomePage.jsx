@@ -9,11 +9,14 @@ import AboutSection from '../components/AboutSection/AboutSection';
 import GuidesEditorial from '../components/GuidesEditorial/GuidesEditorial';
 import StorySlider from '../components/StorySlider/StorySlider';
 import BlogGrid from '../components/BlogGrid/BlogGrid';
+import AnimateIn from '../components/AnimateIn';
+import useInView from '../hooks/useInView';
 import { useProducts } from '../hooks/useProducts';
 import { useSEO } from '../hooks/useSEO';
 import { formatPrice } from '../lib/utils/price';
 import { getProductImage, getProductSlug } from '../lib/utils/image';
 import styles from './HomePage.module.css';
+import anim from '../styles/animations.module.css';
 
 const B2B_CATEGORY_ID = import.meta.env.VITE_B2B_CATEGORY_ID || null;
 
@@ -147,21 +150,29 @@ export default function HomePage() {
     ? groupVariants(rawMateriaPrima).slice(0, 3).map(mapShopwareProduct)
     : BLEND_PRODUCTS_FALLBACK;
 
+  const [gridRef, gridInView] = useInView({ threshold: 0.1 });
+
   return (
     <>
       <Hero image="/images/HERO.jpeg" />
-      <FilterTags />
+
+      <AnimateIn animation="fadeUp">
+        <FilterTags />
+      </AnimateIn>
 
       <SectionHeader label="I più amati" title="I nostri Bestseller" count={sliderProducts.length} viewAllHref="/collections/all" />
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>Caricamento prodotti...</div>
-      ) : (
-        <ProductSlider>
-          {sliderProducts.map((p) => (
-            <ProductCard key={p.name} {...p} />
-          ))}
-        </ProductSlider>
-      )}
+
+      <AnimateIn animation="fadeUp" delay={40}>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>Caricamento prodotti...</div>
+        ) : (
+          <ProductSlider>
+            {sliderProducts.map((p) => (
+              <ProductCard key={p.name} {...p} />
+            ))}
+          </ProductSlider>
+        )}
+      </AnimateIn>
 
       <div style={{ background: 'var(--color-light)' }}>
         <CategoryBanners filterImage="/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp" espressoImage="/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp" />
@@ -171,17 +182,25 @@ export default function HomePage() {
 
       <div style={{ background: 'var(--color-light)', paddingTop: 60 }}>
         <SectionHeader label="La nostra storia" title="Dal campo alla tavola" count={3} />
-        <StorySlider />
+        <AnimateIn animation="fadeUp" delay={80}>
+          <StorySlider />
+        </AnimateIn>
       </div>
 
       <SectionHeader label="Materia prima" title="Le nostre specialità" count={8} viewAllHref="/collections/all" style={{ marginTop: 60 }} />
-      <div className={styles.productGrid}>
+      <div
+        ref={gridRef}
+        className={`${styles.productGrid} ${anim.staggerGrid} ${gridInView ? anim.staggerInView : ''}`}
+      >
         {blendProducts.map((p) => (
           <ProductCard key={p.name} {...p} />
         ))}
       </div>
 
-      <RedMarquee />
+      <AnimateIn animation="fadeIn">
+        <RedMarquee />
+      </AnimateIn>
+
       <GuidesEditorial image="/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp" />
 
       <SectionHeader label="Dal blog" title="Storie e ricette" viewAllHref="/" viewAllText="Tutti gli articoli →" style={{ marginTop: 60 }} />

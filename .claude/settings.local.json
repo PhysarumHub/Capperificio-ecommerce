@@ -8,7 +8,8 @@
       "Bash(grep -n \"#[0-9A-Fa-f]\\\\{3,6\\\\}\" \"c:\\\\Users\\\\Riccardo\\\\OneDrive\\\\Desktop\\\\Capperificio ecommerce\\\\sunrise-coffee\\\\src/components/BlogGrid/BlogGrid.module.css\")",
       "Bash(grep -E '\\\\$\\\\{.*\\\\}' \"c:\\\\Users\\\\Riccardo\\\\OneDrive\\\\Desktop\\\\Capperificio ecommerce\\\\sunrise-coffee\\\\docker-compose.yml\")",
       "Bash(grep -E \"\\\\.\\(jsx?|tsx?\\)$\")",
-      "Bash(grep -r \"blog\\\\|article\\\\|Article\" '/c/Users/Riccardo/OneDrive/Desktop/Capperificio ecommerce/sunrise-coffee/src/pages' --include=*.jsx --include=*.js)"
+      "Bash(grep -r \"blog\\\\|article\\\\|Article\" '/c/Users/Riccardo/OneDrive/Desktop/Capperificio ecommerce/sunrise-coffee/src/pages' --include=*.jsx --include=*.js)",
+      "Bash(npx skills:*)"
     ]
   }
 }

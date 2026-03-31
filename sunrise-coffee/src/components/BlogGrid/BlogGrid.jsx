@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useBlogPosts } from '../../hooks/useBlogPosts';
+import useInView from '../../hooks/useInView';
 import styles from './BlogGrid.module.css';
+import anim from '../../styles/animations.module.css';
 
 const POSTS_FALLBACK = [
   {
@@ -25,43 +27,41 @@ const POSTS_FALLBACK = [
 
 export default function BlogGrid() {
   const { posts: apiPosts, loading } = useBlogPosts({ limit: 3 });
+  const [ref, inView] = useInView({ threshold: 0.1 });
   const posts = !loading && apiPosts.length > 0 ? apiPosts : POSTS_FALLBACK;
 
   return (
-    <div className={styles.grid}>
-      {posts.map((post) => (
-        post.slug ? (
-          <Link key={post.slug} to={`/blog/${post.slug}`} className={styles.card}>
-            <div className={styles.img}>
-              {post.image ? (
-                <img src={post.image} alt={post.title} className={styles.postImg} />
-              ) : (
-                <div className={styles.imgPlaceholder} />
-              )}
+    <div
+      ref={ref}
+      className={`${styles.grid} ${anim.staggerGrid} ${inView ? anim.staggerInView : ''}`}
+    >
+      {posts.map((post) => {
+        const content = (
+          <>
+            <div className={`${styles.img} ${anim.imgZoom}`}>
+              {post.image
+                ? <img src={post.image} alt={post.title} className={styles.postImg} />
+                : <div className={styles.imgPlaceholder} />
+              }
             </div>
             <div className={styles.body}>
               <h3 className={styles.title}>{post.title}</h3>
               <p className={styles.excerpt}>{post.excerpt}</p>
               <span className={styles.link}>Leggi →</span>
             </div>
+          </>
+        );
+
+        return post.slug ? (
+          <Link key={post.slug} to={`/blog/${post.slug}`} className={styles.card}>
+            {content}
           </Link>
         ) : (
           <div key={post.title} className={styles.card}>
-            <div className={styles.img}>
-              {post.image ? (
-                <img src={post.image} alt={post.title} className={styles.postImg} />
-              ) : (
-                <div className={styles.imgPlaceholder} />
-              )}
-            </div>
-            <div className={styles.body}>
-              <h3 className={styles.title}>{post.title}</h3>
-              <p className={styles.excerpt}>{post.excerpt}</p>
-              <span className={styles.link}>Leggi →</span>
-            </div>
+            {content}
           </div>
-        )
-      ))}
+        );
+      })}
     </div>
   );
 }

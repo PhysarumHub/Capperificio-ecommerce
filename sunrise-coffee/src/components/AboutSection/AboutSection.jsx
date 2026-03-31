@@ -1,8 +1,11 @@
+import useInView from '../../hooks/useInView';
 import styles from './AboutSection.module.css';
+import anim from '../../styles/animations.module.css';
 
 export default function AboutSection() {
+  const [ref, inView] = useInView();
   return (
-    <div className={styles.section}>
+    <div ref={ref} className={`${styles.section} ${anim.fadeUp} ${inView ? anim.inView : ''}`}>
       <div className={styles.content}>
         <div className={styles.label}><span className={styles.dot} /> Chi siamo</div>
         <p className={styles.quote}>
