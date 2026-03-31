@@ -75,11 +75,18 @@ function mapRelatedProduct(product) {
   // Se il prodotto è un padre senza figli nella risposta → nascondiamo i chip
   // e non esponiamo l'id (ProductCard esce subito da handleAdd).
   const hasKnownVariants = Object.keys(product._variantMap || {}).length > 0;
-  const options = hasKnownVariants ? product._allVariantOptions : undefined;
   const variantMap = hasKnownVariants ? product._variantMap : {};
 
-  // Un padre senza figli noti ha configuratorSettings ma nessun _variantMap:
-  // passare il suo ID al carrello causerebbe errori silenti.
+  const fromConfigurator = product.configuratorSettings
+    ?.map((s) => s.option?.translated?.name || s.option?.name)
+    .filter(Boolean);
+  // Usa configuratorSettings (sempre completo dal padre) per i chip;
+  // fallback a _allVariantOptions se il configurator non è presente
+  const options = fromConfigurator?.length
+    ? [...new Set(fromConfigurator)]
+    : (hasKnownVariants ? product._allVariantOptions : undefined);
+
+  // Se è un padre senza figli noti non possiamo risolvere l'ID variante per il carrello
   const isUnresolvableParent = !product.parentId && !hasKnownVariants
     && (product.configuratorSettings?.length > 0);
   const id = isUnresolvableParent

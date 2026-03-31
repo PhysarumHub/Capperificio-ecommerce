@@ -96,9 +96,11 @@ function mapShopwareProduct(product) {
   const fromOptions = product.options
     ?.map((o) => o.translated?.name || o.name)
     .filter(Boolean);
-  const options = product._allVariantOptions?.length
-    ? product._allVariantOptions
-    : fromConfigurator?.length ? [...new Set(fromConfigurator)] : (fromOptions?.length ? fromOptions : undefined);
+  // configuratorSettings è sempre completo (viene dal padre);
+  // _allVariantOptions deriva solo dai figli presenti nella risposta, può essere incompleto.
+  const options = fromConfigurator?.length
+    ? [...new Set(fromConfigurator)]
+    : (product._allVariantOptions?.length ? product._allVariantOptions : (fromOptions?.length ? fromOptions : undefined));
 
   return {
     id: product._firstVariantId || product.id,
