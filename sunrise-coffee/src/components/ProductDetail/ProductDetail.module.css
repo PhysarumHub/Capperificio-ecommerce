@@ -7,7 +7,14 @@
 .breadcrumb a { color: var(--color-mid); text-decoration: none; }
 .breadcrumb a:hover { color: var(--color-dark); }
 .sep { margin: 0 6px; }
-
+@keyframes pdpSlideLeft {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes pdpSlideRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
 /* ─── PRODUCT 3-COL LAYOUT ────────────────── */
 .productSection {
   display: grid;
@@ -31,6 +38,7 @@
 .colLeft {
   padding: 40px 36px;
   border-right: 1px solid var(--color-border);
+  animation: pdpSlideLeft 500ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 .colCenter {
@@ -40,6 +48,7 @@
 .colRight {
   padding: 40px 36px;
   border-left: 1px solid var(--color-border);
+  animation: pdpSlideRight 500ms cubic-bezier(0.23, 1, 0.32, 1) 80ms both;
 }
 
 /* ─── DESKTOP STACKED IMAGES ─────────────── */
@@ -373,6 +382,21 @@
 .alsoLikeGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+}
+.alsoLikeGrid > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 400ms cubic-bezier(0.23, 1, 0.32, 1), transform 400ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.alsoLikeGridVisible > *:nth-child(1) { opacity: 1; transform: none; transition-delay: 0ms; }
+.alsoLikeGridVisible > *:nth-child(2) { opacity: 1; transform: none; transition-delay: 70ms; }
+.alsoLikeGridVisible > *:nth-child(3) { opacity: 1; transform: none; transition-delay: 140ms; }
+.alsoLikeGridVisible > *:nth-child(4) { opacity: 1; transform: none; transition-delay: 210ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .colLeft  { animation: none; }
+  .colRight { animation: none; }
+  .alsoLikeGrid > * { transition: opacity 200ms ease; transform: none !important; }
 }
 
 /* ─── MOBILE SLIDER ───────────────────────── */

@@ -64,15 +64,13 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const [showTag, setShowTag] = useState(false);
   const [imgIndex, setImgIndex] = useState(0);
   const [stickyVisible, setStickyVisible] = useState(true);
-  const [mounted, setMounted] = useState(false);
   const debounceRef = useRef(null);
   const cancelAddRef = useRef(false);
   const touchStartX = useRef(null);
   const alsoLikeSectionRef = useRef(null);
-  const [alsoLikeGridRef, alsoLikeGridInView] = useInView({ threshold: 0.1 });
+  const [alsoLikeGridRef, alsoLikeGridInView] = useInView({ threshold: 0.05 });
   const { addItem } = useCartContext();
 
-  useEffect(() => { setMounted(true); }, []);
 
   const scheduleCollapse = (currentQty) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -331,7 +329,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
       {/* Product section — 3 columns desktop / stacked mobile */}
       <section className={styles.productSection}>
         {/* LEFT COL */}
-        <div className={`${styles.colLeft} ${anim.slideLeft} ${mounted ? anim.inView : ''}`}>
+        <div className={styles.colLeft}>
           <p className={styles.description} dangerouslySetInnerHTML={{ __html: productDescription }} />
 
           {(() => {
@@ -375,6 +373,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
           )}
 
           <div className={styles.sectionTitle}>Suggerimenti d'uso</div>
+
           <div className={styles.brewAccordion}>
             {(() => {
               const cf = shopwareProduct?.customFields || {};
@@ -471,7 +470,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         </div>
 
         {/* RIGHT COL — desktop only */}
-        <div className={`${styles.colRight} ${anim.slideRight} ${mounted ? anim.inView : ''}`} style={{ '--delay': '80ms' }}>
+        <div className={styles.colRight}>
           {purchasePanel}
         </div>
       </section>
@@ -509,7 +508,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
       {/* You may also like */}
       <section ref={alsoLikeSectionRef} className={styles.alsoLikeSection}>
         <SectionHeader label="Ti potrebbe piacere" title="Prodotti correlati" />
-        <div ref={alsoLikeGridRef} className={`${styles.alsoLikeGrid} ${anim.staggerGrid} ${alsoLikeGridInView ? anim.staggerInView : ''}`}>
+        <div ref={alsoLikeGridRef} className={`${styles.alsoLikeGrid} ${alsoLikeGridInView ? styles.alsoLikeGridVisible : ''}`}>
           {alsoLikeProducts.map((product) => (
             <ProductCard
               key={product.name}
