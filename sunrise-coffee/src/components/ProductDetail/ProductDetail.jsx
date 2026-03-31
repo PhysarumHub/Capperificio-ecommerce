@@ -68,17 +68,25 @@ function groupVariants(rawList) {
 function mapRelatedProduct(product) {
   const price = product.calculatedPrice || product.price?.[0];
   const listPrice = price?.listPrice;
-  const fromConfigurator = product.configuratorSettings
-    ?.map((s) => s.option?.translated?.name || s.option?.name)
-    .filter(Boolean);
-  const fromOptions = product.options
-    ?.map((o) => o.translated?.name || o.name)
-    .filter(Boolean);
-  const options = product._allVariantOptions?.length
-    ? product._allVariantOptions
-    : fromConfigurator?.length ? [...new Set(fromConfigurator)] : (fromOptions?.length ? fromOptions : undefined);
+
+  // Solo quando abbiamo il variantMap reale (figli presenti nella risposta API)
+  // mostriamo i chip e usiamo gli ID variante per il carrello.
+  // Se il prodotto è un padre senza figli nella risposta → nascondiamo i chip
+  // e non esponiamo l'id (ProductCard esce subito da handleAdd).
+  const hasKnownVariants = Object.keys(product._variantMap || {}).length > 0;
+  const options = hasKnownVariants ? product._allVariantOptions : undefined;
+  const variantMap = hasKnownVariants ? product._variantMap : {};
+
+  // Un padre senza figli noti ha configuratorSettings ma nessun _variantMap:
+  // passare il suo ID al carrello causerebbe errori silenti.
+  const isUnresolvableParent = !product.parentId && !hasKnownVariants
+    && (product.configuratorSettings?.length > 0);
+  const id = isUnresolvableParent
+    ? undefined
+    : (product._firstVariantId || product.id);
+
   return {
-    id: product._firstVariantId || product.id,
+    id,
     name: product.translated?.name || product.name,
     slug: getProductSlug(product),
     image: getProductImage(product),
@@ -86,7 +94,7 @@ function mapRelatedProduct(product) {
     oldPrice: listPrice?.price ? formatPrice(listPrice.price) : undefined,
     badge: listPrice?.price ? 'In saldo' : undefined,
     options,
-    variantMap: product._variantMap || {},
+    variantMap,
   };
 }
 
@@ -270,7 +278,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
       ).filter((p) => !B2B_CATEGORY_ID || !p.categoryTree?.includes(B2B_CATEGORY_ID))
     : [];
 
-  const { products: shopwareRelated } = useProducts({ limit: 8 });
+  const { products: shopwareRelated } = useProducts({ limit: 20 });
 
   const alsoLikeProducts = (() => {
     if (crossSellings.length > 0) {
