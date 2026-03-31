@@ -472,7 +472,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         </div>
       </section>
 
-      {/* Mobile sticky Aggiungi al carrello */
+      {/* Mobile sticky Aggiungi al carrello */}
       <div className={`${styles.mobileSticky} ${stickyVisible ? styles.mobileStickyShow : ''}`}>
         <div className={styles.mobileStickyInner}>
           <div>
