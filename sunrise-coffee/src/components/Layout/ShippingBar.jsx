@@ -1,6 +1,6 @@
 import styles from './ShippingBar.module.css';
 
-const MESSAGE = 'Spend $50.00 to get free shipping';
+const MESSAGE = 'Spedizione gratuita sopra €50';
 
 export default function ShippingBar() {
   return (
