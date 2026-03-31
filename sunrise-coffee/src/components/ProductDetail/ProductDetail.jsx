@@ -31,6 +31,65 @@ const BREW_CUSTOM_FIELDS = [
 
 const B2B_CATEGORY_ID = import.meta.env.VITE_B2B_CATEGORY_ID || null;
 
+function groupVariants(rawList) {
+  const standalone = rawList.filter(p => !p.parentId);
+  const children   = rawList.filter(p => !!p.parentId);
+  const groups = {};
+  children.forEach(child => {
+    if (!groups[child.parentId]) groups[child.parentId] = [];
+    groups[child.parentId].push(child);
+  });
+  const parentIds = new Set(Object.keys(groups));
+  const buildVariantMap = (cList) => {
+    const map = {};
+    cList.forEach(child => {
+      const name = child.options?.[0]?.translated?.name || child.options?.[0]?.name;
+      if (name) map[name] = child.id;
+    });
+    return map;
+  };
+  const result = standalone.map(p => {
+    if (!parentIds.has(p.id)) return p;
+    const allOptions = [...new Set(
+      groups[p.id].flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+    )];
+    return { ...p, _allVariantOptions: allOptions, _firstVariantId: groups[p.id][0]?.id, _variantMap: buildVariantMap(groups[p.id]) };
+  });
+  Object.entries(groups).forEach(([parentId, siblings]) => {
+    if (standalone.some(p => p.id === parentId)) return;
+    const allOptions = [...new Set(
+      siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+    )];
+    result.push({ ...siblings[0], _allVariantOptions: allOptions, _variantMap: buildVariantMap(siblings) });
+  });
+  return result;
+}
+
+function mapRelatedProduct(product) {
+  const price = product.calculatedPrice || product.price?.[0];
+  const listPrice = price?.listPrice;
+  const fromConfigurator = product.configuratorSettings
+    ?.map((s) => s.option?.translated?.name || s.option?.name)
+    .filter(Boolean);
+  const fromOptions = product.options
+    ?.map((o) => o.translated?.name || o.name)
+    .filter(Boolean);
+  const options = product._allVariantOptions?.length
+    ? product._allVariantOptions
+    : fromConfigurator?.length ? [...new Set(fromConfigurator)] : (fromOptions?.length ? fromOptions : undefined);
+  return {
+    id: product._firstVariantId || product.id,
+    name: product.translated?.name || product.name,
+    slug: getProductSlug(product),
+    image: getProductImage(product),
+    price: formatPrice(price?.unitPrice),
+    oldPrice: listPrice?.price ? formatPrice(listPrice.price) : undefined,
+    badge: listPrice?.price ? 'In saldo' : undefined,
+    options,
+    variantMap: product._variantMap || {},
+  };
+}
+
 const ALSO_LIKE_FALLBACK = [
   { name: 'Day For It', image: '/images/PRODUCTSTILL.jpg', badge: 'New!' },
   { name: 'Buoi Sang', image: '/images/PRODUCTSTILL.jpg' },
@@ -215,23 +274,13 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
 
   const alsoLikeProducts = (() => {
     if (crossSellings.length > 0) {
-      return crossSellings.slice(0, 4).map((p) => ({
-        name: p.translated?.name || p.name,
-        slug: getProductSlug(p),
-        image: getProductImage(p),
-        price: formatPrice(p.calculatedPrice?.unitPrice || p.price?.[0]?.gross),
-      }));
+      return groupVariants(crossSellings).slice(0, 4).map(mapRelatedProduct);
     }
-    const fromApi = shopwareRelated
-      .filter((p) => p.id !== shopwareProduct?.id)
-      .filter((p) => !B2B_CATEGORY_ID || !p.categoryTree?.includes(B2B_CATEGORY_ID))
-      .slice(0, 4)
-      .map((p) => ({
-        name: p.translated?.name || p.name,
-        slug: getProductSlug(p),
-        image: getProductImage(p),
-        price: formatPrice(p.calculatedPrice?.unitPrice || p.price?.[0]?.gross),
-      }));
+    const fromApi = groupVariants(
+      shopwareRelated
+        .filter((p) => p.id !== shopwareProduct?.id)
+        .filter((p) => !B2B_CATEGORY_ID || !p.categoryTree?.includes(B2B_CATEGORY_ID))
+    ).slice(0, 4).map(mapRelatedProduct);
     return fromApi.length > 0 ? fromApi : ALSO_LIKE_FALLBACK;
   })();
 
