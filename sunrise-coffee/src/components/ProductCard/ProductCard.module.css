@@ -274,9 +274,14 @@
   }
   .infoLeft { width: 100%; }
   .name {
-    white-space: nowrap;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
+    min-height: calc(var(--text-lg) * 1.4 * 2);
   }
   .pricing { text-align: left; }
   .badge { top: 8px; left: 8px; padding: 3px 8px; }

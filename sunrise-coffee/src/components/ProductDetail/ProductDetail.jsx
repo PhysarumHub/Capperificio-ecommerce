@@ -213,22 +213,26 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
 
   const { products: shopwareRelated } = useProducts({ limit: 5 });
 
-  const alsoLikeProducts = crossSellings.length > 0
-    ? crossSellings.slice(0, 4).map((p) => ({
+  const alsoLikeProducts = (() => {
+    if (crossSellings.length > 0) {
+      return crossSellings.slice(0, 4).map((p) => ({
         name: p.translated?.name || p.name,
         slug: getProductSlug(p),
         image: getProductImage(p),
         price: formatPrice(p.calculatedPrice?.unitPrice || p.price?.[0]?.gross),
-      }))
-    : shopwareRelated
-        .filter((p) => p.id !== shopwareProduct?.id)
-        .slice(0, 4)
-        .map((p) => ({
-          name: p.translated?.name || p.name,
-          slug: getProductSlug(p),
-          image: getProductImage(p),
-          price: formatPrice(p.calculatedPrice?.unitPrice || p.price?.[0]?.gross),
-        }));
+      }));
+    }
+    const fromApi = shopwareRelated
+      .filter((p) => p.id !== shopwareProduct?.id)
+      .slice(0, 4)
+      .map((p) => ({
+        name: p.translated?.name || p.name,
+        slug: getProductSlug(p),
+        image: getProductImage(p),
+        price: formatPrice(p.calculatedPrice?.unitPrice || p.price?.[0]?.gross),
+      }));
+    return fromApi.length > 0 ? fromApi : ALSO_LIKE_FALLBACK;
+  })();
 
   const unitPrice = hasApiProduct ? productPrice : FALLBACK_PRICES[size];
 
