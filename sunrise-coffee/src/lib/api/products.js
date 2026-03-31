@@ -23,14 +23,6 @@ export async function getProducts({ page = 1, limit = 24, filters = [], sort = [
       configuratorSettings: {
         associations: { option: { associations: { group: {} } } },
       },
-      children: {
-        limit: 50,
-        associations: {
-          options: { associations: { group: {} } },
-          cover: { associations: { media: {} } },
-          seoUrls: {},
-        },
-      },
     },
   };
 

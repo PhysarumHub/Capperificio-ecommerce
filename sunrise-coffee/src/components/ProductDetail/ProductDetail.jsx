@@ -49,20 +49,12 @@ function groupVariants(rawList) {
     return map;
   };
   const result = standalone.map(p => {
-    // Merge: siblings dalla lista piatta + figli inline (p.children)
-    // per avere sempre la lista completa di varianti
     const flatSiblings = groups[p.id] || [];
-    const inlineChildren = (p.children || []).filter(c => c.options?.length);
-    const seenIds = new Set(flatSiblings.map(c => c.id));
-    const merged = [...flatSiblings, ...inlineChildren.filter(c => !seenIds.has(c.id))];
-
-    if (merged.length) {
-      const allOptions = [...new Set(
-        merged.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
-      )];
-      return { ...p, _allVariantOptions: allOptions, _firstVariantId: merged[0]?.id, _variantMap: buildVariantMap(merged) };
-    }
-    return p;
+    if (!flatSiblings.length) return p;
+    const allOptions = [...new Set(
+      flatSiblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+    )];
+    return { ...p, _allVariantOptions: allOptions, _firstVariantId: flatSiblings[0]?.id, _variantMap: buildVariantMap(flatSiblings) };
   });
   Object.entries(groups).forEach(([parentId, siblings]) => {
     if (standalone.some(p => p.id === parentId)) return;
