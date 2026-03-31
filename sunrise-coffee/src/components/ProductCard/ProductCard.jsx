@@ -160,7 +160,7 @@ export default function ProductCard({
         <div className={styles.pricing}>
           {oldPrice && <span className={styles.oldPrice}>{oldPrice}</span>}
           <span className={styles.price}>
-            {oldPrice ? `On Sale from ${price}` : `From ${price}`}
+            {oldPrice ? `In saldo · ${price}` : price}
           </span>
         </div>
       </div>

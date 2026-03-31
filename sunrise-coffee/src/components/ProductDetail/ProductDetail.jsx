@@ -7,7 +7,9 @@ import { useProducts } from '../../hooks/useProducts';
 import { formatPrice } from '../../lib/utils/price';
 import { getProductImage, getProductSlug, proxyUrl } from '../../lib/utils/image';
 import { getProductVariants } from '../../lib/api/products';
+import useInView from '../../hooks/useInView';
 import styles from './ProductDetail.module.css';
+import anim from '../../styles/animations.module.css';
 
 const SIZES = ['250g', '500g', '1kg'];
 const GRINDS = ['Beans', 'Espresso', 'Stovetop', 'Plunger', 'Aeropress', 'Pour Over'];
@@ -62,11 +64,15 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const [showTag, setShowTag] = useState(false);
   const [imgIndex, setImgIndex] = useState(0);
   const [stickyVisible, setStickyVisible] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const debounceRef = useRef(null);
   const cancelAddRef = useRef(false);
   const touchStartX = useRef(null);
   const alsoLikeSectionRef = useRef(null);
+  const [alsoLikeGridRef, alsoLikeGridInView] = useInView({ threshold: 0.1 });
   const { addItem } = useCartContext();
+
+  useEffect(() => { setMounted(true); }, []);
 
   const scheduleCollapse = (currentQty) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -285,7 +291,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
           className={styles.pdpCartTag}
           onClick={() => { setShowTag(false); setShowControl(true); scheduleCollapse(cartQty); }}
         >
-          In cart · {cartQty}
+          Nel carrello · {cartQty}
         </button>
       ) : (
         <button className={styles.btnAddCart} onClick={handleAdd}>
@@ -295,7 +301,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
 
       <ul className={styles.trustList}>
         <li>Lavorato Artigianalmente</li>
-        <li>Spedizione Gratuita sopra i €50</li>
+        <li>Spedizione Gratuita sopra €50</li>
         <li>Consegna in 24–48h</li>
       </ul>
     </>
@@ -314,14 +320,14 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
       {/* Breadcrumb */}
       <div className={styles.breadcrumb}>
         <Link to="/">Home</Link><span className={styles.sep}>/</span>
-        <Link to="/collections/all">All Coffee</Link><span className={styles.sep}>/</span>
+        <Link to="/collections/all">Tutti i prodotti</Link><span className={styles.sep}>/</span>
         <span>{productName}</span>
       </div>
 
       {/* Product section — 3 columns desktop / stacked mobile */}
       <section className={styles.productSection}>
         {/* LEFT COL */}
-        <div className={styles.colLeft}>
+        <div className={`${styles.colLeft} ${anim.slideLeft} ${mounted ? anim.inView : ''}`}>
           <p className={styles.description} dangerouslySetInnerHTML={{ __html: productDescription }} />
 
           {(() => {
@@ -418,7 +424,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
           {/* Desktop stacked images */}
           <div className={styles.desktopImages}>
             {productImages.map((src, i) => (
-              <div key={i} className={styles.productImage}>
+              <div key={i} className={`${styles.productImage} ${anim.imgZoom}`}>
                 <img src={src} alt={`${productName} — ${i + 1}`} className={styles.pdpImg} />
               </div>
             ))}
@@ -461,12 +467,12 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         </div>
 
         {/* RIGHT COL — desktop only */}
-        <div className={styles.colRight}>
+        <div className={`${styles.colRight} ${anim.slideRight} ${mounted ? anim.inView : ''}`} style={{ '--delay': '80ms' }}>
           {purchasePanel}
         </div>
       </section>
 
-      {/* Mobile sticky Add to Cart */}
+      {/* Mobile sticky Aggiungi al carrello */
       <div className={`${styles.mobileSticky} ${stickyVisible ? styles.mobileStickyShow : ''}`}>
         <div className={styles.mobileStickyInner}>
           <div>
@@ -486,11 +492,11 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
               className={styles.pdpCartTag}
               onClick={() => { setShowTag(false); setShowControl(true); scheduleCollapse(cartQty); }}
             >
-              In cart · {cartQty}
+              Nel carrello · {cartQty}
             </button>
           ) : (
             <button className={styles.mobileStickyBtn} onClick={handleAdd}>
-              Add to Cart →
+              Aggiungi al carrello →
             </button>
           )}
         </div>
@@ -498,8 +504,8 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
 
       {/* You may also like */}
       <section ref={alsoLikeSectionRef} className={styles.alsoLikeSection}>
-        <SectionHeader label="Recommended" title="You may also like" />
-        <div className={styles.alsoLikeGrid}>
+        <SectionHeader label="Ti potrebbe piacere" title="Prodotti correlati" />
+        <div ref={alsoLikeGridRef} className={`${styles.alsoLikeGrid} ${anim.staggerGrid} ${alsoLikeGridInView ? anim.staggerInView : ''}`}>
           {alsoLikeProducts.map((product) => (
             <ProductCard
               key={product.name}

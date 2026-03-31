@@ -282,7 +282,7 @@
   font-weight: 600;
   letter-spacing: .04em;
   text-transform: uppercase;
-  transition: background var(--duration-base), color var(--duration-base);
+  transition: background var(--duration-base), color var(--duration-base), transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -291,6 +291,7 @@
   font-family: var(--font-sans);
 }
 .btnAddCart:hover { background: var(--color-red-hover); border-color: var(--color-red-hover); }
+.btnAddCart:active { transform: scale(0.97); }
 
 /* Smart add-to-cart stepper (PDP) */
 .pdpQtyControl {
@@ -427,8 +428,9 @@
   letter-spacing: .04em;
   cursor: pointer;
   font-family: var(--font-sans);
-  transition: background .2s;
+  transition: background .2s, transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
 }
+.mobileStickyBtn:active { transform: scale(0.97); }
 
 /* ─── RESPONSIVE ─────────────────────────── */
 @media (max-width: 768px) {
