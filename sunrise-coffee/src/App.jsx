@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
 import HomePage from './pages/HomePage';
+import HomePageAnimated from './pages/HomePageAnimated';
 import ProductPage from './pages/ProductPage';
 import CollectionPage from './pages/CollectionPage';
 import CartPage from './pages/CartPage';
@@ -18,6 +19,7 @@ export default function App() {
       <Routes>
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
+        <Route path="/home-animated" element={<HomePageAnimated />} />
         <Route path="/product/:slug" element={<ProductPage />} />
         <Route path="/collections/:slug" element={<CollectionPage />} />
         <Route path="/cart" element={<CartPage />} />
