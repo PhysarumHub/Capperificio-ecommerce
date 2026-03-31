@@ -65,23 +65,17 @@ function groupVariants(rawList) {
   };
 
   const result = standalone.map(p => {
-    // 1) children present as siblings in the flat list (classic case)
-    if (parentIds.has(p.id)) {
-      const siblings = groups[p.id];
+    // Merge: siblings dalla lista piatta + figli inline (p.children)
+    const flatSiblings = groups[p.id] || [];
+    const inlineChildren = (p.children || []).filter(c => c.options?.length);
+    const seenIds = new Set(flatSiblings.map(c => c.id));
+    const merged = [...flatSiblings, ...inlineChildren.filter(c => !seenIds.has(c.id))];
+
+    if (merged.length) {
       const allOptions = [...new Set(
-        siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+        merged.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
       )];
-      return { ...p, _allVariantOptions: allOptions, _firstVariantId: siblings[0]?.id, _variantMap: buildVariantMap(siblings) };
-    }
-    // 2) children come inline as p.children (from associations.children in the API)
-    if (p.children?.length) {
-      const inlineChildren = p.children.filter(c => c.options?.length);
-      if (inlineChildren.length) {
-        const allOptions = [...new Set(
-          inlineChildren.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
-        )];
-        return { ...p, _allVariantOptions: allOptions, _firstVariantId: inlineChildren[0]?.id, _variantMap: buildVariantMap(inlineChildren) };
-      }
+      return { ...p, _allVariantOptions: allOptions, _firstVariantId: merged[0]?.id, _variantMap: buildVariantMap(merged) };
     }
     return p;
   });
