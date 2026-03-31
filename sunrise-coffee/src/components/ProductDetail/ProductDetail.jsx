@@ -29,6 +29,8 @@ const BREW_CUSTOM_FIELDS = [
   { key: 'capperificio_brew_plunger',   name: 'Lo sapevi?' },
 ];
 
+const B2B_CATEGORY_ID = import.meta.env.VITE_B2B_CATEGORY_ID || null;
+
 const ALSO_LIKE_FALLBACK = [
   { name: 'Day For It', image: '/images/PRODUCTSTILL.jpg', badge: 'New!' },
   { name: 'Buoi Sang', image: '/images/PRODUCTSTILL.jpg' },
@@ -206,10 +208,10 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const crossSellings = hasApiProduct
     ? (shopwareProduct.crossSellings || []).flatMap((cs) =>
         (cs.assignedProducts || []).map((ap) => ap.product).filter(Boolean)
-      )
+      ).filter((p) => !B2B_CATEGORY_ID || !p.categoryTree?.includes(B2B_CATEGORY_ID))
     : [];
 
-  const { products: shopwareRelated } = useProducts({ limit: 5 });
+  const { products: shopwareRelated } = useProducts({ limit: 8 });
 
   const alsoLikeProducts = (() => {
     if (crossSellings.length > 0) {
@@ -222,6 +224,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     }
     const fromApi = shopwareRelated
       .filter((p) => p.id !== shopwareProduct?.id)
+      .filter((p) => !B2B_CATEGORY_ID || !p.categoryTree?.includes(B2B_CATEGORY_ID))
       .slice(0, 4)
       .map((p) => ({
         name: p.translated?.name || p.name,
