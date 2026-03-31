@@ -563,12 +563,8 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         <div ref={alsoLikeGridRef} className={`${styles.alsoLikeGrid} ${alsoLikeGridInView ? styles.alsoLikeGridVisible : ''}`}>
           {alsoLikeProducts.map((product) => (
             <ProductCard
-              key={product.name}
-              name={product.name}
-              slug={product.slug}
-              price={product.price}
-              image={product.image}
-              badge={product.badge}
+              key={product.id || product.name}
+              {...product}
             />
           ))}
         </div>
