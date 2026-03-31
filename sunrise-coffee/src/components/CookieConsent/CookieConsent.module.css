@@ -12,13 +12,12 @@
   z-index: 9999;
   width: calc(100% - 40px);
   max-width: 680px;
-  background: rgba(44, 74, 44, 0.94);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-light);
+  border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 24px 28px;
-  color: #fff;
+  color: var(--color-dark);
+  box-shadow: 0 8px 40px rgba(44, 74, 44, 0.12);
   transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
   pointer-events: none;
 }
@@ -37,17 +36,17 @@
 .bannerText {
   font-size: 13px;
   line-height: 1.55;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--color-mid);
 }
 
 .bannerLink {
-  color: #EAF0E5;
+  color: var(--color-red);
   text-decoration: underline;
   text-underline-offset: 2px;
   transition: color 0.18s;
 }
 .bannerLink:hover {
-  color: #fff;
+  color: var(--color-red-hover);
 }
 
 .bannerActions {
@@ -64,15 +63,16 @@
   letter-spacing: 0.02em;
   padding: 10px 20px;
   border-radius: 100px;
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border: 1.5px solid var(--color-red);
   background: transparent;
-  color: #fff;
+  color: var(--color-red);
   cursor: pointer;
-  transition: background 0.18s, border-color 0.18s, transform 0.12s;
+  transition: background 0.18s, color 0.18s, border-color 0.18s, transform 0.12s;
   white-space: nowrap;
 }
 .btn:hover {
-  border-color: rgba(255, 255, 255, 0.6);
+  border-color: var(--color-red-hover);
+  color: var(--color-red-hover);
 }
 .btn:active {
   transform: scale(0.97);
@@ -80,12 +80,13 @@
 
 .btnAccept {
   flex: 1;
-  background: #547054;
-  border-color: #547054;
+  background: var(--color-red);
+  color: #fff;
 }
 .btnAccept:hover {
-  background: #3D5A3D;
-  border-color: #3D5A3D;
+  background: var(--color-red-hover);
+  border-color: var(--color-red-hover);
+  color: #fff;
 }
 
 .btnReject {
