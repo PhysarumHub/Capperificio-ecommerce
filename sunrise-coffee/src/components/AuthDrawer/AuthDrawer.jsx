@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useCustomerContext } from '../../context/ShopwareContext';
 import { getCountries, getSalutations } from '../../lib/api/customer';
+import { useDrawerDrag } from '../../hooks/useDrawerDrag';
 import styles from './AuthDrawer.module.css';
 
 // ── Helpers ────────────────────────────────────────────────
@@ -380,6 +381,10 @@ function RegisterForm({ onSuccess }) {
 export default function AuthDrawer({ open, onClose }) {
   const [tab, setTab] = useState('login');
 
+  const drawerRef   = useRef(null);
+  const backdropRef = useRef(null);
+  const { onTouchStart, onTouchMove, onTouchEnd } = useDrawerDrag({ drawerRef, backdropRef, onClose });
+
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = '';
@@ -400,19 +405,26 @@ export default function AuthDrawer({ open, onClose }) {
   return (
     <>
       <div
+        ref={backdropRef}
         className={`${styles.backdrop} ${open ? styles.backdropOpen : ''}`}
         onClick={onClose}
         aria-hidden="true"
       />
 
       <div
+        ref={drawerRef}
         className={`${styles.drawer} ${open ? styles.drawerOpen : ''}`}
         role="dialog"
         aria-label="Accesso account"
         aria-modal="true"
       >
-        {/* Header */}
-        <div className={styles.drawerHeader}>
+        {/* Handle drag area */}
+        <div
+          className={styles.drawerHeader}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
           <span className={styles.drawerTitle}>Il mio account</span>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Chiudi">✕</button>
         </div>

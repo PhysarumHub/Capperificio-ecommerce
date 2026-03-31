@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCartContext, useCustomerContext } from '../../context/ShopwareContext';
 import { formatPrice } from '../../lib/utils/price';
 import { getProductImage, proxyUrl } from '../../lib/utils/image';
+import { useDrawerDrag } from '../../hooks/useDrawerDrag';
 import styles from './CartDrawer.module.css';
 
 const FREE_SHIPPING_THRESHOLD = 50;
@@ -16,6 +17,10 @@ function getVariantLabel(item) {
 export default function CartDrawer({ open, onClose }) {
   const { cart, loading, updateQuantity, removeItem, optimisticMerge, mergeUpdate, removeItems, itemCount, totalPrice, positionPrice } = useCartContext();
   const { isB2B } = useCustomerContext();
+
+  const drawerRef  = useRef(null);
+  const backdropRef = useRef(null);
+  const { onTouchStart, onTouchMove, onTouchEnd } = useDrawerDrag({ drawerRef, backdropRef, onClose });
 
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden';
@@ -81,19 +86,26 @@ export default function CartDrawer({ open, onClose }) {
   return (
     <>
       <div
+        ref={backdropRef}
         className={`${styles.backdrop} ${open ? styles.backdropOpen : ''}`}
         onClick={onClose}
         aria-hidden="true"
       />
 
       <div
+        ref={drawerRef}
         className={`${styles.drawer} ${open ? styles.drawerOpen : ''}`}
         role="dialog"
         aria-label="Carrello"
         aria-modal="true"
       >
-        {/* Header */}
-        <div className={styles.drawerHeader}>
+        {/* Handle drag area */}
+        <div
+          className={styles.drawerHeader}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
           <span className={styles.drawerTitle}>
             Il tuo carrello{itemCount > 0 ? ` · ${itemCount}` : ''}
           </span>

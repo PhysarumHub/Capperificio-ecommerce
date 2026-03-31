@@ -24,7 +24,7 @@
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
-  transition: transform .35s cubic-bezier(.4, 0, .2, 1);
+  transition: transform .4s cubic-bezier(0.32, 0.72, 0, 1);
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
 }
 .drawerOpen {
@@ -324,7 +324,7 @@
 
   .drawerHeader {
     padding: 16px 20px;
-    /* drag handle visual */
+    touch-action: none; /* consente al JS di gestire il drag verticale */
   }
   .drawerHeader::before {
     content: '';
