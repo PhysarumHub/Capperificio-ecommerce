@@ -49,6 +49,10 @@ const PRODUCT_DETAIL_ASSOCIATIONS = {
             associations: {
               cover: { associations: { media: { associations: { thumbnails: {} } } } },
               seoUrls: {},
+              options: { associations: { group: {} } },
+              configuratorSettings: {
+                associations: { option: { associations: { group: {} } } },
+              },
             },
           },
         },
