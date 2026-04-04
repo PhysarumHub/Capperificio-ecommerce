@@ -1,0 +1,212 @@
+/* ─── Page wrapper ─────────────────────────────────────────── */
+.page {
+  background: var(--color-light);
+  color: var(--color-dark);
+}
+
+/* ═══════════════════════════════════
+   HERO
+═══════════════════════════════════ */
+.hero {
+  min-height: 90vh;
+  display: flex;
+  align-items: flex-end;
+  padding: clamp(80px, 11vw, 150px) clamp(1.25rem, 5vw, 5rem);
+  background: var(--color-light);
+}
+
+.heroInner {
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.heroEyebrow {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-red);
+  border: 1px solid var(--color-red);
+  border-radius: 2rem;
+  padding: 0.3rem 0.9rem;
+  margin-bottom: 2.25rem;
+  opacity: 0.85;
+}
+
+.heroTitle {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-style: italic;
+  font-size: clamp(3.2rem, 8vw, 8rem);
+  line-height: 1.0;
+  color: var(--color-red);
+  margin-bottom: 2rem;
+}
+
+.heroDesc {
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  color: var(--color-mid);
+  line-height: 1.85;
+  max-width: 480px;
+}
+
+/* ═══════════════════════════════════
+   STICKY STACK
+═══════════════════════════════════ */
+.stickyStack {
+  /* Each panel stacks on top via sticky */
+}
+
+.stickyPanel {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-height: 560px;
+  z-index: var(--panel-z);
+  background-color: var(--panel-bg, var(--color-light));
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+}
+
+/* Alternate image left/right every other panel */
+.stickyPanel:nth-child(even) .panelImage { order: 2; }
+.stickyPanel:nth-child(even) .panelCopy  { order: 1; }
+
+/* ── Image side ── */
+.panelImage {
+  position: relative;
+  overflow: hidden;
+}
+
+.panelImage img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Copy side ── */
+.panelCopy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(3rem, 7vw, 7rem) clamp(2rem, 5vw, 6rem);
+}
+
+.panelEyebrow {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-red);
+  opacity: 0.7;
+  margin-bottom: 1.5rem;
+}
+
+.panelTitle {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-style: italic;
+  font-size: clamp(2rem, 3.5vw, 3.8rem);
+  line-height: 1.08;
+  color: var(--color-dark);
+  margin-bottom: 1.5rem;
+}
+
+.panelDesc {
+  font-size: clamp(0.9rem, 1.1vw, 1.05rem);
+  color: var(--color-mid);
+  line-height: 1.9;
+  max-width: 380px;
+}
+
+/* ═══════════════════════════════════
+   CTA SECTION
+═══════════════════════════════════ */
+.ctaSection {
+  position: relative;
+  z-index: 20;
+  background-color: var(--color-red);
+  padding: clamp(70px, 9vw, 130px) clamp(1.25rem, 4vw, 3.5rem);
+  text-align: center;
+}
+
+.ctaInner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.ctaTitle {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-style: italic;
+  font-size: clamp(2.8rem, 5.5vw, 5.5rem);
+  color: var(--color-light);
+  line-height: 1.05;
+  margin-bottom: 1.5rem;
+}
+
+.ctaDesc {
+  font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+  color: rgba(252, 243, 223, 0.78);
+  max-width: 500px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.75;
+}
+
+.ctaBtn {
+  display: inline-block;
+  background-color: var(--color-light);
+  color: var(--color-red);
+  border-radius: 2rem;
+  padding: 0.9rem 2.6rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  transition: opacity 0.2s;
+  border: 2px solid var(--color-light);
+  text-decoration: none;
+}
+
+.ctaBtn:hover { opacity: 0.82; }
+
+/* ═══════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════ */
+@media (max-width: 768px) {
+  .stickyPanel {
+    grid-template-columns: 1fr;
+    grid-template-rows: 55vh 1fr;
+    height: auto;
+    min-height: auto;
+    position: relative; /* disable sticky on mobile */
+  }
+
+  .stickyPanel:nth-child(even) .panelImage { order: 0; }
+  .stickyPanel:nth-child(even) .panelCopy  { order: 1; }
+
+  .panelImage {
+    min-height: 55vw;
+    position: relative;
+  }
+
+  .panelCopy {
+    padding: 2.5rem 1.5rem 3rem;
+  }
+
+  .panelDesc {
+    max-width: 100%;
+  }
+
+  .heroTitle {
+    font-size: 3rem;
+  }
+}
