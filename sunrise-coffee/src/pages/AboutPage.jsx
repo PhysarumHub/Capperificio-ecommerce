@@ -70,6 +70,19 @@ export default function AboutPage() {
 
   const containerRef = useRef(null);
 
+  // Mobile: apply scroll-snap on <html> only while this page is mounted
+  useEffect(() => {
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    if (!isMobile) return;
+    const html = document.documentElement;
+    html.style.scrollSnapType = 'y mandatory';
+    html.style.overflowY = 'scroll';
+    return () => {
+      html.style.scrollSnapType = '';
+      html.style.overflowY = '';
+    };
+  }, []);
+
   useEffect(() => {
     let ctx;
     let ScrollTrigger;

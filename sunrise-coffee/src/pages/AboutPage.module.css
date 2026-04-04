@@ -56,7 +56,7 @@
    STICKY STACK
 ═══════════════════════════════════ */
 .stickyStack {
-  /* Each panel stacks on top via sticky */
+  overflow: visible;
 }
 
 .stickyPanel {
@@ -182,31 +182,98 @@
    RESPONSIVE
 ═══════════════════════════════════ */
 @media (max-width: 768px) {
-  .stickyPanel {
-    grid-template-columns: 1fr;
-    grid-template-rows: 55vh 1fr;
-    height: auto;
-    min-height: auto;
-    position: relative; /* disable sticky on mobile */
-  }
 
-  .stickyPanel:nth-child(even) .panelImage { order: 0; }
-  .stickyPanel:nth-child(even) .panelCopy  { order: 1; }
-
-  .panelImage {
-    min-height: 55vw;
-    position: relative;
-  }
-
-  .panelCopy {
-    padding: 2.5rem 1.5rem 3rem;
-  }
-
-  .panelDesc {
-    max-width: 100%;
+  /* Hero più compatto + snap point */
+  .hero {
+    min-height: 70vh;
+    padding: 60px 1.5rem 3rem;
+    align-items: flex-end;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
   }
 
   .heroTitle {
-    font-size: 3rem;
+    font-size: clamp(2.6rem, 9vw, 3.8rem);
   }
+
+  /* CTA: snap point */
+  .ctaSection {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  /* Ogni panel è una slide fullscreen */
+  .stickyPanel {
+    position: relative;         /* non sticky su mobile */
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    height: 100svh;
+    min-height: 100svh;
+    grid-template-columns: 1fr; /* override desktop 50/50 */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Immagine: sfondo fullscreen */
+  .panelImage {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .panelImage img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Gradiente per leggibilità testo */
+  .stickyPanel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+      to top,
+      rgba(28, 28, 20, 0.82) 0%,
+      rgba(28, 28, 20, 0.35) 50%,
+      rgba(28, 28, 20, 0.0) 100%
+    );
+    pointer-events: none;
+  }
+
+  /* Testo: in basso sopra il gradiente */
+  .panelCopy {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    padding: 2.5rem 1.75rem 3.5rem;
+    background: none;
+    justify-content: flex-end;
+  }
+
+  .panelEyebrow {
+    color: rgba(252, 243, 223, 0.65);
+  }
+
+  .panelTitle {
+    color: #fcf3df;
+    font-size: clamp(1.8rem, 7vw, 2.6rem);
+    margin-bottom: 0.85rem;
+  }
+
+  .panelDesc {
+    color: rgba(252, 243, 223, 0.78);
+    max-width: 100%;
+    font-size: 0.95rem;
+  }
+
+  /* Reset nth-child order overrides (non servono su mobile) */
+  .stickyPanel:nth-child(even) .panelImage { order: unset; }
+  .stickyPanel:nth-child(even) .panelCopy  { order: unset; }
 }
