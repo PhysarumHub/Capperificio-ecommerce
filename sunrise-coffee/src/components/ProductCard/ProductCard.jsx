@@ -16,6 +16,7 @@ export default function ProductCard({
   sizes,
   variantMap = {},
   variant = 'default',
+  soldOut = false,
   children,
 }) {
   const { addItem, removeItem, cart } = useCartContext();
@@ -78,8 +79,9 @@ export default function ProductCard({
       setShowControl(false);
       setShowTag(false);
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      if (id && cart) {
-        const lineItem = cart.lineItems?.find((li) => li.referencedId === id);
+      const cartId = (selectedVariant && variantMap[selectedVariant]) || id;
+      if (cartId && cart) {
+        const lineItem = cart.lineItems?.find((li) => li.referencedId === cartId);
         try { if (lineItem) await removeItem(lineItem.id); } catch {}
       }
     } else {
@@ -95,7 +97,9 @@ export default function ProductCard({
     scheduleCollapse(qty);
   };
 
-  const control = showControl ? (
+  const control = soldOut ? (
+    <span className={styles.soldOutBadge}>Esaurito</span>
+  ) : showControl ? (
     <div className={styles.qtyControl} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
       <button className={styles.qtyBtn} onClick={handleDecrease} aria-label="Riduci">−</button>
       <span className={styles.qtyNum}>{qty}</span>

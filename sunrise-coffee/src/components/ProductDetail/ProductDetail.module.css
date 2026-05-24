@@ -302,6 +302,25 @@
 .btnAddCart:hover { background: var(--color-red-hover); border-color: var(--color-red-hover); }
 .btnAddCart:active { transform: scale(0.97); }
 
+.btnSoldOut {
+  width: 100%;
+  padding: 16px 24px;
+  background: transparent;
+  color: var(--color-mid);
+  border: 1.5px solid var(--color-card-border);
+  border-radius: 30px;
+  font-size: var(--text-md);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 /* Smart add-to-cart stepper (PDP) */
 .pdpQtyControl {
   display: flex;
@@ -454,6 +473,22 @@
   transition: background .2s, transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 .mobileStickyBtn:active { transform: scale(0.97); }
+
+.mobileStickyBtnSoldOut {
+  flex-shrink: 0;
+  padding: 12px 20px;
+  background: transparent;
+  color: var(--color-mid);
+  border: 1.5px solid var(--color-card-border);
+  border-radius: 30px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-family: var(--font-sans);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 
 /* ─── RESPONSIVE ─────────────────────────── */
 @media (max-width: 768px) {

@@ -1,17 +1,16 @@
-/* ═══════════════════════════════════════════════════════════
-   SUNRISE COFFEE CO — STYLE GUIDE & DESIGN TOKENS
+﻿/* ═══════════════════════════════════════════════════════════
+   CAPPERIFICIO CARO — STYLE GUIDE & DESIGN TOKENS
    ═══════════════════════════════════════════════════════════
 
    BRAND IDENTITY
    ─────────────
-   Sunrise Coffee Co is a specialty coffee e-commerce with a
-   warm, editorial design language. The aesthetic is minimal,
-   typography-driven, with a bold red accent color.
+   Capperificio di Racale — e-commerce di capperi artigianali
+   dal Salento. Estetica editoriale, minimalista, elegante.
 
    TYPOGRAPHY
    ──────────
-   Heading / Display : Playfair Display (serif, italic)
-   Body / UI         : Inter (sans-serif)
+   Heading / Display : PP Editorial Old Regular (serif)
+   Body / UI         : Paralucent Medium + Light (sans-serif)
 
    COLOR PALETTE
    ─────────────
@@ -49,10 +48,60 @@
    Marquee    : overflow-hidden + translateX(-50%) infinite loop
    Cards      : border: 1px solid rgba(216,64,50,0.25), margin-right: -1px
    Buttons    : pill-shaped, outline or fill variants
-   Section    : dot-label + Playfair italic heading
+   Section    : dot-label + PP Editorial Old italic heading
    Accordion  : + icon rotates 45deg on open
 
    ═══════════════════════════════════════════════════════════ */
+
+/* ─── FONT FACES ─────────────────────────────────────── */
+
+@font-face {
+  font-family: 'PP Editorial Old';
+  src: url('/fonts/PPEditorialOld-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PP Editorial Old';
+  src: url('/fonts/PPEditorialOld-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Paralucent';
+  src: url('/fonts/Paralucent-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Paralucent';
+  src: url('/fonts/Paralucent-LightItalic.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Paralucent';
+  src: url('/fonts/Paralucent-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Paralucent';
+  src: url('/fonts/Paralucent-MediumItalic.otf') format('opentype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
 
 /* ─── RESET ─────────────────────────────────────────── */
 *, *::before, *::after {
@@ -75,8 +124,10 @@
   --color-card-border: rgba(84, 112, 84, 0.25);
 
   /* Typography */
-  --font-serif:       'Playfair Display', serif;
-  --font-sans:        'Inter', sans-serif;
+  --font-serif:       'PP Editorial Old', Georgia, serif;
+  --font-sans:        'Paralucent', system-ui, sans-serif;
+  --font-weight-body: 300;   /* Paralucent Light  — paragrafi */
+  --font-weight-ui:   500;   /* Paralucent Medium — UI, label, bottoni */
 
   /* Font sizes */
   --text-xs:    11px;
@@ -131,6 +182,7 @@ html {
 
 body {
   font-family: var(--font-sans);
+  font-weight: var(--font-weight-body); /* Paralucent Light per i testi */
   color: var(--color-dark);
   background: #FCF3DF;
   font-size: var(--text-lg);
@@ -138,6 +190,17 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: clip;
+}
+
+/* Elementi UI in Paralucent Medium */
+button,
+input,
+textarea,
+select,
+label,
+nav,
+.badge {
+  font-weight: var(--font-weight-ui);
 }
 
 a {
@@ -154,10 +217,11 @@ input,
 textarea,
 select {
   font-family: var(--font-sans);
+  font-weight: var(--font-weight-ui);
   font-size: 16px;
   background: var(--color-light);
   border: none;
-  border-bottom: 1.5px solid #3A6B35;
+  border-bottom: 1.5px solid var(--color-red);
   border-radius: 0;
   padding: 10px 14px;
   color: var(--color-dark);
@@ -181,6 +245,7 @@ textarea::placeholder {
 button {
   cursor: pointer;
   font-family: var(--font-sans);
+  font-weight: var(--font-weight-ui);
 }
 
 /* ─── ACCESSIBILITY: SKIP LINK ────────────────────────── */

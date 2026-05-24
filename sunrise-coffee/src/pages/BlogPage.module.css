@@ -1,4 +1,4 @@
---blog-green: #3A6B35;
+﻿--blog-green: var(--color-red);
 
 /* ── Banner ──────────────────────────────────────────────────────────────────── */
 .banner {
@@ -16,14 +16,14 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .12em;
-  color: #3A6B35;
+  color: var(--color-red);
   margin-bottom: 12px;
 }
 
 .bannerDot {
   width: 6px;
   height: 6px;
-  background: #3A6B35;
+  background: var(--color-red);
   border-radius: 50%;
   display: inline-block;
 }
@@ -33,7 +33,7 @@
   font-style: italic;
   font-size: var(--text-5xl);
   font-weight: 500;
-  color: #3A6B35;
+  color: var(--color-red);
   margin: 0 0 12px;
 }
 
@@ -102,7 +102,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .12em;
-  color: #3A6B35;
+  color: var(--color-red);
   margin-bottom: 8px;
   display: block;
 }
@@ -112,7 +112,7 @@
   font-style: italic;
   font-size: 17px;
   font-weight: 500;
-  color: #3A6B35;
+  color: var(--color-red);
   line-height: 1.35;
   margin-bottom: 10px;
 }
@@ -143,7 +143,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .1em;
-  color: #3A6B35;
+  color: var(--color-red);
   text-decoration: none;
 }
 

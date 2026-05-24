@@ -178,7 +178,7 @@ export default function HomePage() {
       </AnimateIn>
 
       <div style={{ background: 'var(--color-light)' }}>
-        <CategoryBanners filterImage="/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp" espressoImage="/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp" />
+        <CategoryBanners filterImage="/images/giannelli.webp" espressoImage="/images/capperi-al-sale.webp" />
       </div>
 
       <AboutSection />

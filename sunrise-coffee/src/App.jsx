@@ -10,6 +10,8 @@ import B2BPage from './pages/B2BPage';
 import BlogPage from './pages/BlogPage';
 import BlogArticlePage from './pages/BlogArticlePage';
 import AboutPage from './pages/AboutPage';
+import TerritorioPage from './pages/TerritorioPage';
+import ProcessoProduttivoPage from './pages/ProcessoProduttivoPage';
 import ScrollToTop from './components/ScrollToTop';
 import TestPageA from './pages/TestPageA';
 import TestPageB from './pages/TestPageB';
@@ -32,6 +34,8 @@ export default function App() {
         <Route path="/blog" element={<BlogPage />} />
         <Route path="/blog/:slug" element={<BlogArticlePage />} />
         <Route path="/storia" element={<AboutPage />} />
+        <Route path="/territorio" element={<TerritorioPage />} />
+        <Route path="/processo-produttivo" element={<ProcessoProduttivoPage />} />
       </Route>
 
       {/* ── View transitions demo (no header/footer) ── */}

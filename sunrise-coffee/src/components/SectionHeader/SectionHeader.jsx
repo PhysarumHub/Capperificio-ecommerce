@@ -12,7 +12,6 @@ export default function SectionHeader({ label, title, count, viewAllHref, viewAl
       </div>
       <h2 className={`${styles.title} ${anim.titleAnim}`}>
         {title}
-        {count != null && <sup>{count}</sup>}
       </h2>
       {viewAllHref && (
         <Link to={viewAllHref} className={`${styles.viewAll} ${anim.linkAnim}`}>{viewAllText}</Link>

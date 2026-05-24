@@ -1,4 +1,4 @@
-.footer {
+﻿.footer {
   border-top: 1px solid var(--color-border);
   padding: 40px 40px 0;
 }
@@ -51,14 +51,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid #3A6B35;
+  border: 1.5px solid var(--color-red);
   border-radius: var(--radius-full);
-  color: #3A6B35;
+  color: var(--color-red);
   font-size: var(--text-md);
   transition: background var(--duration-base), color var(--duration-base);
 }
 .socialLink:hover {
-  background: #3A6B35;
+  background: var(--color-red);
   color: var(--color-white);
 }
 .socialLink svg {

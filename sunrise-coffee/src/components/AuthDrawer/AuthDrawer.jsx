@@ -10,7 +10,7 @@ function inputStyle(hasError) {
     width: '100%',
     padding: '11px 14px',
     border: 'none',
-    borderBottom: `1.5px solid ${hasError ? 'var(--color-red)' : '#3A6B35'}`,
+    borderBottom: `1.5px solid ${hasError ? 'var(--color-red)' : 'var(--color-red)'}`,
     borderRadius: 0,
     fontSize: 16,
     boxSizing: 'border-box',
@@ -53,9 +53,9 @@ function StepBar({ step }) {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, minWidth: 56 }}>
               <div style={{
                 width: 32, height: 32, borderRadius: '50%',
-                background: done ? '#2C4A2C' : active ? '#3A6B35' : '#FCF3DF',
-                border: done || active ? 'none' : '1.5px solid #3A6B35',
-                color: done || active ? '#fff' : '#3A6B35',
+                background: done ? 'var(--color-dark)' : active ? 'var(--color-red)' : '#FCF3DF',
+                border: done || active ? 'none' : '1.5px solid var(--color-red)',
+                color: done || active ? '#fff' : 'var(--color-red)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: done ? 13 : 12, fontWeight: 700, transition: 'all .3s',
               }}>
@@ -63,7 +63,7 @@ function StepBar({ step }) {
               </div>
               <span style={{
                 fontSize: 9, fontWeight: active ? 700 : 400,
-                color: active ? '#3A6B35' : done ? '#2C4A2C' : '#6B8A6B',
+                color: active ? 'var(--color-red)' : done ? 'var(--color-dark)' : 'var(--color-mid)',
                 letterSpacing: '.04em', textTransform: 'uppercase',
               }}>
                 {label}
@@ -285,7 +285,7 @@ function RegisterForm({ onSuccess }) {
 
   const outlineBtn = {
     padding: '13px 0', background: 'var(--color-light)', color: 'var(--color-dark)',
-    border: '1.5px solid #3A6B35', borderRadius: 'var(--radius-pill)',
+    border: '1.5px solid var(--color-red)', borderRadius: 'var(--radius-pill)',
     fontSize: 16, fontWeight: 600, cursor: 'pointer',
     fontFamily: 'var(--font-sans)', flex: '0 0 auto', minWidth: 100,
   };

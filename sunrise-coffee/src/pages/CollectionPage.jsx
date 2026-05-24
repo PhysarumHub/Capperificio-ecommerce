@@ -197,6 +197,18 @@ function getSortCriteria(sortValue) {
 
 /* ─── Mapping prodotto Shopware ─── */
 
+/** Costruisce { optionName → childId } da una lista di figli */
+function buildVariantMap(siblings) {
+  const map = {};
+  siblings.forEach(child => {
+    (child.options || []).forEach(o => {
+      const name = o.translated?.name || o.name;
+      if (name) map[name] = child.id;
+    });
+  });
+  return map;
+}
+
 function groupVariants(rawList) {
   const standalone = rawList.filter(p => !p.parentId);
   const children   = rawList.filter(p => !!p.parentId);
@@ -213,10 +225,11 @@ function groupVariants(rawList) {
   // If the parent is already in the list, enrich it with children's options
   const result = standalone.map(p => {
     if (!parentIds.has(p.id)) return p;
+    const siblings = groups[p.id];
     const allOptions = [...new Set(
-      groups[p.id].flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+      siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
     )];
-    return { ...p, _allVariantOptions: allOptions };
+    return { ...p, _allVariantOptions: allOptions, _variantMap: buildVariantMap(siblings) };
   });
 
   // Only add a representative for children whose parent is NOT in the list
@@ -225,7 +238,7 @@ function groupVariants(rawList) {
     const allOptions = [...new Set(
       siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
     )];
-    result.push({ ...siblings[0], _allVariantOptions: allOptions });
+    result.push({ ...siblings[0], _allVariantOptions: allOptions, _variantMap: buildVariantMap(siblings) });
   });
 
   return result;
@@ -256,7 +269,9 @@ function mapShopwareProduct(product) {
     price:          formatPrice(price?.unitPrice),
     oldPrice:       listPrice?.price ? formatPrice(listPrice.price) : undefined,
     badge:          listPrice?.price ? 'Sale' : undefined,
+    soldOut:        (product.availableStock ?? 1) <= 0,
     options,
+    variantMap:     product._variantMap || {},
     collections:    ['all'],
     tipo,
     formato,
@@ -403,6 +418,8 @@ export default function CollectionPage() {
                   badge={p.badge}
                   badgeColor={p.badgeColor}
                   options={p.options}
+                  variantMap={p.variantMap}
+                  soldOut={p.soldOut}
                 />
               ))}
             </div>

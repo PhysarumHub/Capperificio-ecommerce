@@ -8,13 +8,13 @@ import { useDrawerDrag } from '../../hooks/useDrawerDrag';
 import styles from './Header.module.css';
 
 const MEGA_LINKS = [
-  { label: 'Tutti i Prodotti', href: '/collections/all' },
-  { label: 'Capperi',          href: '/collections/cappero' },
-  { label: 'Cucunci',          href: '/collections/cucunci' },
-  { label: 'Foglie',           href: '/collections/foglie' },
-  { label: 'Polvere',          href: '/collections/polvere' },
-  { label: 'Blog',             href: '/blog' },
-  { label: 'Area B2B',         href: '/b2b', b2b: true },
+  { label: 'Home',                href: '/' },
+  { label: 'I nostri prodotti',   href: '/collections/all' },
+  { label: 'Storia',              href: '/storia' },
+  { label: 'Territorio',          href: '/territorio' },
+  { label: 'Processo produttivo', href: '/processo-produttivo' },
+  { label: 'Blog',                href: '/blog' },
+  { label: 'Area B2B',            href: '/b2b', b2b: true },
 ];
 
 export default function Header() {

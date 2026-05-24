@@ -17,8 +17,8 @@ const ITEMS = [
   },
   {
     type: 'image',
-    src: '/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp',
-    alt: 'Lavorazione capperi artigianale',
+    src: '/images/dalcampoallatavola2.webp',
+    alt: 'Dal campo alla tavola',
   },
 ];
 

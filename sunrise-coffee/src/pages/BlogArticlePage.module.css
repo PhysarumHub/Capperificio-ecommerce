@@ -1,4 +1,4 @@
-/* ── Grid a 3 colonne ────────────────────────────────────────────────────────── */
+﻿/* ── Grid a 3 colonne ────────────────────────────────────────────────────────── */
 .pageGrid {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
@@ -33,7 +33,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .12em;
-  color: #3A6B35;
+  color: var(--color-red);
   margin-bottom: 16px;
 }
 
@@ -42,7 +42,7 @@
   font-style: italic;
   font-size: clamp(28px, 5vw, 44px);
   font-weight: 500;
-  color: #3A6B35;
+  color: var(--color-red);
   line-height: 1.2;
   margin: 0 0 20px;
 }
@@ -82,7 +82,7 @@
 .body {
   font-size: 17px;
   line-height: 1.75;
-  color: #3A6B35;
+  color: var(--color-red);
 }
 
 .paragraph {
@@ -94,7 +94,7 @@
   font-style: italic;
   font-size: 32px;
   font-weight: 500;
-  color: #3A6B35;
+  color: var(--color-red);
   margin: 1.8em 0 .6em;
 }
 
@@ -103,14 +103,14 @@
   font-style: italic;
   font-size: 26px;
   font-weight: 500;
-  color: #3A6B35;
+  color: var(--color-red);
   margin: 1.6em 0 .5em;
 }
 
 .h3 {
   font-size: 19px;
   font-weight: 600;
-  color: #3A6B35;
+  color: var(--color-red);
   margin: 1.4em 0 .4em;
 }
 
@@ -124,7 +124,7 @@
 }
 
 .quote {
-  border-left: 3px solid #3A6B35;
+  border-left: 3px solid var(--color-red);
   margin: 2em 0;
   padding: .8em 1.4em;
   font-family: var(--font-serif);
@@ -151,11 +151,11 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .1em;
-  color: #3A6B35;
+  color: var(--color-red);
   text-decoration: none;
 }
 
-.back:hover { color: #3A6B35; }
+.back:hover { color: var(--color-red); }
 
 /* ── Stati ───────────────────────────────────────────────────────────────────── */
 .loading,

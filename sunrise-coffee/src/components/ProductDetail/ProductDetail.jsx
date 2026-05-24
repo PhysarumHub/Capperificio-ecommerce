@@ -101,6 +101,7 @@ function mapRelatedProduct(product) {
     price: formatPrice(price?.unitPrice),
     oldPrice: listPrice?.price ? formatPrice(listPrice.price) : undefined,
     badge: listPrice?.price ? 'In saldo' : undefined,
+    soldOut: (product.availableStock ?? 1) <= 0,
     options,
     variantMap,
   };
@@ -244,6 +245,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   }, [variants, selectedOptions]);
 
   const hasApiProduct = Boolean(shopwareProduct);
+  const isSoldOut = hasApiProduct && (shopwareProduct.availableStock ?? 1) <= 0;
 
   const productName = hasApiProduct
     ? (shopwareProduct.translated?.name || shopwareProduct.name)
@@ -350,7 +352,9 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         </div>
       )}
 
-      {showControl ? (
+      {isSoldOut ? (
+        <div className={styles.btnSoldOut}>Temporaneamente esaurito</div>
+      ) : showControl ? (
         <div className={styles.pdpQtyControl}>
           <button className={styles.pdpQtyBtn} onClick={handleDecrease} aria-label="Decrease">−</button>
           <span className={styles.pdpQtyNum}>{cartQty}</span>
@@ -552,7 +556,9 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
               {hasApiProduct ? formatPrice(unitPrice) : `$${unitPrice.toFixed(2)}`}
             </div>
           </div>
-          {showControl ? (
+          {isSoldOut ? (
+            <div className={styles.mobileStickyBtnSoldOut}>Esaurito</div>
+          ) : showControl ? (
             <div className={styles.pdpQtyControl}>
               <button className={styles.pdpQtyBtn} onClick={handleDecrease} aria-label="Decrease">−</button>
               <span className={styles.pdpQtyNum}>{cartQty}</span>

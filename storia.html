@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tre generazioni di terra e capperi | Capperificio Caro</title>
+  <meta name="description" content="Dal Salento, una storia familiare che profuma di terra, mani e memoria. Tre generazioni che coltivano capperi e valori con lentezza e rispetto." />
+  <meta property="og:title" content="Tre generazioni di terra e capperi | Capperificio Caro" />
+  <meta property="og:description" content="Dal Salento, una storia familiare che profuma di terra, mani e memoria. Tre generazioni che coltivano capperi e valori con lentezza e rispetto." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="/assets/Logo_nonno_kw5UhGcDmUbvUtRPiXDNY.png" />
+
+  <style>
+    /* ─── FONTS ─── */
+    @font-face {
+      font-family: 'PPEditorialOld';
+      src: url('/assets/PPEditorialOld-Ultralight.ttf_cILd2cuFFEJvihYAlb6Y9.ttf') format('truetype');
+      font-weight: 200; font-style: normal;
+    }
+    @font-face {
+      font-family: 'PPEditorialOld';
+      src: url('/assets/PPEditorialOld-UltralightItalic.ttf_7kfLPGTmjFN3pKut_xErd.ttf') format('truetype');
+      font-weight: 200; font-style: italic;
+    }
+    @font-face {
+      font-family: 'PPEditorialOld';
+      src: url('/assets/PPEditorialOld-Regular_W9VuOsGxVcMXTjPpMIwXs.ttf') format('truetype');
+      font-weight: 400; font-style: normal;
+    }
+    @font-face {
+      font-family: 'PPEditorialOld';
+      src: url('/assets/PPEditorialOld-Italic.ttf_Kf90oas6nMBSJRW8yorD8.ttf') format('truetype');
+      font-weight: 400; font-style: italic;
+    }
+    @font-face {
+      font-family: 'PPEditorialOld';
+      src: url('/assets/PPEditorialOld-Ultrabold_5HWKMDKb53b5onjY2vbpY.ttf') format('truetype');
+      font-weight: 800; font-style: normal;
+    }
+    @font-face {
+      font-family: 'Paralucent';
+      src: url('/assets/Paralucent-Light_evIeCOMli8Lqr_k0GCQyz.ttf') format('truetype');
+      font-weight: 300; font-style: normal;
+    }
+    @font-face {
+      font-family: 'Paralucent';
+      src: url('/assets/Paralucent-Medium_kYSkVMiHYCLG_OCTWQKBu.ttf') format('truetype');
+      font-weight: 500; font-style: normal;
+    }
+    @font-face {
+      font-family: 'Paralucent';
+      src: url('/assets/Paralucent-DemiBold_5dErvkdVFdQ-Fp8GhhQKW.ttf') format('truetype');
+      font-weight: 600; font-style: normal;
+    }
+
+    /* ─── CSS VARIABLES ─── */
+    :root {
+      --green:   #547054;
+      --bg:      #f0ece3;
+      --dark:    #1c1c1a;
+      --muted:   #6b6558;
+      --font-display: 'PPEditorialOld', Georgia, 'Times New Roman', serif;
+      --font-body:    'Paralucent', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      --max-w: 1280px;
+    }
+
+    /* ─── RESET ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    p { margin: 0; }
+    img { display: block; max-width: 100%; }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; font-family: inherit; border: none; background: none; }
+    ul { list-style: none; }
+
+    /* ─── BASE ─── */
+    html { scroll-behavior: smooth; }
+    body {
+      background-color: var(--bg);
+      color: var(--dark);
+      font-family: var(--font-body);
+      font-weight: 300;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── SCROLL REVEAL ─── */
+    [data-reveal] {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.75s ease, transform 0.75s ease;
+    }
+    [data-reveal].visible {
+      opacity: 1;
+      transform: none;
+    }
+    [data-reveal-delay="1"] { transition-delay: 0.12s; }
+    [data-reveal-delay="2"] { transition-delay: 0.24s; }
+
+    /* ═══════════════════════════════════
+       HEADER
+    ═══════════════════════════════════ */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background-color: var(--bg);
+      border-bottom: 1px solid rgba(84,112,84,.14);
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 clamp(1.25rem, 4vw, 3.5rem);
+      height: 76px;
+      gap: 2rem;
+    }
+    .logo-link {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .logo-link svg { height: 46px; width: auto; }
+
+    .main-nav ul {
+      display: flex;
+      gap: 2.5rem;
+      align-items: center;
+    }
+    .main-nav a {
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: .8125rem;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--green);
+      transition: opacity .2s;
+    }
+    .main-nav a:hover { opacity: .55; }
+
+    .btn-cta {
+      background-color: var(--green);
+      color: var(--bg);
+      border-radius: .5rem;
+      padding: .6rem 1.35rem;
+      font-size: .8125rem;
+      font-weight: 600;
+      letter-spacing: .045em;
+      transition: opacity .2s;
+    }
+    .btn-cta:hover { opacity: .82; }
+
+    .hamburger {
+      display: none;
+      padding: .4rem;
+      color: var(--green);
+    }
+
+    /* ─── Mobile nav overlay ─── */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: var(--bg);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2.5rem;
+    }
+    .mobile-nav.open { display: flex; }
+    .mobile-nav a {
+      font-family: var(--font-display);
+      font-weight: 200;
+      font-size: clamp(2rem, 6vw, 3rem);
+      color: var(--green);
+    }
+    .mobile-nav-btn {
+      background-color: var(--green);
+      color: var(--bg);
+      border-radius: .5rem;
+      padding: .85rem 2.5rem;
+      font-size: .9rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      margin-top: .5rem;
+    }
+    .mobile-nav-close {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.5rem;
+      color: var(--green);
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    /* ═══════════════════════════════════
+       HERO
+    ═══════════════════════════════════ */
+    .hero {
+      padding: clamp(80px,11vw,150px) clamp(1.25rem,4vw,3.5rem) clamp(70px,9vw,110px);
+    }
+    .hero-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      font-size: .7rem;
+      font-weight: 600;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--green);
+      border: 1px solid var(--green);
+      border-radius: 2rem;
+      padding: .3rem .9rem;
+      margin-bottom: 2.25rem;
+      opacity: .85;
+    }
+    .hero h2 {
+      font-family: var(--font-display);
+      font-weight: 200;
+      font-size: clamp(3.2rem, 7.5vw, 7.2rem);
+      line-height: 1.04;
+      color: var(--green);
+      margin-bottom: 2rem;
+    }
+    .hero p {
+      font-size: clamp(.95rem, 1.4vw, 1.15rem);
+      color: var(--muted);
+      line-height: 1.85;
+      max-width: 420px;
+    }
+
+    /* ═══════════════════════════════════
+       STORY BLOCKS (image + text side by side)
+    ═══════════════════════════════════ */
+    .story-section {
+      padding: clamp(30px,4vw,60px) clamp(1.25rem,4vw,3.5rem);
+    }
+    .story-grid {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(2rem,5vw,5rem);
+      align-items: center;
+    }
+    .story-grid.flipped .story-image { order: 2; }
+    .story-grid.flipped .story-text  { order: 1; }
+
+    .story-image {
+      border-radius: 1rem;
+      overflow: hidden;
+      aspect-ratio: 4/3;
+    }
+    .story-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform .6s ease;
+    }
+    .story-image:hover img { transform: scale(1.03); }
+
+    .story-text h2 {
+      font-family: var(--font-display);
+      font-weight: 200;
+      font-size: clamp(1.9rem, 3.2vw, 3.1rem);
+      line-height: 1.1;
+      color: var(--green);
+      margin-bottom: 1.4rem;
+    }
+    .story-text p {
+      font-size: clamp(.9rem, 1.1vw, 1.05rem);
+      color: var(--muted);
+      line-height: 1.9;
+    }
+
+    /* ═══════════════════════════════════
+       FEATURE BLOCKS (full-bleed split)
+    ═══════════════════════════════════ */
+    .feature {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: clamp(380px, 52vw, 640px);
+    }
+    .feature-media { overflow: hidden; }
+    .feature-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .feature-copy {
+      display: flex;
+      align-items: center;
+      padding: clamp(3rem,6vw,6rem) clamp(2rem,5vw,5rem);
+      background-color: var(--bg);
+    }
+    .feature-copy h1 {
+      font-family: var(--font-display);
+      font-weight: 200;
+      font-size: clamp(2rem, 3.3vw, 3.4rem);
+      line-height: 1.1;
+      color: var(--green);
+      margin-bottom: 1.5rem;
+    }
+    .feature-copy p {
+      font-size: clamp(.9rem, 1.1vw, 1.05rem);
+      color: var(--muted);
+      line-height: 1.85;
+      max-width: 400px;
+    }
+    .feature-copy p strong { color: var(--green); font-weight: 600; }
+
+    /* ═══════════════════════════════════
+       CTA SECTION
+    ═══════════════════════════════════ */
+    .cta-section {
+      background-color: var(--green);
+      padding: clamp(70px,9vw,130px) clamp(1.25rem,4vw,3.5rem);
+      text-align: center;
+    }
+    .cta-section .container { max-width: var(--max-w); margin: 0 auto; }
+    .cta-section h1 {
+      font-family: var(--font-display);
+      font-weight: 200;
+      font-size: clamp(2.8rem,5.5vw,5.5rem);
+      color: var(--bg);
+      line-height: 1.05;
+      margin-bottom: 1.5rem;
+    }
+    .cta-section p {
+      font-size: clamp(.95rem,1.3vw,1.15rem);
+      color: rgba(240,236,227,.78);
+      max-width: 500px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.75;
+    }
+    .btn-subscribe {
+      display: inline-block;
+      background-color: var(--bg);
+      color: var(--green);
+      border-radius: 2rem;
+      padding: .9rem 2.6rem;
+      font-family: var(--font-body);
+      font-size: .85rem;
+      font-weight: 600;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      transition: opacity .2s;
+      border: 2px solid var(--bg);
+    }
+    .btn-subscribe:hover { opacity: .82; }
+
+    /* ═══════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════ */
+    .site-footer {
+      background-color: var(--bg);
+      border-top: 1px solid rgba(84,112,84,.13);
+      padding: clamp(50px,6vw,80px) clamp(1.25rem,4vw,3.5rem) clamp(30px,4vw,48px);
+    }
+    .footer-top {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 2.5rem;
+    }
+    .footer-logo svg { height: 58px; width: auto; }
+    .footer-nav {
+      display: flex;
+      gap: clamp(1.5rem,3vw,3rem);
+    }
+    .footer-nav a {
+      font-size: .85rem;
+      font-weight: 400;
+      color: var(--green);
+      opacity: .75;
+      transition: opacity .2s;
+    }
+    .footer-nav a:hover { opacity: 1; }
+    .footer-bottom {
+      max-width: var(--max-w);
+      margin: 2.5rem auto 0;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(84,112,84,.11);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+    }
+    .footer-copy {
+      font-size: .75rem;
+      color: var(--muted);
+      line-height: 1.7;
+      opacity: .8;
+    }
+    .footer-legal {
+      display: flex;
+      gap: 1.5rem;
+    }
+    .footer-legal a {
+      font-size: .75rem;
+      color: var(--muted);
+      opacity: .75;
+      transition: color .2s;
+    }
+    .footer-legal a:hover { color: var(--green); opacity: 1; }
+
+    /* ═══════════════════════════════════
+       POPUP / MODAL
+    ═══════════════════════════════════ */
+    .popup-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(28,28,26,.5);
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .popup-overlay.open { display: flex; }
+    .popup-card {
+      background: var(--green);
+      border-radius: 1.5rem 1.5rem 0 0;
+      width: 100%;
+      max-width: 520px;
+      padding: 2.75rem 2.25rem 3rem;
+      position: relative;
+      animation: slideUp .38s cubic-bezier(.25,.46,.45,.94) forwards;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .popup-close-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1.25rem;
+      color: rgba(240,236,227,.7);
+      font-size: 1.6rem;
+      line-height: 1;
+      padding: .4rem;
+      transition: color .2s;
+    }
+    .popup-close-btn:hover { color: var(--bg); }
+
+    .popup-progress-track {
+      width: 100%;
+      height: 3px;
+      background: rgba(240,236,227,.2);
+      border-radius: 2px;
+      margin-bottom: 2.25rem;
+      overflow: hidden;
+    }
+    .popup-progress-fill {
+      height: 100%;
+      background: var(--bg);
+      border-radius: 2px;
+      width: 50%;
+      transition: width .35s ease;
+    }
+
+    .popup-step { display: none; flex-direction: column; gap: 1.25rem; }
+    .popup-step.active { display: flex; }
+
+    .popup-step h2 {
+      font-family: var(--font-display);
+      font-weight: 200;
+      font-size: clamp(1.6rem, 3vw, 2.3rem);
+      color: var(--bg);
+      line-height: 1.2;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .55rem;
+    }
+    .chip {
+      background: rgba(240,236,227,.1);
+      border: 1px solid rgba(240,236,227,.3);
+      color: var(--bg);
+      border-radius: 2rem;
+      padding: .5rem 1.1rem;
+      font-size: .84rem;
+      font-weight: 400;
+      transition: background .2s, border-color .2s;
+    }
+    .chip:hover,
+    .chip.selected {
+      background: rgba(240,236,227,.25);
+      border-color: var(--bg);
+    }
+
+    .popup-input {
+      width: 100%;
+      background: rgba(240,236,227,.1);
+      border: 1px solid rgba(240,236,227,.35);
+      border-radius: .5rem;
+      padding: .85rem 1rem;
+      font-family: var(--font-body);
+      font-size: .95rem;
+      color: var(--bg);
+      outline: none;
+      transition: border-color .2s;
+    }
+    .popup-input::placeholder { color: rgba(240,236,227,.45); }
+    .popup-input:focus { border-color: rgba(240,236,227,.75); }
+
+    .popup-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: .25rem;
+    }
+    .btn-prev {
+      color: rgba(240,236,227,.65);
+      font-size: .88rem;
+      padding: .5rem 0;
+      transition: color .2s;
+    }
+    .btn-prev:hover { color: var(--bg); }
+    .btn-next,
+    .btn-submit {
+      background: var(--bg);
+      color: var(--green);
+      border-radius: .5rem;
+      padding: .75rem 1.9rem;
+      font-size: .88rem;
+      font-weight: 600;
+      letter-spacing: .03em;
+      transition: opacity .2s;
+    }
+    .btn-next:hover, .btn-submit:hover { opacity: .84; }
+    .btn-next:disabled { opacity: .35; pointer-events: none; }
+
+    .popup-success {
+      text-align: center;
+      padding: 1.5rem 0;
+    }
+    .popup-success h2 {
+      font-family: var(--font-display);
+      font-weight: 200;
+      font-size: 2rem;
+      color: var(--bg);
+      margin-bottom: 1rem;
+    }
+    .popup-success p {
+      font-size: .95rem;
+      color: rgba(240,236,227,.75);
+      line-height: 1.7;
+    }
+
+    /* ═══════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════ */
+    @media (max-width: 900px) {
+      .main-nav, .header-cta { display: none; }
+      .hamburger { display: block; }
+
+      .story-grid { grid-template-columns: 1fr; gap: 2rem; }
+      .story-grid.flipped .story-image { order: -1; }
+      .story-grid.flipped .story-text  { order: 0; }
+
+      .feature { grid-template-columns: 1fr; min-height: auto; }
+      .feature-media { aspect-ratio: 16/8; min-height: 260px; }
+      .feature.flip-mobile .feature-copy { order: -1; }
+    }
+    @media (max-width: 600px) {
+      .story-section { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .feature-copy { padding: 2.5rem 1.5rem; }
+      .footer-top { flex-direction: column; }
+      .footer-bottom { flex-direction: column; }
+      .footer-legal { flex-wrap: wrap; gap: 1rem; }
+      .hero h2 { font-size: 2.7rem; }
+      .cta-section h1 { font-size: 2.5rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ══════════════════════════════════
+     MOBILE NAV OVERLAY
+══════════════════════════════════ -->
+<nav class="mobile-nav" id="mobileNav" aria-label="Menu mobile">
+  <button class="mobile-nav-close" id="mobileNavClose" aria-label="Chiudi menu">×</button>
+  <a href="/">Il cappero di Racale</a>
+  <a href="/storia">La nostra storia</a>
+  <button class="mobile-nav-btn open-popup">Contattaci</button>
+</nav>
+
+<!-- ══════════════════════════════════
+     HEADER
+══════════════════════════════════ -->
+<header class="site-header">
+  <div class="header-inner">
+
+    <!-- Logo CARO -->
+    <a href="/" class="logo-link" aria-label="Home – Capperificio Caro">
+      <svg xmlns="http://www.w3.org/2000/svg" height="46" viewBox="0 0 267 389" fill="none" aria-hidden="true">
+        <path d="M252.238 132.113V151.893V250.569L182.465 320.353L168.492 334.331H168.15L138.436 364.044L133.114 369.362L98.0832 334.331H97.7461L83.7676 320.353L13.9785 250.585V151.882V132.124L13.9839 132.119V92.5811C13.9839 90.9827 14.3427 89.4657 14.9897 88.1011C15.2127 87.6443 15.4682 87.1931 15.7455 86.7744C16.0391 86.334 16.3653 85.9208 16.7133 85.5348C16.8275 85.4097 16.9634 85.2738 17.0884 85.1597C17.5397 84.7084 18.0399 84.2952 18.5673 83.9363C19.0077 83.6427 19.4644 83.3709 19.9483 83.1371C21.313 82.4738 22.8462 82.1041 24.4664 82.1041H63.9933L13.9785 132.119V151.882L82.0658 83.8004L82.0767 83.7895L83.7078 82.1149L82.0821 83.7895L83.7676 82.1041H83.7186L83.7241 82.0986H182.46L252.238 151.888V132.113L202.223 82.1041H241.75C243.348 82.1041 244.865 82.4629 246.219 83.1099C246.714 83.3328 247.182 83.6047 247.627 83.9091C248.041 84.1864 248.427 84.5018 248.796 84.8334C248.921 84.9476 249.057 85.0781 249.171 85.2031C249.628 85.6599 250.041 86.1655 250.411 86.7092C250.716 87.1496 250.987 87.6172 251.221 88.1119C251.879 89.4657 252.238 90.9827 252.238 92.5811V132.113L266.216 146.092V92.5866C266.216 92.4778 266.216 92.38 266.206 92.2712C266.14 86.8234 264.286 81.7942 261.187 77.7599C260.111 76.629 259.007 75.5144 257.882 74.4107C257.457 73.9975 257.039 73.5843 256.615 73.1874C256.604 73.1711 256.604 73.1602 256.598 73.1711C252.477 70.0013 247.323 68.1256 241.745 68.1256H24.4718C18.85 68.1256 13.6686 70.0394 9.53103 73.2363L9.52015 73.2472C8.69372 73.8779 7.9108 74.5684 7.17681 75.3024C6.42107 76.0581 5.71969 76.8574 5.08357 77.7001L5.0727 77.711C1.89206 81.8322 0 86.9973 0 92.592V146.097L11.82 134.277L0.0054257 146.103V165.866V236.607V256.359V309.87C0.0054257 314.356 1.21789 318.564 3.33287 322.174C4.39308 324.001 5.68707 325.681 7.17681 327.165C8.69372 328.671 10.3955 329.982 12.2549 331.053C15.8434 333.146 20.019 334.337 24.4664 334.337H77.9609H78.4937L106.021 361.902H106.032L122.283 378.18H122.294L123.289 379.175V379.186L133.065 388.973L142.889 379.148L143.857 378.18L187.701 334.337H188.234H241.739C243.854 334.337 245.915 334.065 247.883 333.548H247.894C250.052 332.988 252.075 332.151 253.956 331.053C255.815 329.982 257.523 328.671 259.034 327.165C260.524 325.681 261.818 324.001 262.878 322.169C265.004 318.564 266.211 314.361 266.211 309.876V256.365V236.596V165.872V146.092L252.238 132.113ZM24.4664 320.353C23.379 320.353 22.3406 320.19 21.3565 319.885C20.7693 319.695 20.193 319.466 19.6601 319.184C17.7844 318.205 16.2457 316.683 15.2399 314.829C14.9354 314.28 14.6798 313.681 14.4841 313.073C14.1633 312.061 13.9839 310.99 13.9839 309.87V270.338L63.9879 320.353H24.4664ZM252.238 309.87C252.238 310.99 252.059 312.061 251.738 313.073C251.542 313.681 251.286 314.274 250.982 314.829C249.976 316.683 248.448 318.205 246.567 319.184C246.023 319.461 245.447 319.695 244.871 319.885C243.881 320.19 242.837 320.353 241.75 320.353H202.229L252.243 270.338V309.87H252.238Z" fill="#547054"/>
+        <path d="M190.849 234.682C190.849 234.682 172.353 238.037 165.116 256.294L184.923 251.004C187.919 250.205 190.067 247.578 190.251 244.485L190.849 234.682Z" fill="#547054"/>
+        <path d="M181.095 260.883C180.97 260.888 180.84 260.893 180.709 260.893C180.584 260.893 180.448 260.893 180.323 260.893H175.196C175.196 260.893 178.469 264.281 182.167 264.509H182.727C183.096 264.487 183.45 264.438 183.792 264.357C185.048 264.063 186.163 263.384 187.005 262.448C188.028 261.312 188.653 259.79 188.653 258.126C188.653 256.402 187.99 254.837 186.902 253.689C186.935 253.956 186.956 254.233 186.956 254.51C186.956 257.908 184.363 260.681 181.095 260.883Z" fill="#547054"/>
+        <path d="M190.628 183.792L194.205 180.916L195.113 170.401L206.243 169.351C208.847 169.107 211.299 168.025 213.235 166.263L226.577 154.139L114.434 170.689L112.841 170.923L114.38 170.428L192.335 145.217C195.51 144.189 196.587 140.269 194.417 137.735C182.021 123.229 162.22 116.879 143.397 121.935L71.3785 141.269L66.5069 142.574C64.1636 143.205 61.8801 144.064 59.7433 145.211C59.7216 145.222 59.7107 145.233 59.6944 145.238C47.8526 151.583 39.7298 164.061 39.6319 178.328C39.5341 191.491 46.1781 203.109 56.3017 209.949C56.3561 209.982 56.4105 210.02 56.454 210.053C59.3899 212.07 61.4723 215.245 62.0432 218.904C62.0867 219.192 62.1193 219.475 62.1465 219.774C63.0979 226.972 66.0774 233.535 70.4977 238.863C72.8791 241.734 74.222 245.322 74.222 249.052V254.016L132.561 308.234L134.04 284.583C134.04 284.583 168.929 290.188 176.084 289.748C183.239 289.302 182.505 281.75 182.505 281.75C180.134 286.257 176.193 286.665 173.121 286.116C170.946 285.73 168.918 284.762 167.184 283.397L148.877 269.011L140.76 238.651V262.628L135.665 258.627L130.897 254.87V207.579L130.886 207.552L136.334 205.616L168.902 194.057C172.963 192.616 177.438 194.106 179.841 197.591L151.656 211.2L170.712 208.041C173.523 207.573 175.932 205.785 177.193 203.235L179.917 197.721C180.08 197.955 180.232 198.2 180.368 198.461L185.387 207.677C185.403 207.698 185.414 207.726 185.43 207.747C185.577 208.003 185.724 208.264 185.854 208.541C186.681 210.188 187.143 212.059 187.143 214.027C187.143 215.397 186.92 216.718 186.512 217.952C186.463 218.088 186.414 218.23 186.36 218.371C185.158 221.617 183.31 225.162 181.798 227.837C180.825 229.566 182.26 231.654 184.223 231.355L205.83 228.109C207.015 227.924 207.618 226.586 206.977 225.575L188.317 196.221C185.919 192.067 186.893 186.793 190.628 183.792Z" fill="#547054"/>
+        <path d="M59.1825 50.6075C76.1296 50.6075 81.8004 41.0982 81.8004 29.0607H67.077C66.1527 36.4224 64.1628 38.8038 59.1825 38.8038C51.5925 38.8038 50.9727 32.5948 50.9727 25.3092C50.9727 18.0291 51.9676 11.8962 59.1825 11.8962C64.0921 11.8962 66.3159 14.2667 67.077 21.4H81.8004C81.8004 9.89536 76.0426 0.00549316 59.1825 0.00549316C39.7018 0.00549316 36.1025 13.0379 36.1025 25.3092C36.1025 37.575 39.6257 50.6075 59.1825 50.6075Z" fill="#547054"/>
+        <path d="M101.419 41.7884H116.752L119.133 49.8406H134.623L117.91 0.766357H100.734L83.4121 49.8406H98.826L101.419 41.7884ZM109.086 12.8908L114.077 30.9797H104.105L109.086 12.8908Z" fill="#547054"/>
+        <path d="M152.87 31.6702L163.532 49.8406H181.854L167.669 31.8985C175.031 30.5175 178.174 24.613 178.174 18.0233C178.174 10.9661 176.488 0.766357 157.317 0.766357H138.146V49.8406H152.87V31.6702ZM152.87 12.5048H156.779C161.993 12.5048 163.298 14.4241 163.298 18.0288C163.298 21.3236 162.069 23.3896 156.779 23.3896H152.87V12.5048Z" fill="#547054"/>
+        <path d="M207.466 50.6074C227.474 50.6074 231.312 37.6456 231.312 25.3798C231.312 12.9617 227.474 -6.10352e-05 207.466 -6.10352e-05C187.534 -6.10352e-05 183.695 12.9617 183.695 25.3037C183.695 37.6456 187.452 50.6074 207.466 50.6074ZM207.466 11.8906C215.899 11.8906 216.361 18.0235 216.361 25.3798C216.361 32.5947 215.899 38.8037 207.466 38.8037C199.109 38.8037 198.571 32.5947 198.571 25.3091C198.571 18.029 199.104 11.8906 207.466 11.8906Z" fill="#547054"/>
+        <path d="M20.5099 32.4426C24.0222 28.9303 24.0222 23.2378 20.5099 19.7309C16.9976 16.2186 11.3051 16.2186 7.79822 19.7309L1.44238 26.0867L7.79822 32.4426C11.3105 35.9549 17.003 35.9549 20.5099 32.4426Z" fill="#547054"/>
+        <path d="M259.387 32.4426L265.743 26.0867L259.387 19.7309C255.875 16.2186 250.182 16.2186 246.675 19.7309C243.163 23.2432 243.163 28.9357 246.675 32.4426C250.188 35.9494 255.875 35.9549 259.387 32.4426Z" fill="#547054"/>
+      </svg>
+    </a>
+
+    <!-- Desktop nav -->
+    <nav class="main-nav" aria-label="Menu principale">
+      <ul>
+        <li><a href="/">Il cappero di Racale</a></li>
+        <li><a href="/storia">La nostra storia</a></li>
+      </ul>
+    </nav>
+
+    <!-- CTA desktop -->
+    <div class="header-cta">
+      <button class="btn-cta open-popup">Contattaci</button>
+    </div>
+
+    <!-- Hamburger mobile -->
+    <button class="hamburger" id="hamburgerBtn" aria-label="Apri menu" aria-expanded="false" aria-controls="mobileNav">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" fill="currentColor" width="28" height="28" aria-hidden="true">
+        <path fill-rule="evenodd" d="M2 5.998a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Zm0 5.5a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Zm0 5.5a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd"/>
+      </svg>
+    </button>
+
+  </div>
+</header>
+
+<!-- ══════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════ -->
+<main>
+
+  <!-- ── HERO ── -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="hero-inner">
+      <span class="hero-eyebrow">La nostra storia</span>
+      <h2 id="hero-heading" data-reveal>
+        3 generazioni,<br>una sola pianta.
+      </h2>
+      <p data-reveal data-reveal-delay="1">
+        Un sapere che passa di mano in mano,<br>
+        come si tramanda una ricetta di famiglia.<br>
+        Da allora, coltiviamo la stessa pianta<br>
+        con lo stesso rispetto.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── STORIA 1: Tutto è nato da qui ── -->
+  <section class="story-section" aria-label="Le origini">
+    <div class="story-grid">
+      <div class="story-image" data-reveal>
+        <img
+          src="/assets/nonnoquintino__compress_LgHdrR8LAdAlu0GnlAIVw.webp"
+          alt="Nonno Quintino, il fondatore"
+          width="768" height="550"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <div class="story-text" data-reveal data-reveal-delay="1">
+        <h2>Tutto è nato da qui</h2>
+        <p>
+          Da un amore sincero,<br>
+          tra un campo da coltivare e una vita da immaginare.<br>
+          I nonni hanno seminato senza sapere,<br>
+          che stavano piantando molto più di una pianta.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STORIA 2: Chi ha tenuto viva la rotta ── -->
+  <section class="story-section" aria-label="La continuità">
+    <div class="story-grid flipped">
+      <div class="story-image" data-reveal>
+        <img
+          src="/assets/20240723_capperificiocaro_lavorazione___-9549_(1)_compress_7hymx2JVxcq4Cx0v_FHR_.webp"
+          alt="Lavorazione artigianale dei capperi"
+          width="1641" height="1094"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <div class="story-text" data-reveal data-reveal-delay="1">
+        <h2>Chi ha tenuto viva la rotta</h2>
+        <p>
+          Hanno scelto di restare.<br>
+          Di custodire il sapere,<br>
+          stagione dopo stagione,<br>
+          dando continuità ai gesti e dignità alla terra.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STORIA 3: Una storia che continua a germogliare ── -->
+  <section class="story-section" aria-label="Il presente">
+    <div class="story-grid">
+      <div class="story-image" data-reveal>
+        <img
+          src="/assets/20250606_capperificiocaro_patate___-3049_compress_1OZpzXEiespbAFz-OBhR3.webp"
+          alt="Capperi freschi dalla raccolta"
+          width="893" height="1340"
+          loading="lazy"
+          decoding="async"
+          style="object-position: center top;"
+        />
+      </div>
+      <div class="story-text" data-reveal data-reveal-delay="1">
+        <h2>Una storia che<br>continua a germogliare</h2>
+        <p>
+          Lo facciamo come ci hanno insegnato:<br>
+          con pazienza, con rispetto, con le mani nella terra.<br>
+          Seminiamo ogni giorno la nostra parte,<br>
+          perché quello che conta ha bisogno di tempo.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FEATURE 1: Mani nuove, stessa terra ── -->
+  <article class="feature">
+    <div class="feature-copy" data-reveal>
+      <div>
+        <h1>Mani nuove,<br>stessa terra</h1>
+        <p>
+          Coltiviamo una nuova <strong>visione</strong>.
+          Una relazione nuova con la terra, fatta di equilibrio, ascolto, lentezza.
+          Ma soprattutto, coltiviamo valori.
+        </p>
+      </div>
+    </div>
+    <div class="feature-media" data-reveal data-reveal-delay="1">
+      <img
+        src="/assets/20250606_capperificiocaro_patate___-2837_compress_1IU7jJg8NG9JojDD8jWFk.webp"
+        alt="Coltivazione del cappero nel Salento"
+        width="1520" height="1013"
+        loading="eager"
+        decoding="async"
+      />
+    </div>
+  </article>
+
+  <!-- ── FEATURE 2: Come una volta, ma con occhi nuovi ── -->
+  <article class="feature flip-mobile">
+    <div class="feature-media" data-reveal>
+      <img
+        src="/assets/20250606_capperificiocaro_patate___-2869_compress_Q7EqlK5YmHo7lC6Y-yDrt.webp"
+        alt="Cura del campo secondo la tradizione"
+        width="1520" height="1013"
+        loading="eager"
+        decoding="async"
+      />
+    </div>
+    <div class="feature-copy" data-reveal data-reveal-delay="1">
+      <div>
+        <h1>Come una volta,<br>ma con occhi nuovi</h1>
+        <p>
+          Filiera corta, lavorazioni minime, racconti lenti.
+          Perché la terra non ha bisogno di rumore. Solo di rispetto.
+        </p>
+      </div>
+    </div>
+  </article>
+
+  <!-- ── FEATURE 3: Atto di restituzione ── -->
+  <article class="feature">
+    <div class="feature-copy" data-reveal>
+      <div>
+        <h1>Tutto ciò che facciamo<br>è un atto di restituzione</h1>
+        <p>
+          Perché crediamo in un'agricoltura che cura, in un cibo che racconta,
+          in una terra che va rispettata. E in un futuro che ha bisogno di radici.
+        </p>
+      </div>
+    </div>
+    <div class="feature-media" data-reveal data-reveal-delay="1">
+      <img
+        src="/assets/20250419_capperificiocaro_drone___--13_compress_GBJ_CH9CsovkfeUJNhnp5.webp"
+        alt="Vista aerea dei campi di capperi di Racale"
+        width="1600" height="902"
+        loading="eager"
+        decoding="async"
+      />
+    </div>
+  </article>
+
+  <!-- ── CTA SECTION ── -->
+  <section class="cta-section" aria-labelledby="cta-heading">
+    <div class="container">
+      <h1 id="cta-heading" data-reveal>Cammina con noi</h1>
+      <p data-reveal data-reveal-delay="1">
+        Ogni pianta ha bisogno di chi la guarda crescere.<br>
+        Segui il nostro percorso per vedere crescere la nostra realtà.
+      </p>
+      <button class="btn-subscribe open-popup" data-reveal data-reveal-delay="2">
+        Iscriviti
+      </button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ══════════════════════════════════
+     FOOTER
+══════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="footer-top">
+
+    <a href="/" class="footer-logo" aria-label="Home – Capperificio Caro">
+      <svg xmlns="http://www.w3.org/2000/svg" height="56" viewBox="0 0 267 389" fill="none" aria-hidden="true">
+        <path d="M252.238 132.113V151.893V250.569L182.465 320.353L168.492 334.331H168.15L138.436 364.044L133.114 369.362L98.0832 334.331H97.7461L83.7676 320.353L13.9785 250.585V151.882V132.124L13.9839 132.119V92.5811C13.9839 90.9827 14.3427 89.4657 14.9897 88.1011C15.2127 87.6443 15.4682 87.1931 15.7455 86.7744C16.0391 86.334 16.3653 85.9208 16.7133 85.5348C16.8275 85.4097 16.9634 85.2738 17.0884 85.1597C17.5397 84.7084 18.0399 84.2952 18.5673 83.9363C19.0077 83.6427 19.4644 83.3709 19.9483 83.1371C21.313 82.4738 22.8462 82.1041 24.4664 82.1041H63.9933L13.9785 132.119V151.882L82.0658 83.8004L82.0767 83.7895L83.7078 82.1149L82.0821 83.7895L83.7676 82.1041H83.7186L83.7241 82.0986H182.46L252.238 151.888V132.113L202.223 82.1041H241.75C243.348 82.1041 244.865 82.4629 246.219 83.1099C246.714 83.3328 247.182 83.6047 247.627 83.9091C248.041 84.1864 248.427 84.5018 248.796 84.8334C248.921 84.9476 249.057 85.0781 249.171 85.2031C249.628 85.6599 250.041 86.1655 250.411 86.7092C250.716 87.1496 250.987 87.6172 251.221 88.1119C251.879 89.4657 252.238 90.9827 252.238 92.5811V132.113L266.216 146.092V92.5866C266.216 92.4778 266.216 92.38 266.206 92.2712C266.14 86.8234 264.286 81.7942 261.187 77.7599C260.111 76.629 259.007 75.5144 257.882 74.4107C257.457 73.9975 257.039 73.5843 256.615 73.1874C256.604 73.1711 256.604 73.1602 256.598 73.1711C252.477 70.0013 247.323 68.1256 241.745 68.1256H24.4718C18.85 68.1256 13.6686 70.0394 9.53103 73.2363L9.52015 73.2472C8.69372 73.8779 7.9108 74.5684 7.17681 75.3024C6.42107 76.0581 5.71969 76.8574 5.08357 77.7001L5.0727 77.711C1.89206 81.8322 0 86.9973 0 92.592V146.097L11.82 134.277L0.0054257 146.103V165.866V236.607V256.359V309.87C0.0054257 314.356 1.21789 318.564 3.33287 322.174C4.39308 324.001 5.68707 325.681 7.17681 327.165C8.69372 328.671 10.3955 329.982 12.2549 331.053C15.8434 333.146 20.019 334.337 24.4664 334.337H77.9609H78.4937L106.021 361.902H106.032L122.283 378.18H122.294L123.289 379.175V379.186L133.065 388.973L142.889 379.148L143.857 378.18L187.701 334.337H188.234H241.739C243.854 334.337 245.915 334.065 247.883 333.548H247.894C250.052 332.988 252.075 332.151 253.956 331.053C255.815 329.982 257.523 328.671 259.034 327.165C260.524 325.681 261.818 324.001 262.878 322.169C265.004 318.564 266.211 314.361 266.211 309.876V256.365V236.596V165.872V146.092L252.238 132.113ZM24.4664 320.353C23.379 320.353 22.3406 320.19 21.3565 319.885C20.7693 319.695 20.193 319.466 19.6601 319.184C17.7844 318.205 16.2457 316.683 15.2399 314.829C14.9354 314.28 14.6798 313.681 14.4841 313.073C14.1633 312.061 13.9839 310.99 13.9839 309.87V270.338L63.9879 320.353H24.4664ZM252.238 309.87C252.238 310.99 252.059 312.061 251.738 313.073C251.542 313.681 251.286 314.274 250.982 314.829C249.976 316.683 248.448 318.205 246.567 319.184C246.023 319.461 245.447 319.695 244.871 319.885C243.881 320.19 242.837 320.353 241.75 320.353H202.229L252.243 270.338V309.87H252.238Z" fill="#547054"/>
+        <path d="M190.849 234.682C190.849 234.682 172.353 238.037 165.116 256.294L184.923 251.004C187.919 250.205 190.067 247.578 190.251 244.485L190.849 234.682Z" fill="#547054"/>
+        <path d="M181.095 260.883C180.97 260.888 180.84 260.893 180.709 260.893C180.584 260.893 180.448 260.893 180.323 260.893H175.196C175.196 260.893 178.469 264.281 182.167 264.509H182.727C183.096 264.487 183.45 264.438 183.792 264.357C185.048 264.063 186.163 263.384 187.005 262.448C188.028 261.312 188.653 259.79 188.653 258.126C188.653 256.402 187.99 254.837 186.902 253.689C186.935 253.956 186.956 254.233 186.956 254.51C186.956 257.908 184.363 260.681 181.095 260.883Z" fill="#547054"/>
+        <path d="M190.628 183.792L194.205 180.916L195.113 170.401L206.243 169.351C208.847 169.107 211.299 168.025 213.235 166.263L226.577 154.139L114.434 170.689L112.841 170.923L114.38 170.428L192.335 145.217C195.51 144.189 196.587 140.269 194.417 137.735C182.021 123.229 162.22 116.879 143.397 121.935L71.3785 141.269L66.5069 142.574C64.1636 143.205 61.8801 144.064 59.7433 145.211C59.7216 145.222 59.7107 145.233 59.6944 145.238C47.8526 151.583 39.7298 164.061 39.6319 178.328C39.5341 191.491 46.1781 203.109 56.3017 209.949C56.3561 209.982 56.4105 210.02 56.454 210.053C59.3899 212.07 61.4723 215.245 62.0432 218.904C62.0867 219.192 62.1193 219.475 62.1465 219.774C63.0979 226.972 66.0774 233.535 70.4977 238.863C72.8791 241.734 74.222 245.322 74.222 249.052V254.016L132.561 308.234L134.04 284.583C134.04 284.583 168.929 290.188 176.084 289.748C183.239 289.302 182.505 281.75 182.505 281.75C180.134 286.257 176.193 286.665 173.121 286.116C170.946 285.73 168.918 284.762 167.184 283.397L148.877 269.011L140.76 238.651V262.628L135.665 258.627L130.897 254.87V207.579L130.886 207.552L136.334 205.616L168.902 194.057C172.963 192.616 177.438 194.106 179.841 197.591L151.656 211.2L170.712 208.041C173.523 207.573 175.932 205.785 177.193 203.235L179.917 197.721C180.08 197.955 180.232 198.2 180.368 198.461L185.387 207.677C185.403 207.698 185.414 207.726 185.43 207.747C185.577 208.003 185.724 208.264 185.854 208.541C186.681 210.188 187.143 212.059 187.143 214.027C187.143 215.397 186.92 216.718 186.512 217.952C186.463 218.088 186.414 218.23 186.36 218.371C185.158 221.617 183.31 225.162 181.798 227.837C180.825 229.566 182.26 231.654 184.223 231.355L205.83 228.109C207.015 227.924 207.618 226.586 206.977 225.575L188.317 196.221C185.919 192.067 186.893 186.793 190.628 183.792Z" fill="#547054"/>
+        <path d="M59.1825 50.6075C76.1296 50.6075 81.8004 41.0982 81.8004 29.0607H67.077C66.1527 36.4224 64.1628 38.8038 59.1825 38.8038C51.5925 38.8038 50.9727 32.5948 50.9727 25.3092C50.9727 18.0291 51.9676 11.8962 59.1825 11.8962C64.0921 11.8962 66.3159 14.2667 67.077 21.4H81.8004C81.8004 9.89536 76.0426 0.00549316 59.1825 0.00549316C39.7018 0.00549316 36.1025 13.0379 36.1025 25.3092C36.1025 37.575 39.6257 50.6075 59.1825 50.6075Z" fill="#547054"/>
+        <path d="M101.419 41.7884H116.752L119.133 49.8406H134.623L117.91 0.766357H100.734L83.4121 49.8406H98.826L101.419 41.7884ZM109.086 12.8908L114.077 30.9797H104.105L109.086 12.8908Z" fill="#547054"/>
+        <path d="M152.87 31.6702L163.532 49.8406H181.854L167.669 31.8985C175.031 30.5175 178.174 24.613 178.174 18.0233C178.174 10.9661 176.488 0.766357 157.317 0.766357H138.146V49.8406H152.87V31.6702ZM152.87 12.5048H156.779C161.993 12.5048 163.298 14.4241 163.298 18.0288C163.298 21.3236 162.069 23.3896 156.779 23.3896H152.87V12.5048Z" fill="#547054"/>
+        <path d="M207.466 50.6074C227.474 50.6074 231.312 37.6456 231.312 25.3798C231.312 12.9617 227.474 -6.10352e-05 207.466 -6.10352e-05C187.534 -6.10352e-05 183.695 12.9617 183.695 25.3037C183.695 37.6456 187.452 50.6074 207.466 50.6074ZM207.466 11.8906C215.899 11.8906 216.361 18.0235 216.361 25.3798C216.361 32.5947 215.899 38.8037 207.466 38.8037C199.109 38.8037 198.571 32.5947 198.571 25.3091C198.571 18.029 199.104 11.8906 207.466 11.8906Z" fill="#547054"/>
+        <path d="M20.5099 32.4426C24.0222 28.9303 24.0222 23.2378 20.5099 19.7309C16.9976 16.2186 11.3051 16.2186 7.79822 19.7309L1.44238 26.0867L7.79822 32.4426C11.3105 35.9549 17.003 35.9549 20.5099 32.4426Z" fill="#547054"/>
+        <path d="M259.387 32.4426L265.743 26.0867L259.387 19.7309C255.875 16.2186 250.182 16.2186 246.675 19.7309C243.163 23.2432 243.163 28.9357 246.675 32.4426C250.188 35.9494 255.875 35.9549 259.387 32.4426Z" fill="#547054"/>
+      </svg>
+    </a>
+
+    <nav class="footer-nav" aria-label="Footer">
+      <a href="/">Home</a>
+      <a href="/">Il Cappero di Racale</a>
+      <a href="/storia">Storia</a>
+    </nav>
+
+  </div>
+
+  <div class="footer-bottom">
+    <p class="footer-copy">
+      © 2025 Capperificio Caro. Tutti i diritti sono riservati.<br>
+      Racale (LE) – Via Montesanto – 73055 – PEC: farmetechsrls@pec.agritel.it<br>
+      REA: LE – 351078 | P. IVA: 05222980756
+    </p>
+    <div class="footer-legal">
+      <a href="/policy/privacy-policy">Privacy Policy</a>
+      <a href="/policy/termini-e-condizioni">Terms of Service</a>
+      <a href="/policy/cookie">Cookie Settings</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════
+     POPUP / MODAL ISCRIZIONE
+══════════════════════════════════ -->
+<div
+  class="popup-overlay"
+  id="popup"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="popup-title"
+>
+  <div class="popup-card" role="document">
+
+    <button class="popup-close-btn" id="popupClose" aria-label="Chiudi">×</button>
+
+    <div class="popup-progress-track">
+      <div class="popup-progress-fill" id="popupProgress"></div>
+    </div>
+
+    <form id="signupForm" novalidate>
+
+      <!-- STEP 1: chi sei -->
+      <div class="popup-step active" id="step1">
+        <h2 id="popup-title">Per iniziare,<br>raccontaci chi sei:</h2>
+        <input type="hidden" name="form-di-arrivo" value="Storia">
+        <input type="hidden" name="chi-sei" id="chiSeiVal">
+        <div class="chips" id="chipsWrap" role="group" aria-label="Seleziona il tuo ruolo">
+          <button type="button" class="chip" data-val="Appassionato di prodotti autentici">Appassionato di prodotti autentici</button>
+          <button type="button" class="chip" data-val="Chef">Chef</button>
+          <button type="button" class="chip" data-val="Ristoratore">Ristoratore</button>
+          <button type="button" class="chip" data-val="Buyer o negozio">Buyer o negozio</button>
+          <button type="button" class="chip" data-val="Giornalista/stampa">Giornalista/stampa</button>
+          <button type="button" class="chip" data-val="Altro">Altro</button>
+        </div>
+        <div class="popup-actions">
+          <button type="button" class="btn-next" id="nextBtn" disabled>Avanti →</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: contatti -->
+      <div class="popup-step" id="step2">
+        <h2 id="popup-title">Lasciaci<br>i tuoi recapiti:</h2>
+        <input type="text"  name="nome"  class="popup-input" placeholder="Il tuo nome"  autocomplete="name"  required>
+        <input type="email" name="email" class="popup-input" placeholder="La tua email" autocomplete="email" required>
+        <div class="popup-actions">
+          <button type="button" class="btn-prev" id="prevBtn">← Indietro</button>
+          <button type="submit" class="btn-submit">Iscriviti</button>
+        </div>
+      </div>
+
+      <!-- GRAZIE -->
+      <div class="popup-step" id="stepThanks">
+        <div class="popup-success">
+          <h2>Grazie!</h2>
+          <p>Ti abbiamo aggiunto alla nostra comunità.<br>A presto dalla terra di Racale.</p>
+        </div>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════ -->
+<script>
+  'use strict';
+
+  /* ── Scroll reveal ── */
+  (function () {
+    var els = document.querySelectorAll('[data-reveal]');
+    if (!window.IntersectionObserver) {
+      els.forEach(function (el) { el.classList.add('visible'); });
+      return;
+    }
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          obs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    els.forEach(function (el) { obs.observe(el); });
+  }());
+
+  /* ── Mobile nav ── */
+  var hamburger   = document.getElementById('hamburgerBtn');
+  var mobileNav   = document.getElementById('mobileNav');
+  var mobileClose = document.getElementById('mobileNavClose');
+
+  function openMobileNav() {
+    mobileNav.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    hamburger.setAttribute('aria-expanded', 'true');
+  }
+  function closeMobileNav() {
+    mobileNav.classList.remove('open');
+    document.body.style.overflow = '';
+    hamburger.setAttribute('aria-expanded', 'false');
+  }
+  hamburger.addEventListener('click', openMobileNav);
+  mobileClose.addEventListener('click', closeMobileNav);
+
+  /* ── Popup ── */
+  var popup        = document.getElementById('popup');
+  var popupClose   = document.getElementById('popupClose');
+  var openBtns     = document.querySelectorAll('.open-popup');
+  var progressFill = document.getElementById('popupProgress');
+  var step1        = document.getElementById('step1');
+  var step2        = document.getElementById('step2');
+  var stepThanks   = document.getElementById('stepThanks');
+  var nextBtn      = document.getElementById('nextBtn');
+  var prevBtn      = document.getElementById('prevBtn');
+  var chiSeiVal    = document.getElementById('chiSeiVal');
+  var chips        = document.querySelectorAll('#chipsWrap .chip');
+
+  function openPopup() {
+    // reset to step 1 if coming back
+    step1.classList.add('active');
+    step2.classList.remove('active');
+    stepThanks.classList.remove('active');
+    progressFill.style.width = '50%';
+    nextBtn.disabled = !chiSeiVal.value;
+    popup.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closePopup() {
+    popup.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  openBtns.forEach(function (btn) { btn.addEventListener('click', openPopup); });
+  popupClose.addEventListener('click', closePopup);
+  popup.addEventListener('click', function (e) { if (e.target === popup) closePopup(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePopup(); });
+
+  /* Chip selection */
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chips.forEach(function (c) { c.classList.remove('selected'); });
+      chip.classList.add('selected');
+      chiSeiVal.value = chip.dataset.val;
+      nextBtn.disabled = false;
+    });
+  });
+
+  /* Step navigation */
+  nextBtn.addEventListener('click', function () {
+    step1.classList.remove('active');
+    step2.classList.add('active');
+    progressFill.style.width = '100%';
+    // focus first input
+    var firstInput = step2.querySelector('input[type="text"]');
+    if (firstInput) firstInput.focus();
+  });
+
+  prevBtn.addEventListener('click', function () {
+    step2.classList.remove('active');
+    step1.classList.add('active');
+    progressFill.style.width = '50%';
+  });
+
+  /* Form submit */
+  document.getElementById('signupForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var nome  = this.querySelector('[name="nome"]').value.trim();
+    var email = this.querySelector('[name="email"]').value.trim();
+    if (!nome || !email) return;
+    // TODO: replace with actual webhook / API call
+    step2.classList.remove('active');
+    stepThanks.classList.add('active');
+    progressFill.style.width = '100%';
+  });
+</script>
+
+</body>
+</html>

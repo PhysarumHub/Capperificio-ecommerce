@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import { useSEO } from '../hooks/useSEO';
 import styles from './AboutPage.module.css';
 
@@ -15,7 +15,7 @@ const PANELS = [
     eyebrow: '01 — Le origini',
     title: 'Tutto è nato da qui',
     desc: 'Da un amore sincero, tra un campo da coltivare e una vita da immaginare. I nonni hanno seminato senza sapere che stavano piantando molto più di una pianta.',
-    bg: '#f5ede0',
+    bg: '#FCF3DF',
   },
   {
     img: '/images/Storia/20240723_capperificiocaro_lavorazione___-9549_(1)_compress_7hymx2JVxcq4Cx0v_FHR_.webp',
@@ -23,7 +23,7 @@ const PANELS = [
     eyebrow: '02 — La continuità',
     title: 'Chi ha tenuto viva la rotta',
     desc: 'Hanno scelto di restare. Di custodire il sapere, stagione dopo stagione, dando continuità ai gesti e dignità alla terra.',
-    bg: '#eaf0e5',
+    bg: '#FCF3DF',
   },
   {
     img: '/images/Storia/20250606_capperificiocaro_patate___-3049_compress_1OZpzXEiespbAFz-OBhR3.webp',
@@ -31,7 +31,7 @@ const PANELS = [
     eyebrow: '03 — Il presente',
     title: 'Una storia che continua a germogliare',
     desc: 'Lo facciamo come ci hanno insegnato: con pazienza, con rispetto, con le mani nella terra. Seminiamo ogni giorno la nostra parte.',
-    bg: '#f0ece3',
+    bg: '#FCF3DF',
     imgPosition: 'center top',
   },
   {
@@ -40,7 +40,7 @@ const PANELS = [
     eyebrow: '04 — La visione',
     title: 'Mani nuove, stessa terra',
     desc: 'Coltiviamo una nuova visione. Una relazione con la terra fatta di equilibrio, ascolto, lentezza. Ma soprattutto, coltiviamo valori.',
-    bg: '#e8ede8',
+    bg: '#FCF3DF',
   },
   {
     img: '/images/Storia/20250606_capperificiocaro_patate___-2869_compress_Q7EqlK5YmHo7lC6Y-yDrt.webp',
@@ -48,7 +48,7 @@ const PANELS = [
     eyebrow: '05 — La tradizione',
     title: 'Come una volta, ma con occhi nuovi',
     desc: 'Filiera corta, lavorazioni minime, racconti lenti. Perché la terra non ha bisogno di rumore. Solo di rispetto.',
-    bg: '#f5ede0',
+    bg: '#FCF3DF',
   },
   {
     img: '/images/Storia/20250419_capperificiocaro_drone___--13_compress_GBJ_CH9CsovkfeUJNhnp5.webp',
@@ -56,7 +56,7 @@ const PANELS = [
     eyebrow: '06 — Il futuro',
     title: 'Tutto ciò che facciamo è un atto di restituzione',
     desc: "Perché crediamo in un\u2019agricoltura che cura, in un cibo che racconta, in una terra che va rispettata. E in un futuro che ha bisogno di radici.",
-    bg: '#eaf0e5',
+    bg: '#FCF3DF',
   },
 ];
 
@@ -128,20 +128,6 @@ export default function AboutPage() {
 
   return (
     <div className={styles.page}>
-
-      {/* ── HERO ── */}
-      <section className={styles.hero} aria-labelledby="hero-heading">
-        <div className={styles.heroInner}>
-          <span className={styles.heroEyebrow}>La nostra storia</span>
-          <h1 id="hero-heading" className={styles.heroTitle}>
-            3 generazioni,<br />una sola pianta.
-          </h1>
-          <p className={styles.heroDesc}>
-            Un sapere che passa di mano in mano, come si tramanda una ricetta di famiglia.
-            Da allora, coltiviamo la stessa pianta con lo stesso rispetto.
-          </p>
-        </div>
-      </section>
 
       {/* ── STICKY PANELS ── */}
       <div className={styles.stickyStack} ref={containerRef}>

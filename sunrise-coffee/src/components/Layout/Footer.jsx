@@ -11,8 +11,21 @@ const PAYMENT_METHODS = [
   { label: 'DISC', bg: '#FF6000' },
 ];
 
-const LINKS_COL1 = ['Tutti i prodotti', 'Capperi', 'Cucunci', 'Foglie', 'Polvere'];
-const LINKS_COL2 = ['Chi siamo', 'Contatti', 'FAQ', 'Area B2B', 'Gestione cookie'];
+const LINKS_COL1 = [
+  { label: 'Home',                href: '/' },
+  { label: 'I nostri prodotti',   href: '/collections/all' },
+  { label: 'Storia',              href: '/storia' },
+  { label: 'Territorio',          href: '/territorio' },
+  { label: 'Processo produttivo', href: '/processo-produttivo' },
+];
+
+const LINKS_COL2 = [
+  { label: 'Blog',             href: '/blog' },
+  { label: 'Area B2B',         href: '/b2b' },
+  { label: 'Contatti',         href: '/contatti' },
+  { label: 'FAQ',              href: '/faq' },
+  { label: 'Gestione cookie',  href: '#', cookie: true },
+];
 
 const SOCIAL_ICONS = [
   { Icon: FacebookIcon,  label: 'Facebook' },
@@ -33,18 +46,18 @@ export default function Footer() {
         </p>
 
         <ul className={styles.links}>
-          {LINKS_COL1.map((t) => (
-            <li key={t}><Link to="/">{t}</Link></li>
+          {LINKS_COL1.map(({ label, href }) => (
+            <li key={label}><Link to={href}>{label}</Link></li>
           ))}
         </ul>
 
         <ul className={styles.links}>
-          {LINKS_COL2.map((t) => (
-            <li key={t}>
-              {t === 'Gestione cookie' ? (
-                <a href="#" onClick={(e) => { e.preventDefault(); window.CapperificioConsent?.openSettings(); }}>{t}</a>
+          {LINKS_COL2.map(({ label, href, cookie }) => (
+            <li key={label}>
+              {cookie ? (
+                <a href="#" onClick={(e) => { e.preventDefault(); window.CapperificioConsent?.openSettings(); }}>{label}</a>
               ) : (
-                <Link to="/">{t}</Link>
+                <Link to={href}>{label}</Link>
               )}
             </li>
           ))}
