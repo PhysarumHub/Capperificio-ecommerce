@@ -176,8 +176,9 @@ function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, s
   const [open, setOpen] = useState(!isMobile);
   useEffect(() => { setOpen(!isMobile); }, [isMobile]);
 
+  const FREE_SHIPPING_MIN = 50;
   const shippingCost = cart?.deliveries?.[0]?.shippingCosts?.totalPrice ?? 0;
-  const hasFreeShipping = shippingCost <= 0;
+  const hasFreeShipping = shippingCost <= 0 || (positionPrice != null && positionPrice >= FREE_SHIPPING_MIN);
   const productItems = (cart?.lineItems ?? []).filter((i) => i.type === 'product');
   const totalTax = productItems.reduce((sum, item) =>
     sum + (item.price?.calculatedTaxes ?? []).reduce((s, t) => s + (t.tax ?? 0), 0), 0);
@@ -379,6 +380,15 @@ export default function CheckoutPage() {
       if (paypalPm) setPaypalPaymentMethodId(paypalPm.id);
     }).catch(() => {});
   }, []);
+
+  // Aggiorna contesto Shopware con il metodo di spedizione selezionato quando si arriva allo step 2
+  // → Shopware ricalcola il carrello e applica la regola "spedizione gratuita sopra X€"
+  useEffect(() => {
+    if (step !== 2 || !selectedShipping || !isShopwareConfigured()) return;
+    updateContext({ shippingMethodId: selectedShipping })
+      .then(() => fetchCart())
+      .catch(() => {}); // silenzioso, non blocca il flusso
+  }, [step, selectedShipping]);
 
   // Crea PaymentIntent Stripe quando si arriva allo step 2 con tab stripe
   useEffect(() => {
