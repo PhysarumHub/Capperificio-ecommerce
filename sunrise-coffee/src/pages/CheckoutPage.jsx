@@ -326,6 +326,38 @@ export default function CheckoutPage() {
   });
   const [touched, setTouched] = useState({});
 
+  // ── Paesi EU Est (per distinguere Europa Est da Ovest) ─────────────
+  const EU_EAST = new Set(['PL', 'CZ', 'SK', 'HU', 'RO', 'BG', 'HR', 'SI', 'EE', 'LV', 'LT', 'GR', 'CY', 'MT']);
+
+  // ── Filtra i metodi di spedizione in base al paese selezionato ─────
+  const filteredShippingMethods = useMemo(() => {
+    if (!shippingMethods.length) return [];
+    const iso = address.countryIso;
+    const isItaly = iso === 'IT';
+    const isEastEU = EU_EAST.has(iso);
+
+    // cerca un metodo che corrisponde al paese
+    const matchItaly = shippingMethods.filter((m) => /italia/i.test(m.name || '') || /italia/i.test(m.translated?.name || ''));
+    const matchEastEU = shippingMethods.filter((m) => /europa\s*(est|orientale)/i.test(m.name || '') || /europa\s*(est|orientale)/i.test(m.translated?.name || ''));
+    const matchWestEU = shippingMethods.filter((m) => /europa\s*(ovest|occidentale)/i.test(m.name || '') || /europa\s*(ovest|occidentale)/i.test(m.translated?.name || ''));
+    // fallback generico "europa" (senza est/ovest)
+    const matchEuropaGeneric = shippingMethods.filter((m) => /europa/i.test(m.name || '') || /europa/i.test(m.translated?.name || ''));
+
+    if (isItaly && matchItaly.length) return matchItaly;
+    if (!isItaly && isEastEU && matchEastEU.length) return matchEastEU;
+    if (!isItaly && !isEastEU && matchWestEU.length) return matchWestEU;
+    if (!isItaly && matchEuropaGeneric.length) return matchEuropaGeneric;
+    // nessun match specifico: mostra tutti
+    return shippingMethods;
+  }, [shippingMethods, address.countryIso]);
+
+  // ── Auto-seleziona quando cambia il filtro ─────────────────────────
+  useEffect(() => {
+    if (!filteredShippingMethods.length) return;
+    const stillValid = filteredShippingMethods.some((m) => m.id === selectedShipping);
+    if (!stillValid) setSelectedShipping(filteredShippingMethods[0].id);
+  }, [filteredShippingMethods]);
+
   useEffect(() => {
     if (isLoggedIn && customer) {
       setAddress((p) => ({ ...p, email: customer.email || '', firstName: customer.firstName || '', lastName: customer.lastName || '' }));
@@ -776,16 +808,38 @@ export default function CheckoutPage() {
                 </div>
               ) : (
                 <>
-                  {shippingMethods.length > 0 && (
+                  {filteredShippingMethods.length > 0 && (
                     <div style={{ paddingBottom: 40 }}>
                       <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 14, marginTop: 0, color: 'var(--color-dark)' }}>
                         Spedizione
                       </h2>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        {shippingMethods.map((m) => (
-                          <MethodCard key={m.id} method={m} selected={selectedShipping === m.id} onSelect={setSelectedShipping} name="shipping" isMobile={isMobile} />
-                        ))}
-                      </div>
+                      {filteredShippingMethods.length === 1 ? (
+                        // Un solo metodo → mostra info, nessuna scelta da fare
+                        <div style={{
+                          padding: '14px 0',
+                          borderBottom: '1.5px solid var(--color-dark)',
+                          display: 'flex', alignItems: 'center', gap: 12,
+                        }}>
+                          <span style={{ fontSize: 18, color: 'var(--color-dark)' }}>✓</span>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-dark)' }}>
+                              {filteredShippingMethods[0].translated?.name || filteredShippingMethods[0].name}
+                            </div>
+                            {filteredShippingMethods[0].translated?.description && (
+                              <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 2 }}>
+                                {filteredShippingMethods[0].translated.description}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        // Più metodi → mostra selezione radio
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {filteredShippingMethods.map((m) => (
+                            <MethodCard key={m.id} method={m} selected={selectedShipping === m.id} onSelect={setSelectedShipping} name="shipping" isMobile={isMobile} />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                   {/* ── Pagamento ──────────────────────────── */}
