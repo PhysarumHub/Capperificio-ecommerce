@@ -7,11 +7,20 @@ import express from 'express';
 import cors from 'cors';
 import Stripe from 'stripe';
 
+// ── Validazione env vars obbligatorie ────────────────────────────────────────
+const REQUIRED_ENV = ['STRIPE_SECRET_KEY'];
+for (const key of REQUIRED_ENV) {
+  if (!process.env[key]) {
+    console.error(`❌  Variabile d'ambiente mancante: ${key}`);
+    process.exit(1);
+  }
+}
+
 const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
 app.use(express.json());
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 app.post('/api/stripe/create-payment-intent', async (req, res) => {
   try {
@@ -32,4 +41,4 @@ app.post('/api/stripe/create-payment-intent', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Backend pagamenti attivo su http://localhost:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`Backend pagamenti attivo su http://0.0.0.0:${PORT}`));
