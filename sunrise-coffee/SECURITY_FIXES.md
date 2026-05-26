@@ -160,6 +160,72 @@ Queste cose **non possono essere risolte con codice** — richiedono accesso ai 
 
 ---
 
+---
+
+### Fix 6 — `.env.example` incompleto
+
+**Problema:** Il file `.env.example` mancava di variabili critiche per il deploy
+in produzione:
+- `FRONTEND_URL` — usata da `server.js` per configurare CORS (senza di essa,
+  le chiamate dal frontend vengono bloccate come cross-origin)
+- `PORT` — porta del server Express locale
+- `NODE_ENV=production` — abilita ottimizzazioni React e disabilita devtools
+
+Inoltre la distinzione tra variabili **lato client** (`VITE_*`) e **lato server**
+(senza prefisso `VITE_`) non era documentata — rischio di esporre `STRIPE_SECRET_KEY`
+nel bundle JS se rinominata per errore.
+
+**Fix applicato:** `.env.example` riscritto con:
+- Tutte le variabili necessarie per Shopware, Stripe, PayPal, Strapi, B2B
+- Commenti esplicativi su dove trovare ogni valore
+- Sezione separata per variabili server-only (non Vercel)
+- Warning esplicito su `STRIPE_SECRET_KEY` — mai prefissare con `VITE_`
+
+---
+
+### Fix 7 — Stripe e PayPal: integrazione production-ready verificata
+
+**Analisi del codice:**
+
+**Stripe** (`CheckoutPage.jsx` + `StripePaymentForm.jsx` + `api/stripe/create-payment-intent.js`):
+- ✅ Flusso corretto: PaymentIntent creato lato server → confermato lato client
+- ✅ `redirect: 'if_required'` gestisce 3D Secure senza redirect forzato
+- ✅ `automatic_payment_methods: { enabled: true }` — Stripe mostra i metodi disponibili nel paese
+- ✅ `STRIPE_SECRET_KEY` letta solo dal server (serverless function), mai esposta al browser
+- ✅ Il `clientSecret` viene creato fresh ogni volta che il customer arriva allo step pagamento
+
+**PayPal** (`CheckoutPage.jsx`):
+- ✅ `PayPalScriptProvider` + `PayPalButtons` — SDK ufficiale React
+- ✅ `currency: 'EUR'`, `locale: 'it_IT'` corretti per mercato italiano
+- ✅ Flusso: `createOrder` client-side → `onApprove` cattura → poi piazza ordine su Shopware
+- ✅ PayPal auto-rileva live vs sandbox dal `clientId` — zero config extra
+- ⚠️ PayPal non ha un webhook configurato lato server (non critico per questo setup)
+
+**Cosa NON va fatto** (errori comuni evitati):
+```jsx
+// ❌ SBAGLIATO — espone la chiave segreta al browser
+const stripe = new Stripe(import.meta.env.VITE_STRIPE_SECRET_KEY);
+
+// ✅ CORRETTO — chiave segreta solo nella serverless function
+// api/stripe/create-payment-intent.js → process.env.STRIPE_SECRET_KEY
+```
+
+---
+
+## ⚠️ Azioni manuali ancora da fare
+
+| # | Cosa fare | Dove | Priorità |
+|---|---|---|---|
+| 1 | **Cambia password admin Shopware** da `shopware` | Shopware Admin → My Profile | 🔴 URGENTE |
+| 2 | **Rigenera Access Key Shopware** (quella vecchia è su GitHub) | Sales Channels → Headless → API Access → 🔄 | 🔴 URGENTE |
+| 3 | **Crea `scripts/.env`** con le nuove credenziali | Copia da `scripts/.env.example` | 🔴 Prima di usare gli script |
+| 4 | **Crea `.env.local`** con le nuove credenziali | Copia da `.env.example` | 🟡 Prima di sviluppare in locale |
+| 5 | **Imposta le env vars su Vercel** | Vercel → Settings → Environment Variables | 🟡 Prima del deploy |
+| 6 | **Ruota chiavi Stripe** se mai usate con dati reali | dashboard.stripe.com → API Keys → Roll | 🟡 Consigliato |
+| 7 | Configura firewall sulla porta 8090 di Shopware | Hetzner/server provider → Firewall | 🟢 Best practice |
+
+---
+
 ## 📁 File modificati in questi fix
 
 | File | Modifica |
@@ -168,9 +234,10 @@ Queste cose **non possono essere risolte con codice** — richiedono accesso ai 
 | `scripts/audit2-shopware.py` | Credenziali → env vars |
 | `scripts/fix-shopware-production.py` | Credenziali → env vars |
 | `scripts/update-prices-soldout.py` | Credenziali → env vars |
-| `scripts/.env.example` | Nuovo — template credenziali |
+| `scripts/.env.example` | Nuovo — template credenziali script |
 | `.gitignore` | Aggiunto `scripts/.env`, `*chiave*`, `*secret*`, `*.key` |
 | `server.js` | `0.0.0.0` bind + validazione env vars obbligatorie |
+| `.env.example` | Riscritto completo: tutte le var, commenti, avvisi sicurezza |
 
 ---
 
