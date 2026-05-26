@@ -4,16 +4,44 @@
 
 import sys
 import io
+import os
+import pathlib
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 import requests
 
-BASE = "http://SHOPWARE_HOST_REDACTED:8090"
+# ── Carica variabili d'ambiente da scripts/.env (se esiste) ──────────────────
+def _load_env():
+    env_path = pathlib.Path(__file__).parent / '.env'
+    if env_path.exists():
+        for line in env_path.read_text(encoding='utf-8').splitlines():
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                k, _, v = line.partition('=')
+                os.environ.setdefault(k.strip(), v.strip().strip('"\''))
 
+_load_env()
+
+SHOPWARE_URL = os.environ.get('SHOPWARE_URL', '').rstrip('/')
+ADMIN_USER   = os.environ.get('SHOPWARE_ADMIN_USER', 'admin')
+ADMIN_PASS   = os.environ.get('SHOPWARE_ADMIN_PASS', '')
+ACCESS_KEY   = os.environ.get('VITE_SHOPWARE_ACCESS_KEY', '')
+
+if not SHOPWARE_URL:
+    sys.exit("❌  SHOPWARE_URL non impostata. Crea scripts/.env (vedi scripts/.env.example)")
+if not ADMIN_PASS:
+    sys.exit("❌  SHOPWARE_ADMIN_PASS non impostata. Crea scripts/.env (vedi scripts/.env.example)")
+if not ACCESS_KEY:
+    sys.exit("❌  VITE_SHOPWARE_ACCESS_KEY non impostata. Crea scripts/.env (vedi scripts/.env.example)")
+
+BASE = SHOPWARE_URL
+
+# ── Auth ─────────────────────────────────────────────────────────────────────
 r = requests.post(f"{BASE}/api/oauth/token", json={
     "grant_type": "password", "client_id": "administration",
-    "username": "admin", "password": "SHOPWARE_ADMIN_PASS", "scope": "write"
+    "username": ADMIN_USER, "password": ADMIN_PASS, "scope": "write"
 })
+r.raise_for_status()
 token = r.json()["access_token"]
 h = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
@@ -88,7 +116,6 @@ for cid, cname in channel_ids.items():
     rel = data2.get("relationships", {}).get("countries", {}).get("data", [])
     print(f"  '{cname}': {len(rel)} paesi")
 
-# Mostra anche tutti i paesi presenti in Shopware
 all_countries = search("country")
 active_countries = [c for c in all_countries if c.get("attributes", {}).get("active")]
 print(f"  Totale paesi in Shopware: {len(all_countries)} | attivi: {len(active_countries)}")
@@ -168,23 +195,18 @@ print("\n" + "=" * 60)
 print("12. TEMPLATE EMAIL")
 print(SEP)
 mails = search("mail-template")
-order_mail = [m for m in mails if "order" in str(m.get("attributes", {}).get("mailTemplateTypeId", "")).lower()]
 print(f"  Totale template email: {len(mails)}")
 
 # 13. STORE API - Payment & Shipping (come li vede il checkout)
 print("\n" + "=" * 60)
 print("13. STORE API - Metodi visibili al checkout")
 print(SEP)
-access_key = "VITE_SHOPWARE_ACCESS_KEY_REDACTED"
-sh = {"sw-access-key": access_key, "Content-Type": "application/json"}
-r_pay = requests.post(f"{BASE}/store-api/payment-method", headers=sh, json={"onlyAvailable": True})
+sh = {"sw-access-key": ACCESS_KEY, "Content-Type": "application/json"}
+r_pay  = requests.post(f"{BASE}/store-api/payment-method",  headers=sh, json={"onlyAvailable": True})
 r_ship = requests.post(f"{BASE}/store-api/shipping-method", headers=sh, json={"onlyAvailable": True})
 
-pay_data = r_pay.json()
-ship_data = r_ship.json()
-
-pay_list = pay_data.get("elements", [])
-ship_list = ship_data.get("elements", [])
+pay_list  = r_pay.json().get("elements", [])
+ship_list = r_ship.json().get("elements", [])
 
 print(f"  Metodi pagamento disponibili: {len(pay_list)}")
 for p in pay_list:

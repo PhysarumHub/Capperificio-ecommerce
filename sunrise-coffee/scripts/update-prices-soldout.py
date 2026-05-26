@@ -15,13 +15,31 @@ Uso:
   python scripts/update-prices-soldout.py --base http://localhost:8090 --pass shopware
 """
 
-import urllib.request, urllib.error, json, sys
+import urllib.request, urllib.error, json, sys, os, pathlib
 
+# ── Carica variabili d'ambiente da scripts/.env (se esiste) ──────────────────
+def _load_env():
+    env_path = pathlib.Path(__file__).parent / '.env'
+    if env_path.exists():
+        for line in env_path.read_text(encoding='utf-8').splitlines():
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                k, _, v = line.partition('=')
+                os.environ.setdefault(k.strip(), v.strip().strip('"\''))
+
+_load_env()
+
+# CLI args hanno la precedenza sulle env vars (utile per override rapido)
 _args      = dict(zip(sys.argv[1::2], sys.argv[2::2]))
-_base_raw  = _args.get('--base', 'http://SHOPWARE_HOST_REDACTED:8090').rstrip('/')
-BASE       = _base_raw + '/api' if not _base_raw.endswith('/api') else _base_raw
-ADMIN_USER = _args.get('--user', 'admin')
-ADMIN_PASS = _args.get('--pass', 'shopware')
+_base_raw  = _args.get('--base', os.environ.get('SHOPWARE_URL', '')).rstrip('/')
+BASE       = _base_raw + '/api' if _base_raw and not _base_raw.endswith('/api') else _base_raw
+ADMIN_USER = _args.get('--user', os.environ.get('SHOPWARE_ADMIN_USER', 'admin'))
+ADMIN_PASS = _args.get('--pass', os.environ.get('SHOPWARE_ADMIN_PASS', ''))
+
+if not BASE:
+    sys.exit("❌  SHOPWARE_URL non impostata. Crea scripts/.env (vedi scripts/.env.example)")
+if not ADMIN_PASS:
+    sys.exit("❌  SHOPWARE_ADMIN_PASS non impostata. Crea scripts/.env (vedi scripts/.env.example)")
 
 EUR_CURRENCY_ID = 'b7d2554b0ce847cd82f3ac9bd1c0dfca'
 TAX_RATE        = 0.22  # IVA 22%

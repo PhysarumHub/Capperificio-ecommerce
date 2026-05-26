@@ -13,17 +13,38 @@ Fix completo Shopware per produzione:
   9. Aggiorna stock dei prodotti a 0
 """
 
-import sys, io
+import sys, io, os, pathlib
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 import requests, json, uuid
 
-BASE     = "http://SHOPWARE_HOST_REDACTED:8090"
-ACCESS_KEY = "VITE_SHOPWARE_ACCESS_KEY_REDACTED"
+# ── Carica variabili d'ambiente da scripts/.env (se esiste) ──────────────────
+def _load_env():
+    env_path = pathlib.Path(__file__).parent / '.env'
+    if env_path.exists():
+        for line in env_path.read_text(encoding='utf-8').splitlines():
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                k, _, v = line.partition('=')
+                os.environ.setdefault(k.strip(), v.strip().strip('"\''))
+
+_load_env()
+
+BASE       = os.environ.get('SHOPWARE_URL', '').rstrip('/')
+ADMIN_USER = os.environ.get('SHOPWARE_ADMIN_USER', 'admin')
+ADMIN_PASS = os.environ.get('SHOPWARE_ADMIN_PASS', '')
+ACCESS_KEY = os.environ.get('VITE_SHOPWARE_ACCESS_KEY', '')
+
+if not BASE:
+    sys.exit("❌  SHOPWARE_URL non impostata. Crea scripts/.env (vedi scripts/.env.example)")
+if not ADMIN_PASS:
+    sys.exit("❌  SHOPWARE_ADMIN_PASS non impostata. Crea scripts/.env (vedi scripts/.env.example)")
+if not ACCESS_KEY:
+    sys.exit("❌  VITE_SHOPWARE_ACCESS_KEY non impostata. Crea scripts/.env (vedi scripts/.env.example)")
 
 # ── Auth ────────────────────────────────────────────────────────────────
 r = requests.post(f"{BASE}/api/oauth/token", json={
     "grant_type": "password", "client_id": "administration",
-    "username": "admin", "password": "SHOPWARE_ADMIN_PASS", "scope": "write"
+    "username": ADMIN_USER, "password": ADMIN_PASS, "scope": "write"
 })
 r.raise_for_status()
 token = r.json()["access_token"]

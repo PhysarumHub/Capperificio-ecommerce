@@ -3,3 +3,14 @@ dist
 .env
 .env.local
 backups/*.tar.gz
+
+# Credenziali script Python — NON committare mai questo file
+scripts/.env
+
+# File con chiavi/token (nomi comuni da escludere sempre)
+*chiave*
+*CHIAVE*
+*secret*
+*SECRET*
+*.key
+*.pem
