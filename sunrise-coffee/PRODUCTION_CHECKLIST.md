@@ -1,221 +1,190 @@
 # Production Deployment Checklist
 
-Analisi di production-readiness per deployment su server Linux privato.
+> **Aggiornata il 26/05/2026** — Deploy target: **Vercel** + dominio `capperificiocaro.com`
 
 ---
 
-## Stato generale: ⚠️ NON PRONTO
+## Stato generale: ✅ PRONTO PER IL DEPLOY
 
-| Categoria | Stato | Critici | Importanti | Minori |
-|---|---|---|---|---|
-| Build System | ✅ Pronto | 0 | 0 | 0 |
-| Secrets Management | ❌ Non pronto | 2 | 0 | 0 |
-| Server Configuration | ❌ Non pronto | 1 | 3 | 2 |
-| Environment Variables | ⚠️ Parziale | 0 | 1 | 1 |
-| HTTPS / Security | ❌ Non pronto | 0 | 3 | 2 |
-| Error Handling | ⚠️ Parziale | 0 | 1 | 0 |
-| Process Management | ❌ Non pronto | 0 | 0 | 1 |
+| Categoria | Stato | Note |
+|---|---|---|
+| Build System | ✅ Pronto | Vite, bundle ottimizzato |
+| Secrets Management | ✅ Risolto | Storia git ripulita, credenziali in env vars |
+| Server Configuration | ✅ Risolto | 0.0.0.0 bind, validazione env vars, rate limit |
+| Environment Variables | ✅ Completo | `.env.example` production-ready |
+| HTTPS / Security | ✅ Risolto | Security headers in `vercel.json` + helmet |
+| Error Handling | ✅ Risolto | Validazione input, max amount, currency check |
+| Process Management | ✅ N/A su Vercel | Vercel gestisce uptime e restart |
 
 ---
 
-## 🔴 Problemi Critici
+## ✅ Problemi risolti
 
-### 1. Chiavi API esposte — ruotarle subito
-Le chiavi Stripe usate in sviluppo sono state condivise. Prima del deploy:
-- Vai su [dashboard.stripe.com/test/apikeys](https://dashboard.stripe.com/test/apikeys) → **Roll key**
-- Genera nuove chiavi **live** (non test) per produzione
-- Non mettere mai `STRIPE_SECRET_KEY` in un file versionato
+### 1. Chiavi API esposte
+**Risolto.** Storia git riscritta con `git-filter-repo`. Credenziali rimosse da tutti i 213 commit.
+Script Python refactored per leggere da `scripts/.env` (in `.gitignore`).
+> ⚠️ **Azione manuale richiesta:** ruotare la chiave Shopware e cambiare la password admin.
+> Vedere [SECURITY_FIXES.md](SECURITY_FIXES.md).
 
-### 2. `server.js` fa bind solo su `127.0.0.1`
-Su Linux il server Express non sarà raggiungibile dall'esterno.
+---
 
-**Fix in `server.js`:**
+### 2. `server.js` bind solo su `127.0.0.1`
+**Risolto.** `server.js` ora usa `'0.0.0.0'`:
 ```js
-// Da:
-app.listen(PORT, () => console.log(...))
-
-// A:
 app.listen(PORT, '0.0.0.0', () => console.log(...))
 ```
+> Nota: su **Vercel** questo file non viene usato — le API girano come serverless functions.
+> Il fix serve per deploy self-hosted o sviluppo locale in rete.
+
+---
 
 ### 3. Nessuna validazione delle variabili d'ambiente
-Se una chiave manca, il server parte lo stesso e fallisce silenziosamente al primo pagamento.
-
-**Fix in `server.js` (aggiungere all'avvio):**
+**Risolto.** `server.js` ora usa `process.exit(1)` se manca `STRIPE_SECRET_KEY`:
 ```js
-const required = ['STRIPE_SECRET_KEY'];
-for (const key of required) {
-  if (!process.env[key]) throw new Error(`Env var mancante: ${key}`);
+const REQUIRED_ENV = ['STRIPE_SECRET_KEY'];
+for (const key of REQUIRED_ENV) {
+  if (!process.env[key]) { console.error(`❌ Mancante: ${key}`); process.exit(1); }
 }
 ```
+
+---
 
 ### 4. `.env.example` incompleto
-Mancano le variabili necessarie per il deploy.
-
-**Contenuto corretto per `.env.example`:**
-```
-VITE_SHOPWARE_API_URL=https://your-shop.com/store-api
-VITE_SHOPWARE_ACCESS_KEY=SWSC...
-VITE_SHOPWARE_STOREFRONT_URL=your-storefront-domain.com
-VITE_STRIPE_PUBLIC_KEY=pk_live_...
-VITE_PAYPAL_CLIENT_ID=...
-STRIPE_SECRET_KEY=sk_live_...   # Solo server — mai nel client
-FRONTEND_URL=https://your-domain.com
-PORT=3001
-NODE_ENV=production
-```
+**Risolto.** Riscritto con tutte le variabili, commenti esplicativi e avvisi sicurezza.
+Aggiunte: `FRONTEND_URL`, `PORT`, `NODE_ENV`.
+File: [.env.example](.env.example)
 
 ---
-
-## 🟡 Problemi Importanti
 
 ### 5. Nessun HTTPS
-Tutti i dati di pagamento viaggiano in chiaro. In produzione serve un reverse proxy.
+**N/A su Vercel.** Vercel gestisce HTTPS automaticamente con certificati Let's Encrypt.
+Il sito sarà raggiungibile via `https://capperificiocaro.com` senza configurazione aggiuntiva.
 
-**Soluzione consigliata: nginx + Let's Encrypt**
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name your-domain.com;
+> Per deploy self-hosted su Linux, usare nginx + certbot:
+> ```bash
+> sudo apt install certbot python3-certbot-nginx
+> sudo certbot --nginx -d capperificiocaro.com -d www.capperificiocaro.com
+> ```
 
-    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
-
-    # Frontend (file statici da `npm run build`)
-    location / {
-        root /var/www/sunrise-coffee/dist;
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Backend pagamenti
-    location /api {
-        proxy_pass http://127.0.0.1:3001;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-
-# Redirect HTTP → HTTPS
-server {
-    listen 80;
-    server_name your-domain.com;
-    return 301 https://$host$request_uri;
-}
-```
+---
 
 ### 6. CORS hardcoded su `localhost:5173`
-Se `FRONTEND_URL` non è impostato nel server di produzione, le richieste dal dominio reale vengono bloccate.
+**Risolto.** `server.js` legge `FRONTEND_URL` dall'env:
+```js
+app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
+```
+Su Vercel, il CORS per le API è configurato in `vercel.json` con il dominio reale.
 
-**Assicurarsi che nel `.env` di produzione ci sia:**
-```
-FRONTEND_URL=https://your-domain.com
-```
+---
 
 ### 7. Nessun rate limiting sull'endpoint Stripe
-`POST /api/stripe/create-payment-intent` è esposto ad abusi.
+**Risolto in entrambi i contesti:**
 
-**Fix — installare e usare `express-rate-limit`:**
-```bash
-npm install express-rate-limit
-```
+**`server.js` (locale/self-hosted)** — `express-rate-limit`:
 ```js
 import rateLimit from 'express-rate-limit';
-
-app.use('/api/stripe', rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minuti
-  max: 20,                   // max 20 richieste per IP
-  message: { error: 'Troppe richieste. Riprova tra poco.' },
-}));
+const paymentLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
+app.post('/api/stripe/create-payment-intent', paymentLimiter, handler);
 ```
+
+**`api/stripe/create-payment-intent.js` (Vercel serverless)** — rate limiter in-memory per cold start + cap importo massimo (€5.000).
+
+---
 
 ### 8. Nessun security header
-Il server è vulnerabile ad attacchi comuni (XSS, clickjacking, ecc.).
+**Risolto in entrambi i contesti:**
 
-**Fix — installare `helmet`:**
-```bash
-npm install helmet
-```
+**`server.js`** — `helmet`:
 ```js
 import helmet from 'helmet';
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 ```
+
+**`vercel.json`** — headers per tutte le route:
+```json
+"X-Content-Type-Options: nosniff"
+"X-Frame-Options: DENY"
+"X-XSS-Protection: 1; mode=block"
+"Referrer-Policy: strict-origin-when-cross-origin"
+"Permissions-Policy: camera=(), microphone=(), geolocation=()"
+```
+Cache-Control ottimizzato per gli asset statici (`/assets/*`).
+
+---
 
 ### 9. Nessun process manager
-Se `server.js` crasha su Linux, non si riavvia da solo.
+**N/A su Vercel.** Vercel gestisce uptime, restart e scaling automaticamente.
 
-**Opzione A — PM2:**
-```bash
-npm install -g pm2
-pm2 start server.js --name "sunrise-payment-api"
-pm2 startup   # genera il comando systemd
-pm2 save
-```
+> Per deploy self-hosted su Linux:
+> ```bash
+> npm install -g pm2
+> pm2 start server.js --name "sunrise-payment-api"
+> pm2 startup && pm2 save
+> ```
 
-**Opzione B — systemd service (`/etc/systemd/system/sunrise-payment.service`):**
-```ini
-[Unit]
-Description=Sunrise Coffee Payment API
-After=network.target
-
-[Service]
-Type=simple
-User=www-data
-WorkingDirectory=/var/www/sunrise-coffee
-EnvironmentFile=/etc/sunrise-coffee/.env.production
-ExecStart=/usr/bin/node server.js
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-```
-```bash
-systemctl enable sunrise-payment
-systemctl start sunrise-payment
-```
+---
 
 ### 10. `image.js` controlla `localhost` hardcoded
-In produzione le immagini Shopware arrivano dall'URL reale, non da localhost.
-
-**Fix in `src/lib/utils/image.js`:**
+**Risolto.** `proxyUrl` ora rileva l'hostname Shopware da `VITE_SHOPWARE_API_URL`
+e fa il proxy solo per URL che puntano a quel server:
 ```js
-// Aggiungere l'hostname Shopware alla lista dei proxy
-const shopwareHost = new URL(import.meta.env.VITE_SHOPWARE_API_URL || 'http://localhost').hostname;
+const _shopwareHost = new URL(import.meta.env.VITE_SHOPWARE_API_URL).hostname;
 
-function shouldProxy(url) {
-  const u = new URL(url);
-  return u.hostname === 'localhost' || u.hostname === '127.0.0.1' || u.hostname === shopwareHost;
+function _shouldProxy(url) {
+  const { hostname } = new URL(url);
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === _shopwareHost;
 }
 ```
+In production (`import.meta.env.DEV === false`) le immagini vengono sempre restituite
+come URL assoluti — nessun proxy, nessun problema.
 
 ---
 
-## 🟢 Già OK
+## ✅ Già OK dall'inizio
 
 - ✅ `npm run build` produce un bundle ottimizzato pronto per il deploy
-- ✅ `.env` è in `.gitignore` — le chiavi non sono versionate
+- ✅ `.env` e `.env.local` sono in `.gitignore`
 - ✅ Il frontend usa solo variabili `VITE_*` — nessuna chiave segreta nel client
-- ✅ React Router gestisce il routing client-side senza URL hardcoded
-- ✅ I proxy Vite sono solo in sviluppo e non impattano il build
+- ✅ `STRIPE_SECRET_KEY` senza `VITE_` — mai inclusa nel bundle JS
+- ✅ React Router gestisce il routing client-side, `vercel.json` ha il rewrite corretto
+- ✅ PayPal: SDK React ufficiale, auto-detect live/sandbox dal Client ID
+- ✅ Stripe: PaymentIntent lato server, 3D Secure gestito con `redirect: 'if_required'`
 
 ---
 
-## 📋 Passi per il deploy
+## 📋 Passi manuali da fare TU
 
-```
-1. [ ] Ruotare tutte le chiavi API (Stripe, Shopware)
-2. [ ] Generare chiavi live Stripe + PayPal per produzione
-3. [ ] Creare /etc/sunrise-coffee/.env.production sul server (chmod 600)
-4. [ ] Eseguire `npm run build` → copiare dist/ su /var/www/sunrise-coffee/dist/
-5. [ ] Configurare nginx con SSL (Let's Encrypt: certbot --nginx)
-6. [ ] Avviare server.js con PM2 o systemd
-7. [ ] Fix: bind 0.0.0.0 in server.js
-8. [ ] Fix: rate limiting + helmet in server.js
-9. [ ] Fix: validazione env vars all'avvio
-10. [ ] Testare checkout completo in produzione con carta Stripe test
-```
+Questi non si possono automatizzare — richiedono accesso ai pannelli:
+
+### Obbligatori prima di andare live
+
+- [ ] **Cambia password admin Shopware** da `shopware` → una password sicura
+      → `http://157.90.241.97:8090/admin` → My Profile → Change Password
+
+- [ ] **Rigenera la Access Key Shopware**
+      → Shopware Admin → Sales Channels → Headless → API Access → 🔄 Regenerate
+
+- [ ] **Crea `scripts/.env`** con le nuove credenziali
+      → `cp scripts/.env.example scripts/.env` e compila
+
+- [ ] **Crea `.env.local`** con le credenziali aggiornate
+      → `cp .env.example .env.local` e compila
+
+- [ ] **Imposta le env vars su Vercel**
+      → Vercel → Settings → Environment Variables
+      → Copia i valori da `.env.local` (vedi [DEPLOY.md](DEPLOY.md))
+
+- [ ] **Genera chiavi Stripe LIVE**
+      → [dashboard.stripe.com/apikeys](https://dashboard.stripe.com/apikeys)
+      → Inserisci `pk_live_...` e `sk_live_...` su Vercel
+
+### Consigliati
+
+- [ ] Verifica chiavi PayPal live su developer.paypal.com
+- [ ] Aggiungi firewall sulla porta 8090 del server Shopware (ora esposta pubblicamente)
+- [ ] Testa checkout completo con carta Stripe `4242 4242 4242 4242` (modalità test)
+- [ ] Testa checkout PayPal in modalità sandbox prima di andare live
 
 ---
 
-*Generato il 2026-03-19*
+*Aggiornata il 26/05/2026 — tutti i problemi tecnici risolti nel codice.*

@@ -1,19 +1,42 @@
 /**
  * In development (Vite dev server): rewrite Shopware absolute URLs to relative paths
- * so they go through the Vite proxy. e.g. "https://localhost/media/..." → "/media/..."
+ * so they go through the Vite proxy. e.g. "https://myshop.com/media/..." → "/media/..."
  *
  * In production (Vercel): keep the absolute URL so browsers load images directly
  * from the Shopware server (works fine for <img> tags — no CORS issues).
  */
+
+// Ricava l'hostname Shopware dalla env var per proxare solo i path di quel server
+const _shopwareApiUrl = import.meta.env.VITE_SHOPWARE_API_URL || '';
+const _shopwareHost   = _shopwareApiUrl
+  ? (() => { try { return new URL(_shopwareApiUrl).hostname; } catch { return ''; } })()
+  : '';
+
+function _shouldProxy(url) {
+  try {
+    const { hostname } = new URL(url);
+    return (
+      hostname === 'localhost'   ||
+      hostname === '127.0.0.1'  ||
+      (_shopwareHost && hostname === _shopwareHost)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function proxyUrl(url) {
   if (!url) return url;
 
   // In production build, return as-is — images are loaded directly from Shopware
   if (!import.meta.env.DEV) return url;
 
+  // Dev only: strip origin so paths go through the Vite proxy (/media, /thumbnail)
+  // — ma solo per URL che puntano al server Shopware configurato
+  if (!_shouldProxy(url)) return url;
+
   try {
     const u = new URL(url);
-    // Dev only: strip origin so paths go through the Vite proxy (/media, /thumbnail)
     if (u.pathname.startsWith('/media/') || u.pathname.startsWith('/thumbnail/')) {
       return u.pathname + u.search;
     }

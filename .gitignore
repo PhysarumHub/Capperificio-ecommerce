@@ -1,0 +1,10 @@
+# File con chiavi e segreti nella root del repo
+*chiave*
+*CHIAVE*
+*secret*
+*SECRET*
+*.key
+*.pem
+
+# File temporanei strumenti
+git-filter-replacements.txt
