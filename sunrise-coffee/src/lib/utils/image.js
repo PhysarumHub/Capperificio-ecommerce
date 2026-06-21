@@ -1,9 +1,17 @@
 /**
- * In development (Vite dev server): rewrite Shopware absolute URLs to relative paths
- * so they go through the Vite proxy. e.g. "https://myshop.com/media/..." → "/media/..."
+ * Riscrive gli URL assoluti di Shopware in path relativi (/media, /thumbnail)
+ * così vengono serviti dal reverse-proxy davanti al frontend:
+ *   - in sviluppo  → proxy di Vite  (vite.config.js)
+ *   - in produzione → nginx         (nginx.conf: location /media, /thumbnail)
  *
- * In production (Vercel): keep the absolute URL so browsers load images directly
- * from the Shopware server (works fine for <img> tags — no CORS issues).
+ * È necessario perché Shopware genera gli URL media in base al suo SHOP_DOMAIN
+ * (es. localhost:8090 nello stack Docker), che NON è raggiungibile dal browser
+ * del visitatore. Riscrivendoli relativi, le immagini passano per lo stesso
+ * dominio del sito e nginx le inoltra al container Shopware.
+ *
+ * Nota: richiede un reverse-proxy che inoltri /media e /thumbnail a Shopware.
+ * Su un hosting statico senza questo proxy (es. Vercel) va invece configurato
+ * Shopware con il dominio pubblico e gli URL vanno lasciati assoluti.
  */
 
 // Ricava l'hostname Shopware dalla env var per proxare solo i path di quel server
@@ -28,11 +36,8 @@ function _shouldProxy(url) {
 export function proxyUrl(url) {
   if (!url) return url;
 
-  // In production build, return as-is — images are loaded directly from Shopware
-  if (!import.meta.env.DEV) return url;
-
-  // Dev only: strip origin so paths go through the Vite proxy (/media, /thumbnail)
-  // — ma solo per URL che puntano al server Shopware configurato
+  // Strip origin so the paths go through the reverse-proxy (/media, /thumbnail)
+  // — solo per URL che puntano al server Shopware configurato (o a localhost)
   if (!_shouldProxy(url)) return url;
 
   try {
