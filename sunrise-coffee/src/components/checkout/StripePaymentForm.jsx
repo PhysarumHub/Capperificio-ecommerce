@@ -23,7 +23,7 @@ export default function StripePaymentForm({ onSuccess, totalPrice, isMobile }) {
     }
 
     // Confirm payment — Stripe verifica la carta
-    const { error: confirmError } = await stripe.confirmPayment({
+    const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: `${window.location.origin}/checkout`,
@@ -37,8 +37,12 @@ export default function StripePaymentForm({ onSuccess, totalPrice, isMobile }) {
       return;
     }
 
-    // Pagamento confermato → completa l'ordine su Shopware
-    await onSuccess();
+    // Pagamento confermato → il server verifica il PaymentIntent e crea l'ordine
+    try {
+      await onSuccess(paymentIntent?.id);
+    } catch (err) {
+      setError(err?.message || 'Errore durante il completamento dell’ordine.');
+    }
     setLoading(false);
   };
 

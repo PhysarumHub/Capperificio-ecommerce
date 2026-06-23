@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 
-const STRAPI_URL   = import.meta.env.VITE_STRAPI_URL;
-const STRAPI_TOKEN = import.meta.env.VITE_STRAPI_TOKEN;
+// URL pubblico (solo per costruire i src delle immagini). Il token NON è qui:
+// le chiamate API passano dal proxy server /api/strapi che lo tiene segreto.
+const STRAPI_URL = import.meta.env.VITE_STRAPI_URL;
 
 export function useBlogPosts({ limit = 3, page = 1 } = {}) {
   const [posts, setPosts]     = useState([]);
@@ -14,11 +15,9 @@ export function useBlogPosts({ limit = 3, page = 1 } = {}) {
       return;
     }
 
-    const url = `${STRAPI_URL}/api/articles?populate=cover&pagination[pageSize]=${limit}&pagination[page]=${page}&sort=publishedAt:desc`;
+    const url = `/api/strapi/articles?populate=cover&pagination[pageSize]=${limit}&pagination[page]=${page}&sort=publishedAt:desc`;
 
-    fetch(url, {
-      headers: STRAPI_TOKEN ? { Authorization: `Bearer ${STRAPI_TOKEN}` } : {},
-    })
+    fetch(url)
       .then(r => {
         if (!r.ok) throw new Error(`Strapi ${r.status}`);
         return r.json();

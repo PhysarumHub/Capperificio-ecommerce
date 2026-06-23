@@ -1,10 +1,22 @@
 # File con chiavi e segreti nella root del repo
+# (gitignore è case-sensitive: elenco le varianti di maiuscole/minuscole)
 *chiave*
 *CHIAVE*
+*Chiave*
+cHIAVE*
 *secret*
 *SECRET*
+*Secret*
+*token*
+*TOKEN*
 *.key
 *.pem
+.env
+.env.*
+!.env.example
+
+# File temporanei strumenti
+git-filter-replacements.txt
 
 # File temporanei strumenti
 git-filter-replacements.txt

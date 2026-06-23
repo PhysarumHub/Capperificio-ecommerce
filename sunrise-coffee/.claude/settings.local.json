@@ -38,7 +38,11 @@
       "Bash(Start-Process \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe\")",
       "Bash(find 'c:\\\\Users\\\\Riccardo\\\\OneDrive\\\\Desktop\\\\Capperificio ecommerce\\\\sunrise-coffee\\\\src' -type f \\\\\\(-name *cart* -o -name *Cart* \\\\\\))",
       "Read(//c/Users/Riccardo/sunrise-coffee/sunrise-coffee/**)",
-      "Read(//root/sunrise-coffee/sunrise-coffee/**)"
+      "Read(//root/sunrise-coffee/sunrise-coffee/**)",
+      "Bash(npx eslint *)",
+      "Bash(npx vite *)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('scripts/seed-capperificio.py',encoding='utf-8'\\).read\\(\\)\\); print\\('PY OK'\\)\")",
+      "Bash(python -c \"import json; d=json.load\\(open\\('src/data/capperificioCatalog.json',encoding='utf-8'\\)\\); print\\('JSON OK —', len\\(d\\), 'prodotti'\\)\")"
     ]
   }
 }

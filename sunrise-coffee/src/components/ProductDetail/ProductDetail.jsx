@@ -7,6 +7,7 @@ import { useProducts } from '../../hooks/useProducts';
 import { formatPrice } from '../../lib/utils/price';
 import { getProductImage, getProductSlug, proxyUrl } from '../../lib/utils/image';
 import { getProductVariants } from '../../lib/api/products';
+import { getCatalogEntry } from '../../data/capperificioCatalog';
 import useInView from '../../hooks/useInView';
 import styles from './ProductDetail.module.css';
 import anim from '../../styles/animations.module.css';
@@ -247,13 +248,17 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const hasApiProduct = Boolean(shopwareProduct);
   const isSoldOut = hasApiProduct && (shopwareProduct.availableStock ?? 1) <= 0;
 
+  // Scheda catalogo Capperificio: fallback locale quando Shopware non ha ancora
+  // description / properties / customFields popolati per questo prodotto.
+  const catalogEntry = useMemo(() => getCatalogEntry(shopwareProduct), [shopwareProduct]);
+
   const productName = hasApiProduct
     ? (shopwareProduct.translated?.name || shopwareProduct.name)
     : FALLBACK_PRODUCT.name;
 
-  const productDescription = hasApiProduct
-    ? (shopwareProduct.translated?.description || shopwareProduct.description || '')
-    : FALLBACK_PRODUCT.description;
+  const productDescription = (hasApiProduct
+    ? (shopwareProduct.translated?.description || shopwareProduct.description)
+    : null) || catalogEntry?.description || FALLBACK_PRODUCT.description;
 
   const productPrice = hasApiProduct
     ? (activeVariant?.calculatedPrice?.unitPrice
@@ -269,7 +274,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     ? (rawMediaImages.length ? rawMediaImages : [getProductImage(shopwareProduct)])
     : FALLBACK_PRODUCT.images;
 
-  const PROPERTY_ORDER = ['Tasting notes', 'Region', 'Type', 'Best for', 'Process'];
+  const PROPERTY_ORDER = ['Origine', 'Ingredienti', 'Calibro', 'Tipo', 'Formato', 'Peso netto', 'Note di gusto', 'Ideale per'];
   const properties = hasApiProduct ? (shopwareProduct.properties || []) : [];
   const groupedProperties = properties.reduce((acc, prop) => {
     const groupName = prop.group?.translated?.name || prop.group?.name || 'Other';
@@ -281,6 +286,13 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     ...PROPERTY_ORDER.filter((g) => groupedProperties[g]),
     ...Object.keys(groupedProperties).filter((g) => !PROPERTY_ORDER.includes(g)),
   ].map((g) => [g, groupedProperties[g]]);
+
+  // Scheda tecnica da mostrare nel primo screen:
+  // 1) Proprietà reali da Shopware  2) catalogo locale  3) (nessuna → fallback caffè)
+  // I valori array (es. "Note di gusto") vengono resi su più righe.
+  const techRows = sortedProperties.length > 0
+    ? sortedProperties
+    : (catalogEntry?.properties || []);
 
   const crossSellings = hasApiProduct
     ? (shopwareProduct.crossSellings || []).flatMap((cs) =>
@@ -316,11 +328,11 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const purchasePanel = (
     <>
       <h1 className={styles.pdpTitle}>{productName}</h1>
-      {shopwareProduct?.customFields?.capperificio_calibro && !hasConfigurator && (
-        <span className={styles.calibroTag}>
-          {shopwareProduct.customFields.capperificio_calibro}
-        </span>
-      )}
+      {(() => {
+        const calibro = shopwareProduct?.customFields?.capperificio_calibro || catalogEntry?.calibro;
+        if (!calibro || hasConfigurator) return null;
+        return <span className={styles.calibroTag}>{calibro}</span>;
+      })()}
       <div className={styles.pdpPrice}>
         {hasApiProduct ? formatPrice(unitPrice) : `$${unitPrice.toFixed(2)}`}
       </div>
@@ -406,7 +418,8 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
 
           {(() => {
             const cf = shopwareProduct?.customFields || {};
-            const bullets = [cf.capperificio_bullet_1, cf.capperificio_bullet_2, cf.capperificio_bullet_3].filter(Boolean);
+            const cfBullets = [cf.capperificio_bullet_1, cf.capperificio_bullet_2, cf.capperificio_bullet_3].filter(Boolean);
+            const bullets = cfBullets.length ? cfBullets : (catalogEntry?.bullets || []);
             if (!bullets.length) return null;
             return (
               <ul className={styles.bullets}>
@@ -417,29 +430,33 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
             );
           })()}
 
-          {hasApiProduct && sortedProperties.length > 0 ? (
+          {techRows.length > 0 ? (
             <table className={styles.infoTable}>
               <tbody>
-                {sortedProperties.map(([group, values]) => (
-                  <tr key={group}>
-                    <td>{group}</td>
-                    <td>
-                      {group === 'Tasting notes'
-                        ? values.map((v, i) => <span key={i}>{v}{i < values.length - 1 && <br />}</span>)
-                        : values.join(', ')}
-                    </td>
-                  </tr>
-                ))}
+                {techRows.map(([group, values]) => {
+                  const list = Array.isArray(values) ? values : [values];
+                  const multiline = group === 'Note di gusto' || group === 'Tasting notes';
+                  return (
+                    <tr key={group}>
+                      <td>{group}</td>
+                      <td>
+                        {multiline
+                          ? list.map((v, i) => <span key={i}>{v}{i < list.length - 1 && <br />}</span>)
+                          : list.join(', ')}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           ) : (
             <table className={styles.infoTable}>
               <tbody>
-                <tr><td>Tasting notes</td><td>Vanilla<br/>Caramel<br/>Fruity</td></tr>
-                <tr><td>Region</td><td>Various</td></tr>
-                <tr><td>Type</td><td>Blend</td></tr>
-                <tr><td>Best for</td><td>Filter</td></tr>
-                <tr><td>Process</td><td>Washed &amp; Natural</td></tr>
+                <tr><td>Origine</td><td>Racale (Salento, Puglia)</td></tr>
+                <tr><td>Ingredienti</td><td>Capperi 80% – Sale marino integrale 20%</td></tr>
+                <tr><td>Note di gusto</td><td>Sapido<br/>Mediterraneo<br/>Aromatico</td></tr>
+                <tr><td>Ideale per</td><td>Insalate, primi piatti, salse</td></tr>
+                <tr><td>Conservazione</td><td>Luogo fresco e asciutto</td></tr>
               </tbody>
             </table>
           )}
@@ -450,18 +467,23 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
             {(() => {
               const cf = shopwareProduct?.customFields || {};
               const hasBrewCustomFields = BREW_CUSTOM_FIELDS.some(({ key }) => cf[key]);
-              if (hasBrewCustomFields) {
-                return BREW_CUSTOM_FIELDS.filter(({ key }) => cf[key]).map(({ key, name }) => {
+              // Sezioni "Suggerimenti d'uso": 1) custom field Shopware
+              // 2) accordion del catalogo locale  3) (fallback ricette caffè)
+              const sections = hasBrewCustomFields
+                ? BREW_CUSTOM_FIELDS.filter(({ key }) => cf[key]).map(({ key, name }) => ({ name, html: cf[key] }))
+                : (catalogEntry?.accordion || []);
+              if (sections.length) {
+                return sections.map(({ name, html }) => {
                   const isOpen = openBrew === name;
                   return (
-                    <div key={key} className={styles.brewItem}>
+                    <div key={name} className={styles.brewItem}>
                       <button className={styles.brewToggle} onClick={() => setOpenBrew(isOpen ? null : name)}>
                         <span>{name}</span>
                         <span className={`${styles.brewIcon} ${isOpen ? styles.brewIconOpen : ''}`}>+</span>
                       </button>
                       {isOpen && (
                         <div className={styles.brewContent}>
-                          <p dangerouslySetInnerHTML={{ __html: cf[key] }} />
+                          <p dangerouslySetInnerHTML={{ __html: html }} />
                         </div>
                       )}
                     </div>

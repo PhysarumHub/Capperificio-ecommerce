@@ -1,7 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useCartContext, useCustomerContext } from '../context/ShopwareContext';
-import { getShippingMethods, getPaymentMethods, updateContext, placeOrder } from '../lib/api/checkout';
+import {
+  getShippingMethods, getPaymentMethods, updateContext,
+  getContextToken, createStripePaymentIntent, confirmStripeOrder,
+  createPaypalOrder, capturePaypalOrder,
+} from '../lib/api/checkout';
 import { getCountries, getSalutations, register } from '../lib/api/customer';
 import { useSEO } from '../hooks/useSEO';
 import { formatPrice } from '../lib/utils/price';
@@ -390,20 +394,31 @@ export default function CheckoutPage() {
       .catch(() => {}); // silenzioso, non blocca il flusso
   }, [step, selectedShipping]);
 
-  // Crea PaymentIntent Stripe quando si arriva allo step 2 con tab stripe
+  // Se il totale cambia (es. cambio spedizione) invalida il PaymentIntent:
+  // verrà ricreato con l'importo aggiornato, evitando mismatch in fase di verifica.
+  useEffect(() => { setStripeClientSecret(null); }, [totalPrice]);
+
+  // Crea PaymentIntent Stripe quando si arriva allo step 2 con tab stripe.
+  // L'importo è calcolato dal server sul carrello reale (anti price-tampering).
+  // Prima registra l'utente (guest) così il context token è stabile e coincide
+  // con quello con cui verrà poi verificato e piazzato l'ordine.
   useEffect(() => {
     if (step !== 2 || paymentTab !== 'stripe' || !stripePromise || stripeClientSecret) return;
+    let cancelled = false;
     setStripeLoading(true);
-    fetch('/api/stripe/create-payment-intent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: totalPrice }),
-    })
-      .then((r) => r.json())
-      .then((d) => { if (d.clientSecret) setStripeClientSecret(d.clientSecret); })
-      .catch(() => setOrderError('Impossibile inizializzare il pagamento con carta. Riprova o usa PayPal.'))
-      .finally(() => setStripeLoading(false));
-  }, [step, paymentTab, stripeClientSecret, totalPrice]);
+    (async () => {
+      try {
+        const token = await ensurePreparedContext(stripePaymentMethodId);
+        const data = await createStripePaymentIntent(token);
+        if (!cancelled && data.clientSecret) setStripeClientSecret(data.clientSecret);
+      } catch {
+        if (!cancelled) setOrderError('Impossibile inizializzare il pagamento con carta. Riprova o usa PayPal.');
+      } finally {
+        if (!cancelled) setStripeLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [step, paymentTab, stripeClientSecret, stripePaymentMethodId]);
 
   // Ricerca indirizzo con Nominatim (OpenStreetMap, gratuito)
   useEffect(() => {
@@ -528,21 +543,22 @@ export default function CheckoutPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Chiamata dopo che il pagamento (Stripe o PayPal) è stato confermato
-  const handlePlaceOrder = async () => {
-    setOrderError(null);
-    setPlacing(true);
-    try {
-      if (!isLoggedIn) {
-        const billingAddress = {
-          firstName: address.firstName,
-          lastName: address.lastName,
-          street: [address.street, address.houseNumber].filter(Boolean).join(', '),
-          zipcode: address.zipcode,
-          city: address.city,
-          salutationId,
-          ...(resolvedCountryId ? { countryId: resolvedCountryId } : {}),
-        };
+  // Registra l'utente (guest) una sola volta e imposta spedizione + metodo di
+  // pagamento sul contesto Shopware. Ritorna il context token aggiornato, che è
+  // lo stesso usato dal server per verificare il pagamento e creare l'ordine.
+  const preparedGuest = useRef(false);
+  const ensurePreparedContext = async (paymentMethodId) => {
+    if (!isLoggedIn && !preparedGuest.current) {
+      const billingAddress = {
+        firstName: address.firstName,
+        lastName: address.lastName,
+        street: [address.street, address.houseNumber].filter(Boolean).join(', '),
+        zipcode: address.zipcode,
+        city: address.city,
+        salutationId,
+        ...(resolvedCountryId ? { countryId: resolvedCountryId } : {}),
+      };
+      try {
         await register({
           guest: true,
           email: address.email,
@@ -552,18 +568,55 @@ export default function CheckoutPage() {
           storefrontUrl: import.meta.env.VITE_SHOPWARE_STOREFRONT_URL || window.location.origin,
           billingAddress,
         });
+      } catch (e) {
+        // Se è già registrato come guest in questa sessione, prosegui
+        if (!/already|exist/i.test(e?.message || '')) throw e;
       }
-      const paymentMethodId = paymentTab === 'paypal' ? paypalPaymentMethodId : stripePaymentMethodId;
-      await updateContext({
-        shippingMethodId: selectedShipping,
-        ...(paymentMethodId ? { paymentMethodId } : {}),
-      });
-      const order = await placeOrder();
-      setOrderNumber(order?.orderNumber || order?.id || '—');
+      preparedGuest.current = true;
+    }
+    await updateContext({
+      shippingMethodId: selectedShipping,
+      ...(paymentMethodId ? { paymentMethodId } : {}),
+    });
+    await fetchCart();
+    return getContextToken();
+  };
+
+  // ── Finalizzazione Stripe: il server verifica il pagamento prima di creare l'ordine
+  const handleStripeSuccess = async (paymentIntentId) => {
+    setOrderError(null);
+    setPlacing(true);
+    try {
+      if (!paymentIntentId) throw new Error('Pagamento non identificato. Riprova.');
+      const token = await ensurePreparedContext(stripePaymentMethodId);
+      const { orderNumber: num } = await confirmStripeOrder(paymentIntentId, token);
+      setOrderNumber(num || '—');
       await fetchCart();
     } catch (e) {
       setOrderError(e.message || 'Errore durante il completamento ordine. Riprova.');
-      throw e; // rilancia per gestire dentro i provider di pagamento
+      throw e;
+    } finally {
+      setPlacing(false);
+    }
+  };
+
+  // ── Finalizzazione PayPal: cattura + verifica importo + ordine, tutto lato server
+  const handlePaypalCreateOrder = async () => {
+    const token = await ensurePreparedContext(paypalPaymentMethodId);
+    const { id } = await createPaypalOrder(token);
+    return id;
+  };
+  const handlePaypalApprove = async (data) => {
+    setOrderError(null);
+    setPlacing(true);
+    try {
+      const token = getContextToken();
+      const { orderNumber: num } = await capturePaypalOrder(data.orderID, token);
+      setOrderNumber(num || '—');
+      await fetchCart();
+    } catch (e) {
+      setOrderError(e.message || 'Errore durante il completamento ordine PayPal.');
+      throw e;
     } finally {
       setPlacing(false);
     }
@@ -940,7 +993,7 @@ export default function CheckoutPage() {
                             },
                           }}>
                             <StripePaymentForm
-                              onSuccess={handlePlaceOrder}
+                              onSuccess={handleStripeSuccess}
                               totalPrice={totalPrice}
                               isMobile={isMobile}
                             />
@@ -964,20 +1017,8 @@ export default function CheckoutPage() {
                           }}>
                             <PayPalButtons
                               style={{ layout: 'vertical', shape: 'pill' }}
-                              createOrder={(_data, actions) =>
-                                actions.order.create({
-                                  purchase_units: [{
-                                    amount: {
-                                      value: totalPrice.toFixed(2),
-                                      currency_code: 'EUR',
-                                    },
-                                  }],
-                                })
-                              }
-                              onApprove={async (_data, actions) => {
-                                await actions.order.capture();
-                                await handlePlaceOrder();
-                              }}
+                              createOrder={() => handlePaypalCreateOrder()}
+                              onApprove={(data) => handlePaypalApprove(data)}
                               onError={(err) => setOrderError('Errore PayPal: ' + (err?.message || 'Riprova.'))}
                             />
                           </PayPalScriptProvider>
@@ -1011,7 +1052,7 @@ export default function CheckoutPage() {
             isB2B={isB2B}
             address={address} step={step}
             selectedCountryName={selectedCountryName} orderError={orderError}
-            placing={placing} onPlaceOrder={handlePlaceOrder} isMobile={false}
+            placing={placing} isMobile={false}
           />
         )}
       </div>

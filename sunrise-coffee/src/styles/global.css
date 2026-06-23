@@ -175,6 +175,17 @@
   --header-height: 56px;
 }
 
+/* ─── TEXT SELECTION (brand identity, non blu generico) ─ */
+::selection {
+  background: var(--color-red);
+  color: var(--color-light);
+}
+
+::-moz-selection {
+  background: var(--color-red);
+  color: var(--color-light);
+}
+
 /* ─── BASE STYLES ───────────────────────────────────── */
 html {
   overflow-x: clip;

@@ -1,0 +1,197 @@
+[
+  {
+    "productNumber": "CAP-OCCHIO-150",
+    "name": "Cappero di Racale Occhio di Pernice al Sale Marino",
+    "match": ["occhio di pernice", "occhio"],
+    "calibro": "Occhio di Pernice · Piccolo · Ø 6–9 mm",
+    "weightNet": "150 g",
+    "shippingWeightKg": 0.30,
+    "description": "Nel cuore di Racale siamo gli unici a classificare i capperi per calibro: un gesto di precisione che valorizza ogni sfumatura di gusto. L'<strong>Occhio di Pernice</strong> è il nostro calibro Piccolo, con un diametro che va dal 6 al 9 mm: il più versatile della nostra selezione, con un gusto equilibrato e adatto a ogni tipo di palato. Racchiude tutta l'intensità del cappero, ma con una sapidità più fine e armoniosa. Compatto e profumato, è perfetto per insalate, primi piatti, salse e preparazioni dove il cappero deve esaltare senza coprire.",
+    "bullets": [
+      "Occhio di Pernice (calibro Piccolo, Ø 6–9 mm): il più versatile ed equilibrato della selezione",
+      "Raccolto e selezionato a mano a Racale",
+      "Esalta i piatti senza coprirli"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Capperi 80% – Sale marino integrale 20%"],
+      ["Calibro", "Occhio di Pernice (Piccolo) · Ø 6–9 mm"],
+      ["Peso netto", "150 g"],
+      ["Note di gusto", ["Sapido", "Equilibrato", "Floreale"]],
+      ["Ideale per", "Insalate, primi piatti, salse"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Ideale per insalate, primi piatti e salse: esalta senza coprire gli altri ingredienti.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Equilibrato e armonioso, si sposa con pesce, verdure e formaggi freschi.</p>" },
+      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Mantenere i capperi coperti dal sale dopo l'apertura.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>A Racale siamo gli unici a classificare i capperi per calibro, uno per uno.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CAP-LILLIPUT-75",
+    "name": "Cappero di Racale Lilliput al Sale Marino",
+    "match": ["lilliput"],
+    "calibro": "Lilliput · Ø 4–6 mm",
+    "weightNet": "75 g",
+    "shippingWeightKg": 0.20,
+    "description": "Il calibro <strong>Lilliput</strong> è il nostro orgoglio, il simbolo della cura e dell'identità che ci distingue. Unico nel suo genere, selezionato con meticolosa attenzione, rappresenta la nostra firma sul cappero di Racale. Con un diametro tra 4 e 6 mm, è il formato che meglio bilancia intensità e finezza. Compatti, fragranti e persistenti, questi capperi sprigionano l'essenza del Mediterraneo in ogni bocciolo. Ideali per chi cerca l'eccellenza: perfetti nella ristorazione gourmet, ma sorprendenti anche nelle preparazioni quotidiane. Lilliput non è solo un calibro: è il cuore del nostro lavoro, la nostra unicità in ogni vaso.",
+    "bullets": [
+      "Lilliput (Ø 4–6 mm): il calibro più piccolo e pregiato, la nostra firma — fragrante e persistente",
+      "Selezionato uno per uno, l'eccellenza per la cucina gourmet",
+      "L'essenza del Mediterraneo in ogni bocciolo"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Capperi 80% – Sale marino integrale 20%"],
+      ["Calibro", "Lilliput · Ø 4–6 mm"],
+      ["Peso netto", "75 g"],
+      ["Note di gusto", ["Intenso", "Fragrante", "Persistente"]],
+      ["Ideale per", "Cucina gourmet, crudi, finger food"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Perfetto crudo o a fine cottura su carpacci, tartare, primi piatti e finger food gourmet.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Eccelle con pesce crudo, burrata, ricci di mare e piatti della ristorazione raffinata.</p>" },
+      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Mantenere i capperi coperti dal sale dopo l'apertura.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Fu Nonno Quintino a ideare per primo questo calibro minuscolo, poi battezzato dalla famiglia \"Lilliput\": dimensioni ridottissime ma un concentrato di sapore straordinario.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CAP-LACRIMELLA-250",
+    "name": "Cappero di Racale Lacrimella al Sale Marino",
+    "match": ["lacrimella"],
+    "calibro": "Lacrimella · Medio · Ø 9–11 mm",
+    "weightNet": "250 g",
+    "shippingWeightKg": 0.42,
+    "description": "La <strong>Lacrimella</strong> è il nostro calibro medio (Ø 9–11 mm) e rappresenta l'armonia perfetta tra intensità aromatica e struttura. Più grande dei piccoli boccioli (come i Lilliput e l'Occhio di Pernice), ma non ancora completamente sviluppato come i capperoni, conserva una polpa carnosa, un gusto pieno ma non invadente e una consistenza che lo rende estremamente versatile in cucina. Con la maturazione diventa più morbido e leggermente più dolce rispetto ai calibri più piccoli. Questa evoluzione lo rende ideale anche per piatti quotidiani, dove si cerca equilibrio senza rinunciare al sapore.",
+    "bullets": [
+      "Lacrimella (calibro Medio, Ø 9–11 mm): polpa carnosa, gusto pieno ma non invadente",
+      "Morbido e leggermente dolce, versatile in cucina",
+      "Perfetto per i piatti di tutti i giorni"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Capperi 80% – Sale marino integrale 20%"],
+      ["Calibro", "Lacrimella (Medio) · Ø 9–11 mm"],
+      ["Peso netto", "250 g"],
+      ["Note di gusto", ["Pieno", "Morbido", "Leggermente dolce"]],
+      ["Ideale per", "Risi, paste fredde, salse agrodolci"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Ottimo nel riso e nelle paste fredde: a questo livello di maturazione si fonde con gli altri ingredienti esaltandoli. Perfetto anche per ragù di pesce, caponata, farciture, paste fresche e salse agrodolci.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Si abbina a pesce, verdure agrodolci, paste fresche, antipasti e farciture.</p>" },
+      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Mantenere i capperi coperti dal sale dopo l'apertura.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Con la maturazione il cappero medio diventa più morbido e leggermente più dolce dei calibri piccoli.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CAP-CAPPERONE-250",
+    "name": "Capperone di Racale al Sale Marino",
+    "match": ["capperone"],
+    "calibro": "Capperone · Ø 12–15 mm",
+    "weightNet": "250 g",
+    "shippingWeightKg": 0.42,
+    "description": "Il più grande tra i capperi, dall'audace consistenza carnosa e dal sapore marcato. Perfetto per essere tritato o disidratato. La sua peculiarità principale è quella di mantenere l'aroma anche dopo la cottura, grazie alla struttura più sviluppata e alla maggiore concentrazione di oli essenziali nella polpa. Questo tipo di cappero, noto come <strong>capperone</strong>, ha un diametro tra i 12 e i 15 mm. Viene raccolto in una fase più avanzata del bocciolo, poco prima che si trasformi in frutto.",
+    "bullets": [
+      "Capperone (Ø 12–15 mm): il calibro più grande, carnoso e dal sapore marcato",
+      "Mantiene l'aroma anche dopo la cottura",
+      "Ottimo tritato o disidratato"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Capperi 80% – Sale marino integrale 20%"],
+      ["Calibro", "Capperone · Ø 12–15 mm"],
+      ["Peso netto", "250 g"],
+      ["Note di gusto", ["Marcato", "Carnoso", "Aromatico"]],
+      ["Ideale per", "Cotture, sughi, tritato o disidratato"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Perfetto tritato o disidratato, in piatti cotti, sughi e secondi: rilascia aroma anche a fine cottura.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Ideale con carni, sughi corposi e preparazioni che richiedono un cappero deciso.</p>" },
+      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Mantenere i capperi coperti dal sale dopo l'apertura.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Quello che nasce nel terreno racalino non è una semplice variante di qualcosa di già noto, ma un prodotto che trasuda autenticità, carattere e appartenenza.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CAP-POLVERE-50",
+    "name": "Polvere di Cappero Extrafine",
+    "match": ["polvere"],
+    "calibro": "Polvere Extrafine",
+    "weightNet": "50 g",
+    "shippingWeightKg": 0.12,
+    "description": "Capperi selezionati, dissalati, essiccati e ridotti in polvere. Un insaporitore naturale dal profumo intenso, sapido e dalla lunga persistenza aromatica, capace di richiamare tutta la complessità del cappero fresco in una forma più pratica e dosabile. Tutto il gusto del cappero in una forma concentrata e soprattutto <strong>100% naturale</strong>, senza conservanti né additivi. Si scioglie facilmente in fondi, brodi e salse: un cucchiaino basta per trasformare un piatto semplice in un'esperienza complessa e intensa, grazie alla naturale concentrazione aromatica ottenuta con un processo lento di essiccazione a bassa temperatura che preserva gli oli essenziali del cappero.",
+    "bullets": [
+      "Tutto il gusto del cappero in forma concentrata e dosabile",
+      "100% naturale, senza conservanti né additivi",
+      "Un cucchiaino basta per insaporire"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Capperi disidratati e sale marino integrale — 100% naturale, senza conservanti né additivi"],
+      ["Tipo", "Polvere extrafine"],
+      ["Peso netto", "50 g"],
+      ["Note di gusto", ["Concentrato", "Sapido", "Persistente"]],
+      ["Ideale per", "Fondi, brodi, salse, marinature"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Si scioglie in fondi, brodi e salse: un cucchiaino trasforma un piatto semplice in un'esperienza intensa.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Insaporitore versatile per primi, secondi, marinature e finiture a crudo.</p>" },
+      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto, al riparo dall'umidità; richiudere bene dopo l'uso.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Nasce dal recupero di capperi troppo grandi o imperfetti per la conservazione intera: uno scarto che diventa prelibatezza grazie a essiccazione e macinatura.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CAP-FOGLIE",
+    "name": "Foglie di Cappero al Sale Marino",
+    "match": ["foglie"],
+    "calibro": "Foglie · 50 g / 150 g",
+    "weightNet": "50 g / 150 g",
+    "variants": { "group": "Formato", "options": ["50 g", "150 g"], "skus": ["CAP-FOGLIE-50", "CAP-FOGLIE-150"] },
+    "description": "Le foglie della pianta del cappero, dal gusto fresco, minerale e dalla consistenza croccante. Una rarità mediterranea. Le foglie di cappero (<em>Capparis spinosa</em>) sono una parte meno conosciuta ma sempre più apprezzata della pianta. Non sono solo commestibili, ma anche estremamente versatili in cucina, soprattutto nella gastronomia mediterranea contemporanea e nella ristorazione gourmet. Vengono raccolte durante la stagione vegetativa, generalmente tra maggio e settembre, prima che diventino troppo coriacee: si scelgono le foglie giovani e tenere, dalla consistenza più delicata e dal gusto equilibrato, leggermente sapido.",
+    "bullets": [
+      "Foglie di cappero: fresche, minerali e croccanti",
+      "Una rarità mediterranea, perfetta in cucina gourmet",
+      "Solo foglie giovani e tenere, raccolte a mano"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Foglie di cappero 80% – Sale marino integrale 20%"],
+      ["Tipo", "Foglie giovani e tenere"],
+      ["Peso netto", "50 g / 150 g"],
+      ["Note di gusto", ["Fresco", "Minerale", "Amarognolo"]],
+      ["Ideale per", "Tartare, insalate, involtini, fritture"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Ideali per arricchire tartare di pesce, involtini di carne, insalate di stagione o persino da friggere.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Perfette con pesce crudo, carni delicate e insalate estive; un tocco amarognolo e fresco.</p>" },
+      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Mantenere le foglie coperte dal sale dopo l'apertura.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Si raccolgono tra maggio e settembre, scegliendo solo le foglie giovani e tenere prima che diventino coriacee.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CAP-HORECA",
+    "name": "Capperi di Racale Ho.Re.Ca — Busta Sottovuoto",
+    "match": ["ho.re.ca", "horeca", "sottovuoto"],
+    "calibro": "Ho.Re.Ca · 500 g / 1000 g",
+    "weightNet": "500 g / 1000 g",
+    "variants": { "group": "Formato", "options": ["500 g", "1000 g"], "skus": ["CAP-HORECA-500", "CAP-HORECA-1000"] },
+    "description": "La nostra linea Ho.Re.Ca nasce per portare il cappero di Racale nelle mani di chi ogni giorno crea esperienze di gusto: chef e ristoratori, veri ambasciatori del territorio. Per questo confezioniamo i nostri capperi in <strong>buste sottovuoto da 500 g e 1000 g</strong>, realizzate con plastiche alimentari ad alta barriera che proteggono il prodotto da ossigeno e umidità. L'aria viene aspirata durante il confezionamento sottovuoto: un processo che impedisce lo sviluppo microbico, prolunga la shelf life e preserva struttura e gusto originale. Le buste riducono inoltre l'impatto ambientale grazie al minor peso degli imballaggi rispetto al vetro, facilitando logistica e stoccaggio.",
+    "bullets": [
+      "Formati professionali da 500 g e 1000 g per chef e ristoratori",
+      "Buste sottovuoto ad alta barriera: gusto e struttura preservati",
+      "Meno imballaggio, logistica più semplice"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Capperi 80% – Sale marino integrale 20%"],
+      ["Formato", "500 g / 1000 g"],
+      ["Note di gusto", ["Sapido", "Mediterraneo"]],
+      ["Ideale per", "Uso professionale, tutto il menu"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Formato professionale per un uso intensivo: dosaggio libero secondo le esigenze del servizio.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Versatile su tutta la linea di menu, dagli antipasti ai secondi.</p>" },
+      { "name": "Conservazione", "html": "<p>Sottovuoto ad alta barriera contro ossigeno e umidità; una volta aperta, conservare in frigo e consumare in tempi brevi.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>La busta sottovuoto pesa meno del vetro: meno imballaggio, logistica più semplice e minore impatto ambientale.</p>" }
+    ]
+  }
+]
