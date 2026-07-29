@@ -42,7 +42,15 @@
       "Bash(npx eslint *)",
       "Bash(npx vite *)",
       "Bash(python -c \"import ast; ast.parse\\(open\\('scripts/seed-capperificio.py',encoding='utf-8'\\).read\\(\\)\\); print\\('PY OK'\\)\")",
-      "Bash(python -c \"import json; d=json.load\\(open\\('src/data/capperificioCatalog.json',encoding='utf-8'\\)\\); print\\('JSON OK —', len\\(d\\), 'prodotti'\\)\")"
+      "Bash(python -c \"import json; d=json.load\\(open\\('src/data/capperificioCatalog.json',encoding='utf-8'\\)\\); print\\('JSON OK —', len\\(d\\), 'prodotti'\\)\")",
+      "Bash(mkdir -p \"C:/Users/Riccardo/OneDrive/Desktop/Capperificio Caro/Capperificio ecommerce/sunrise-coffee/public/images/territorio\")",
+      "Bash(cp \"C:/Users/Riccardo/OneDrive/Desktop/Capperificio Caro/Capperificio ecommerce/sunrise-coffee/Screenshoot-website/Hero-img.png\" \"C:/Users/Riccardo/OneDrive/Desktop/Capperificio Caro/Capperificio ecommerce/sunrise-coffee/public/images/territorio/hero-raccolta.png\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5183/territorio)",
+      "Bash(npx --no-install playwright --version)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(pkill -f \"vite --port 5183\")",
+      "Bash(node -e ' *)",
+      "Bash(npm i *)"
     ]
   }
 }

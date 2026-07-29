@@ -270,9 +270,13 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const rawMediaImages = (shopwareProduct?.media || [])
     .map((m) => proxyUrl(m.media?.url || m.url))
     .filter(Boolean);
+  // Foto: 1) media Shopware  2) foto dal catalogo JSON  3) placeholder generico
+  const catalogImages = catalogEntry?.images || [];
   const productImages = hasApiProduct
-    ? (rawMediaImages.length ? rawMediaImages : [getProductImage(shopwareProduct)])
-    : FALLBACK_PRODUCT.images;
+    ? (rawMediaImages.length
+        ? rawMediaImages
+        : (catalogImages.length ? catalogImages : [getProductImage(shopwareProduct)]))
+    : (catalogImages.length ? catalogImages : FALLBACK_PRODUCT.images);
 
   const PROPERTY_ORDER = ['Origine', 'Ingredienti', 'Calibro', 'Tipo', 'Formato', 'Peso netto', 'Note di gusto', 'Ideale per'];
   const properties = hasApiProduct ? (shopwareProduct.properties || []) : [];

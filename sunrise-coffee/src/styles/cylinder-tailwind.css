@@ -1,0 +1,6 @@
+/* Tailwind utilities only (no Preflight) so the reset doesn't leak into the
+   rest of the site, which is styled with plain CSS Modules. */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@source "../components/CylinderCarousel.tsx";

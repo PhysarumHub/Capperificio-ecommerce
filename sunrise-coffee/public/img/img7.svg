@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#122b26"/>
+      <stop offset="100%" stop-color="#247a68"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#g)"/>
+  <circle cx="512" cy="420" r="180" fill="#ffffff" fill-opacity="0.06"/>
+  <text x="512" y="540" text-anchor="middle" font-family="Georgia, serif" font-size="220" fill="#ffffff" fill-opacity="0.22">07</text>
+  <text x="512" y="860" text-anchor="middle" font-family="Georgia, serif" font-size="46" fill="#ffffff" fill-opacity="0.85" letter-spacing="2">Terrazzamenti</text>
+</svg>

@@ -1,0 +1,323 @@
+/* ==========================================================================
+   Storia2Page — porting 1:1 della landing "Just scroll it" (Webflow)
+   GSAP ScrollTrigger + Lenis. Tutto scoped al modulo/pagina.
+   @font-face restano globali (comportamento CSS Modules): ok.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- @font-face */
+@font-face {
+  font-family: 'Spacegrotesk';
+  src: url('https://moussamamadou.github.io/fonts/SpaceGrotesk-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Spacegrotesk';
+  src: url('https://moussamamadou.github.io/fonts/SpaceGrotesk-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Spacegrotesk';
+  src: url('https://moussamamadou.github.io/fonts/SpaceGrotesk-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Sora';
+  src: url('https://moussamamadou.github.io/fonts/Sora-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Sora';
+  src: url('https://moussamamadou.github.io/fonts/Sora-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inconsolata';
+  src: url('https://moussamamadou.github.io/fonts/Inconsolata-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inconsolata';
+  src: url('https://moussamamadou.github.io/fonts/Inconsolata-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------------------------------------------------------------- page / reset scoped */
+.page {
+  position: relative;
+  width: 100%;
+  background: #000;
+  color: #fff;
+  font-family: 'Spacegrotesk', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+.page * {
+  box-sizing: border-box;
+}
+
+/* colori */
+.color-0 { color: #cde5df; }
+.color-1 { color: #ffd9b3; }
+.color-2 { color: #d2ffe2; }
+.color-3 { color: #d9d2ff; }
+
+/* ---------------------------------------------------------------- NAV */
+.nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  font-family: 'Inconsolata', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  mix-blend-mode: difference;
+}
+.nav-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+.nav-line {
+  position: absolute;
+  left: 2rem;
+  right: 2rem;
+  bottom: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* ---------------------------------------------------------------- HERO */
+.hero_section {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.hero_bg-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.hero_text {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  text-align: center;
+  color: #fff;
+  font-family: 'Spacegrotesk', sans-serif;
+  font-weight: 700;
+  line-height: 0.95;
+  font-size: 12vw;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+  mix-blend-mode: difference;
+}
+
+/* ---------------------------------------------------------------- WORK SECTION */
+.work_section {
+  position: relative;
+  width: 100%;
+  z-index: 2;
+}
+
+.work_item {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 3;
+}
+
+.work_bg-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  will-change: transform, filter;
+}
+
+.work_item-wrapper {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2vw;
+}
+
+.work_video-wrapper {
+  position: relative;
+  width: 26vw;
+  max-width: 480px;
+  will-change: transform;
+}
+
+.work_video-container {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 */
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.work_video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.work_video > video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.work_text {
+  position: absolute;
+  z-index: 4;
+  left: 2rem;
+  bottom: 2rem;
+  color: #fff;
+  mix-blend-mode: difference;
+}
+
+.work_text-title {
+  margin: 0;
+  font-family: 'Spacegrotesk', sans-serif;
+  font-weight: 700;
+  font-size: 8vw;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.work-text-subtitle {
+  margin-top: 1rem;
+  font-family: 'Sora', sans-serif;
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 22ch;
+}
+
+/* line reveal wrapper (overflow hidden per il mask) */
+.line-wrapper {
+  overflow: hidden;
+  display: block;
+}
+.line {
+  display: block;
+  will-change: transform;
+}
+
+/* overlay nero */
+.work_item-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: #000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------------------------------------------------------------- FOOTER */
+.footer_section {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.footer_bg-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.footer_text {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  text-align: center;
+  color: #fff;
+  font-family: 'Spacegrotesk', sans-serif;
+  font-weight: 700;
+  line-height: 0.95;
+  font-size: 12vw;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+  mix-blend-mode: difference;
+}
+
+/* ---------------------------------------------------------------- mobile */
+@media screen and (max-width: 479px) {
+  .nav {
+    padding: 1rem 1.25rem;
+  }
+  .nav-line {
+    left: 1.25rem;
+    right: 1.25rem;
+  }
+  .hero_text,
+  .footer_text {
+    font-size: 22vw;
+  }
+  .work_item-wrapper {
+    flex-direction: column;
+    gap: 4vw;
+  }
+  .work_video-wrapper {
+    width: 70vw;
+    max-width: none;
+  }
+  .work_text {
+    left: 1.25rem;
+    bottom: 1.25rem;
+  }
+  .work_text-title {
+    font-size: 16vw;
+  }
+  .work-text-subtitle {
+    font-size: 0.9rem;
+  }
+}
