@@ -40,7 +40,7 @@ export const COMPANY = {
 
   /* Web */
   domain: 'capperificiocaro.com',
-  siteUrl: 'https://capperificiocaro.com',
+  siteUrl: 'https://www.capperificiocaro.com',
 };
 
 /** Ultimo aggiornamento dei documenti legali (mostrato in pagina). */

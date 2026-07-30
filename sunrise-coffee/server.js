@@ -267,7 +267,7 @@ app.get('/api/health', (_req, res) => {
 // Aggrega: pagine statiche + prodotti Shopware (con SEO URL) + articoli Strapi.
 // Cacheable da nginx (1h) e da CDN (2h).
 app.get('/sitemap.xml', async (_req, res) => {
-  const SITE = 'https://capperificiocaro.com';
+  const SITE = 'https://www.capperificiocaro.com';
   const now  = new Date().toISOString().split('T')[0];
 
   const STATIC_PAGES = [

@@ -13,4 +13,4 @@ Disallow: /store-api/
 Disallow: /api/
 
 # Sitemap
-Sitemap: https://capperificiocaro.com/sitemap.xml
+Sitemap: https://www.capperificiocaro.com/sitemap.xml
