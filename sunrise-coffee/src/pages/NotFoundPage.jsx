@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 
 export default function NotFoundPage() {
-  useSEO({ title: 'Pagina non trovata', path: '/404', noindex: true });
+  useSEO({ title: 'Pagina non trovata', noindex: true, canonical: false });
 
   return (
     <div style={{ padding: '100px 24px', textAlign: 'center', maxWidth: 520, margin: '0 auto' }}>

@@ -6,6 +6,24 @@ import { useProduct } from '../hooks/useProducts';
 import { useSEO } from '../hooks/useSEO';
 import { getProductImage } from '../lib/utils/image';
 import { gtmViewItem } from '../lib/utils/gtm';
+import { isProductAvailable } from '../lib/utils/availability';
+import { COMPANY } from '../data/company';
+
+/* Soglia di spedizione gratuita: deve restare allineata a CheckoutPage. */
+const FREE_SHIPPING_MIN = 50;
+
+/* Tariffa di spedizione standard sotto soglia, in EUR.
+   Oggi il costo lo calcola il corriere in checkout in base a peso e
+   destinazione, quindi non lo dichiariamo: annunciare 0 sarebbe falso e
+   Merchant Center penalizza i dati che non combaciano col checkout.
+   Se in futuro adotti una tariffa fissa, mettila qui e finirà nello schema. */
+const STANDARD_SHIPPING_RATE = null;
+
+/* I prezzi restano validi fino a fine anno solare: Google richiede
+   priceValidUntil per mostrare il prezzo nelle rich result. */
+function priceValidUntil() {
+  return `${new Date().getFullYear()}-12-31`;
+}
 
 export default function ProductPage() {
   const { slug } = useParams();
@@ -19,17 +37,70 @@ export default function ProductPage() {
 
   const jsonLd = useMemo(() => {
     if (!product) return null;
+
+    const productUrl = `${COMPANY.siteUrl}/product/${slug}`;
+    const inStock = isProductAvailable(product);
+    const sku = product.productNumber || product.id;
+    const gtin = product.ean || undefined;
+
     return {
       '@type': 'Product',
       name: productName,
       description: plainDesc,
       image: productImage,
+      sku,
+      ...(gtin ? { gtin13: gtin } : {}),
+      mpn: sku,
+      brand: { '@type': 'Brand', name: COMPANY.brand },
       offers: {
         '@type': 'Offer',
-        price: price || 0,
+        url: productUrl,
+        price: price ?? 0,
         priceCurrency: 'EUR',
-        availability: 'https://schema.org/InStock',
-        url: `https://capperificiocaro.com/product/${slug}`,
+        priceValidUntil: priceValidUntil(),
+        itemCondition: 'https://schema.org/NewCondition',
+        availability: inStock
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
+        seller: { '@type': 'Organization', name: COMPANY.legalNameShort },
+
+        /* Spedizione e resi dichiarati nello schema: Google li mostra
+           direttamente in scheda invece di lasciarli come "sorpresa". */
+        shippingDetails: {
+          '@type': 'OfferShippingDetails',
+          ...(STANDARD_SHIPPING_RATE != null
+            ? {
+                shippingRate: {
+                  '@type': 'MonetaryAmount',
+                  value: STANDARD_SHIPPING_RATE,
+                  currency: 'EUR',
+                },
+              }
+            : {}),
+          shippingDestination: {
+            '@type': 'DefinedRegion',
+            addressCountry: 'IT',
+          },
+          deliveryTime: {
+            '@type': 'ShippingDeliveryTime',
+            handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'DAY' },
+            transitTime: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 5, unitCode: 'DAY' },
+          },
+          /* Sopra questa soglia la spedizione è gratuita (vedi Termini). */
+          freeShippingThreshold: {
+            '@type': 'MonetaryAmount',
+            value: FREE_SHIPPING_MIN,
+            currency: 'EUR',
+          },
+        },
+        hasMerchantReturnPolicy: {
+          '@type': 'MerchantReturnPolicy',
+          applicableCountry: 'IT',
+          returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+          merchantReturnDays: 14,
+          returnMethod: 'https://schema.org/ReturnByMail',
+          returnFees: 'https://schema.org/ReturnShippingFees',
+        },
       },
     };
   }, [product, productName, plainDesc, productImage, price, slug]);

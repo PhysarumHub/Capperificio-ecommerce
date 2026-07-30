@@ -22,6 +22,9 @@ import anim from '../styles/animations.module.css';
 
 const B2B_CATEGORY_ID = import.meta.env.VITE_B2B_CATEGORY_ID || null;
 
+// Product-number prefixes for the "Materia prima" section (cucunci, foglie, polvere)
+const SPECIALTY_PRODUCT_PREFIXES = ['CUC-', 'CAP-FOGLIE', 'CAP-POLVERE'];
+
 /* ─── Fallback data (used when Shopware is not connected) ─── */
 
 const SLIDER_PRODUCTS_FALLBACK = [
@@ -153,12 +156,6 @@ export default function HomePage() {
   // Fetch more products to account for B2B ones being filtered out client-side
   const { products: rawProducts, loading, error } = useProducts({ limit: 24 });
 
-  // Fetch products tagged "Materia prima" for the blends section
-  const { products: rawMateriaPrima } = useProducts({
-    limit: 9,
-    filters: [{ type: 'equals', field: 'tags.name', value: 'Materia prima' }],
-  });
-
   const shopwareProducts = useMemo(
     () => groupVariants(rawProducts).filter(p => !B2B_CATEGORY_ID || !p.categoryTree?.includes(B2B_CATEGORY_ID)),
     [rawProducts],
@@ -171,18 +168,25 @@ export default function HomePage() {
     ? shopwareProducts.slice(0, 6).map(mapShopwareProduct)
     : SLIDER_PRODUCTS_FALLBACK;
 
-  const blendProducts = useMemo(
-    () => hasApiData && rawMateriaPrima.length > 0
-      ? groupVariants(rawMateriaPrima).slice(0, 3).map(mapShopwareProduct)
-      : BLEND_PRODUCTS_FALLBACK,
-    [hasApiData, rawMateriaPrima],
-  );
+  // "Materia prima" section: capperi non-treated products (foglie, polvere, cucunci)
+  // vs the core capperi shown in the bestseller slider above.
+  const blendProducts = useMemo(() => {
+    if (!hasApiData) return BLEND_PRODUCTS_FALLBACK;
+    const specialty = shopwareProducts.filter((p) =>
+      SPECIALTY_PRODUCT_PREFIXES.some((prefix) => p.productNumber?.startsWith(prefix))
+    );
+    return (specialty.length > 0 ? specialty : shopwareProducts).slice(0, 3).map(mapShopwareProduct);
+  }, [hasApiData, shopwareProducts]);
 
   const [gridRef, gridInView] = useInView({ threshold: 0.1 });
 
   return (
     <>
-      <Hero image="/images/HERO.jpeg" />
+      <Hero
+        image="/images/HERO.jpeg"
+        alt="Capperi di Racale raccolti a mano nei campi del Salento"
+        heading="Capperificio di Racale — capperi, cucunci e foglie artigianali dal Salento"
+      />
 
       <AnimateIn animation="fadeUp">
         <FilterTags />

@@ -149,7 +149,12 @@ export default function AboutPage() {
             </div>
             <div className={styles.panelCopy} data-panel-content>
               <span className={styles.panelEyebrow}>{panel.eyebrow}</span>
-              <h2 className={styles.panelTitle}>{panel.title}</h2>
+              {/* Il primo pannello porta l'h1 della pagina: stessa resa visiva, gerarchia corretta */}
+              {i === 0 ? (
+                <h1 className={styles.panelTitle}>{panel.title}</h1>
+              ) : (
+                <h2 className={styles.panelTitle}>{panel.title}</h2>
+              )}
               <p className={styles.panelDesc}>{panel.desc}</p>
             </div>
           </div>

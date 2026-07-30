@@ -40,7 +40,7 @@ export default function BlogGrid() {
           <>
             <div className={`${styles.img} ${anim.imgZoom}`}>
               {post.image
-                ? <img src={post.image} alt={post.title} className={styles.postImg} />
+                ? <img src={post.image} alt={post.title} className={styles.postImg} loading="lazy" decoding="async" />
                 : <div className={styles.imgPlaceholder} />
               }
             </div>

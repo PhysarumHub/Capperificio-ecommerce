@@ -20,7 +20,7 @@ export default function GuidesEditorial({ image }) {
         className={`${styles.photo} ${anim.slideRight} ${inView ? anim.inView : ''}`}
         style={{ '--delay': '80ms' }}
       >
-        {image && <img src={image} alt="Capperi in cucina" className={styles.photoImg} />}
+        {image && <img src={image} alt="Capperi in cucina" className={styles.photoImg} loading="lazy" decoding="async" />}
       </div>
     </section>
   );

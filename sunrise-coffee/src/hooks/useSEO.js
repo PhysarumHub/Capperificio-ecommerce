@@ -58,6 +58,9 @@ function removeJsonLd(id) {
  * @param {string} [options.type]       - og:type (default 'website')
  * @param {Object} [options.jsonLd]     - Dati JSON-LD extra (con @type)
  * @param {boolean} [options.noindex]   - Se true, aggiunge noindex
+ * @param {boolean} [options.canonical] - Se false, non emette il canonical.
+ *   Serve alla 404: un canonical fisso su /404 farebbe collassare lì ogni URL
+ *   inesistente invece di lasciarlo semplicemente fuori dall'indice.
  * @param {Array}  [options.breadcrumbs] - Array di {name, path} per BreadcrumbList
  * @param {string} [options.twitterCard] - Tipo di Twitter Card (default 'summary_large_image')
  */
@@ -69,6 +72,7 @@ export function useSEO({
   type = 'website',
   jsonLd = null,
   noindex = false,
+  canonical = true,
   breadcrumbs = null,
   twitterCard = 'summary_large_image',
 } = {}) {
@@ -99,7 +103,11 @@ export function useSEO({
     setMeta('twitter:image', fullImage);
 
     // Canonical
-    setCanonical(fullUrl);
+    if (canonical) {
+      setCanonical(fullUrl);
+    } else {
+      document.querySelector('link[rel="canonical"]')?.remove();
+    }
 
     // JSON-LD per pagina
     if (jsonLd) {
@@ -124,5 +132,5 @@ export function useSEO({
       removeJsonLd('page');
       removeJsonLd('breadcrumb');
     };
-  }, [title, description, path, image, type, noindex, jsonLd, breadcrumbs, twitterCard]);
+  }, [title, description, path, image, type, noindex, canonical, jsonLd, breadcrumbs, twitterCard]);
 }

@@ -57,7 +57,8 @@
 
 @font-face {
   font-family: 'PP Editorial Old';
-  src: url('/fonts/PPEditorialOld-Regular.otf') format('opentype');
+  src: url('/fonts/PPEditorialOld-Regular.woff2') format('woff2'),
+       url('/fonts/PPEditorialOld-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -65,7 +66,8 @@
 
 @font-face {
   font-family: 'PP Editorial Old';
-  src: url('/fonts/PPEditorialOld-Italic.otf') format('opentype');
+  src: url('/fonts/PPEditorialOld-Italic.woff2') format('woff2'),
+       url('/fonts/PPEditorialOld-Italic.otf') format('opentype');
   font-weight: 400;
   font-style: italic;
   font-display: swap;
@@ -73,7 +75,8 @@
 
 @font-face {
   font-family: 'Paralucent';
-  src: url('/fonts/Paralucent-Light.otf') format('opentype');
+  src: url('/fonts/Paralucent-Light.woff2') format('woff2'),
+       url('/fonts/Paralucent-Light.otf') format('opentype');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
@@ -81,7 +84,8 @@
 
 @font-face {
   font-family: 'Paralucent';
-  src: url('/fonts/Paralucent-LightItalic.otf') format('opentype');
+  src: url('/fonts/Paralucent-LightItalic.woff2') format('woff2'),
+       url('/fonts/Paralucent-LightItalic.otf') format('opentype');
   font-weight: 300;
   font-style: italic;
   font-display: swap;
@@ -89,7 +93,8 @@
 
 @font-face {
   font-family: 'Paralucent';
-  src: url('/fonts/Paralucent-Medium.otf') format('opentype');
+  src: url('/fonts/Paralucent-Medium.woff2') format('woff2'),
+       url('/fonts/Paralucent-Medium.otf') format('opentype');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -97,7 +102,8 @@
 
 @font-face {
   font-family: 'Paralucent';
-  src: url('/fonts/Paralucent-MediumItalic.otf') format('opentype');
+  src: url('/fonts/Paralucent-MediumItalic.woff2') format('woff2'),
+       url('/fonts/Paralucent-MediumItalic.otf') format('opentype');
   font-weight: 500;
   font-style: italic;
   font-display: swap;

@@ -59,7 +59,7 @@ export default function StorySlider() {
           </div>
         ) : (
           <div key={i} className={styles.imageCell}>
-            <img src={item.src} alt={item.alt} className={styles.image} draggable={false} />
+            <img src={item.src} alt={item.alt} className={styles.image} draggable={false} loading="lazy" decoding="async" />
           </div>
         )
       ))}

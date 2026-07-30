@@ -158,7 +158,7 @@ export default function ProductCard({
     return (
       <div className={styles.card}>
         <div className={`${styles.imgWrap} ${styles.imgSquare}`}>
-          {image ? <img src={image} alt={name} className={styles.productImg} loading="lazy" /> : children}
+          {image ? <img src={image} alt={name} className={styles.productImg} loading="lazy" decoding="async" /> : children}
           {control}
         </div>
         <div className={styles.merchFooter}>
@@ -178,7 +178,7 @@ export default function ProductCard({
           </span>
         )}
         {image ? (
-          <img src={image} alt={name} className={styles.productImg} loading="lazy" />
+          <img src={image} alt={name} className={styles.productImg} loading="lazy" decoding="async" />
         ) : (
           <div className={styles.imgPlaceholder} />
         )}

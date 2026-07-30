@@ -63,22 +63,30 @@
     })();
     </script>
 
-    <!-- TODO: Google Tag Manager — replace GTM-XXXXXXXXX with your container ID -->
-    <!--
+    <!-- Google Tag Manager — si attiva da solo appena VITE_GTM_ID è valorizzato
+         in .env (formato GTM-XXXXXXX). Senza container ID non parte nessuna
+         richiesta: niente placeholder da ricordarsi di sostituire a mano. -->
     <script>
-    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-XXXXXXXXX');
+    (function (w, d, s, l, i) {
+      if (!i || i.indexOf('GTM-') !== 0) return;
+      w[l] = w[l] || [];
+      w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+      var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != 'dataLayer' ? '&l=' + l : '';
+      j.async = true;
+      j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+      f.parentNode.insertBefore(j, f);
+    })(window, document, 'script', 'dataLayer', '%VITE_GTM_ID%');
     </script>
-    -->
 
-    <!-- Fonts locali — PP Editorial Old + Paralucent -->
-    <link rel="preload" href="/fonts/PPEditorialOld-Regular.otf"      as="font" type="font/otf" crossorigin />
-    <link rel="preload" href="/fonts/PPEditorialOld-Italic.otf"       as="font" type="font/otf" crossorigin />
-    <link rel="preload" href="/fonts/Paralucent-Medium.otf"           as="font" type="font/otf" crossorigin />
-    <link rel="preload" href="/fonts/Paralucent-Light.otf"            as="font" type="font/otf" crossorigin />
+    <!-- LCP: immagine hero della home, precaricata prima del bundle JS -->
+    <link rel="preload" href="/images/HERO.jpeg" as="image" fetchpriority="high" />
+
+    <!-- Fonts locali (woff2) — solo quelli visibili above the fold.
+         Gli altri tagli si caricano via @font-face con font-display: swap. -->
+    <link rel="preload" href="/fonts/PPEditorialOld-Italic.woff2"     as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/Paralucent-Medium.woff2"         as="font" type="font/woff2" crossorigin />
 
     <!-- JSON-LD: Organization -->
     <script type="application/ld+json">

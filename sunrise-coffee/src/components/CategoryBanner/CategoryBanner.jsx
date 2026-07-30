@@ -14,7 +14,7 @@ export default function CategoryBanners({ filterImage, espressoImage }) {
       >
         <div className={`${styles.bg} ${anim.imgZoom}`}>
           {filterImage
-            ? <img src={filterImage} alt="Il Nostro Territorio" className={styles.bgImg} />
+            ? <img src={filterImage} alt="Il Nostro Territorio" className={styles.bgImg} loading="lazy" decoding="async" />
             : <div className={styles.bgPlaceholder} />
           }
           <div className={styles.gradient} />
@@ -31,7 +31,7 @@ export default function CategoryBanners({ filterImage, espressoImage }) {
       >
         <div className={`${styles.bg} ${anim.imgZoom}`}>
           {espressoImage
-            ? <img src={espressoImage} alt="Processo Produttivo" className={styles.bgImg} />
+            ? <img src={espressoImage} alt="Processo Produttivo" className={styles.bgImg} loading="lazy" decoding="async" />
             : <div className={styles.bgPlaceholder} />
           }
           <div className={styles.gradient} />

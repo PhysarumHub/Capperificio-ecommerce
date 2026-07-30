@@ -344,9 +344,12 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     touchStartX.current = null;
   };
 
+  // Il pannello è renderizzato due volte (layout mobile e desktop, alternati via
+  // CSS): il titolo qui è un <p> con aria-hidden, l'unico <h1> della pagina vive
+  // fuori dai due blocchi così non viene mai duplicato né nascosto da display:none.
   const purchasePanel = (
     <>
-      <h1 className={styles.pdpTitle}>{productName}</h1>
+      <p className={styles.pdpTitle} aria-hidden="true">{productName}</p>
       {(() => {
         const calibro = shopwareProduct?.customFields?.capperificio_calibro || catalogEntry?.calibro;
         if (!calibro || hasConfigurator) return null;
@@ -422,6 +425,9 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
 
   return (
     <>
+      {/* Unico h1 della pagina — vedi nota su purchasePanel */}
+      <h1 className="sr-only">{productName}</h1>
+
       {/* Breadcrumb */}
       <div className={styles.breadcrumb}>
         <Link to="/">Home</Link><span className={styles.sep}>/</span>
