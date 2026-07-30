@@ -2,111 +2,128 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Homepage -->
   <url>
-    <loc>https://www.capperificio.it/</loc>
+    <loc>https://capperificiocaro.com/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
   <!-- Collezioni -->
   <url>
-    <loc>https://www.capperificio.it/collections/all</loc>
+    <loc>https://capperificiocaro.com/collections/all</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/collections/cappero</loc>
+    <loc>https://capperificiocaro.com/collections/cappero</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/collections/cucunci</loc>
+    <loc>https://capperificiocaro.com/collections/cucunci</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/collections/foglie</loc>
+    <loc>https://capperificiocaro.com/collections/foglie</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/collections/polvere</loc>
+    <loc>https://capperificiocaro.com/collections/polvere</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Prodotti (slug dei prodotti principali — aggiornare quando si aggiungono nuovi prodotti) -->
   <url>
-    <loc>https://www.capperificio.it/product/cappero-sale-lilliput</loc>
+    <loc>https://capperificiocaro.com/product/cappero-sale-lilliput</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/product/cappero-sale-lacrimella</loc>
+    <loc>https://capperificiocaro.com/product/cappero-sale-lacrimella</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/product/cappero-sale-occhio</loc>
+    <loc>https://capperificiocaro.com/product/cappero-sale-occhio</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/product/cappero-sale-capperone</loc>
+    <loc>https://capperificiocaro.com/product/cappero-sale-capperone</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/product/cappero-aceto-lilliput</loc>
+    <loc>https://capperificiocaro.com/product/cappero-aceto-lilliput</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/product/cappero-aceto-lacrimella</loc>
+    <loc>https://capperificiocaro.com/product/cappero-aceto-lacrimella</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/product/cappero-aceto-capperone</loc>
+    <loc>https://capperificiocaro.com/product/cappero-aceto-capperone</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/product/cucunci-aceto-vino</loc>
+    <loc>https://capperificiocaro.com/product/cucunci-aceto-vino</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/product/cucunci-aceto-mele</loc>
+    <loc>https://capperificiocaro.com/product/cucunci-aceto-mele</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/product/foglie-cappero-aceto</loc>
+    <loc>https://capperificiocaro.com/product/foglie-cappero-aceto</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/product/polvere-cappero</loc>
+    <loc>https://capperificiocaro.com/product/polvere-cappero</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.capperificio.it/product/cofanetto-degustazione</loc>
+    <loc>https://capperificiocaro.com/product/cofanetto-degustazione</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <!-- Blog -->
   <url>
-    <loc>https://www.capperificio.it/blog</loc>
+    <loc>https://capperificiocaro.com/blog</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <!-- B2B -->
   <url>
-    <loc>https://www.capperificio.it/b2b</loc>
+    <loc>https://capperificiocaro.com/b2b</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
+  </url>
+
+  <!-- Pagine legali -->
+  <url>
+    <loc>https://capperificiocaro.com/privacy-policy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://capperificiocaro.com/cookie-policy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://capperificiocaro.com/termini-e-condizioni</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
   </url>
 </urlset>

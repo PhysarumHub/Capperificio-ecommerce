@@ -15,6 +15,7 @@ export default function ProductCard({
   options,
   sizes,
   variantMap = {},
+  availabilityMap = {},
   variant = 'default',
   soldOut = false,
   children,
@@ -27,6 +28,26 @@ export default function ProductCard({
 
   const variantList = options?.length ? options : sizes ? [sizes] : null;
   const [selectedVariant, setSelectedVariant] = useState(variantList?.[0] ?? null);
+
+  const hasPerVariantAvailability = Object.keys(availabilityMap).length > 0;
+
+  // Sold-out for the currently selected state:
+  // 1. Whole product sold-out (soldOut prop from parent)
+  // 2. Per-variant: explicit false in availabilityMap for this option
+  // 3. No per-variant data: fall back to the product-level soldOut
+  const isCurrentVariantSoldOut = soldOut || (
+    hasPerVariantAvailability && selectedVariant
+      ? availabilityMap[selectedVariant] === false
+      : false
+  );
+
+  // For variant products: only allow direct-add when we have the specific child variant ID.
+  // When variantMap is empty (Shopware doesn't include children in listings), adding the
+  // parent product ID to cart would be wrong — the card Link leads to the PDP instead.
+  const directCartId = variantList
+    ? ((selectedVariant && variantMap[selectedVariant]) || null)
+    : id;
+  const canDirectAdd = Boolean(directCartId) && !isCurrentVariantSoldOut;
 
   const base = `/product/${slug || name.toLowerCase().replace(/\s+/g, '-')}`;
   const href = selectedVariant ? `${base}?variant=${encodeURIComponent(selectedVariant)}` : base;
@@ -54,17 +75,15 @@ export default function ProductCard({
   const handleAdd = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const cartId = (selectedVariant && variantMap[selectedVariant]) || id;
-    if (!cartId) return; // prodotto senza ID (fallback) — non fare nulla
+    if (!canDirectAdd) return;
     const next = qty + 1;
     setQty(next);
     setShowControl(true);
     setShowTag(false);
     try {
-      await addItem(cartId, 1);
+      await addItem(directCartId, 1);
       scheduleCollapse(next);
     } catch {
-      // rollback se l'API fallisce
       setQty(qty);
       if (qty === 0) { setShowControl(false); setShowTag(false); }
     }
@@ -79,9 +98,8 @@ export default function ProductCard({
       setShowControl(false);
       setShowTag(false);
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      const cartId = (selectedVariant && variantMap[selectedVariant]) || id;
-      if (cartId && cart) {
-        const lineItem = cart.lineItems?.find((li) => li.referencedId === cartId);
+      if (directCartId && cart) {
+        const lineItem = cart.lineItems?.find((li) => li.referencedId === directCartId);
         try { if (lineItem) await removeItem(lineItem.id); } catch {}
       }
     } else {
@@ -97,7 +115,7 @@ export default function ProductCard({
     scheduleCollapse(qty);
   };
 
-  const control = soldOut ? (
+  const control = isCurrentVariantSoldOut ? (
     <span className={styles.soldOutBadge}>Esaurito</span>
   ) : showControl ? (
     <div className={styles.qtyControl} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
@@ -109,8 +127,31 @@ export default function ProductCard({
     <button className={styles.cartTag} onClick={handleTagClick} aria-label="Nel carrello">
       Nel carrello · {qty}
     </button>
-  ) : (
+  ) : canDirectAdd ? (
     <button className={styles.addToCart} onClick={handleAdd} aria-label="Aggiungi al carrello">+</button>
+  ) : null;
+
+  const variantChips = variantList && (
+    <div className={styles.variants}>
+      {variantList.map((v, i) => {
+        const chipSoldOut = hasPerVariantAvailability && availabilityMap[v] === false;
+        return (
+          <button
+            key={i}
+            className={[
+              styles.variantChip,
+              selectedVariant === v ? styles.variantChipSelected : '',
+              chipSoldOut ? styles.variantChipSoldOut : '',
+            ].filter(Boolean).join(' ')}
+            onClick={(e) => handleVariantClick(e, v)}
+            aria-pressed={selectedVariant === v}
+            aria-disabled={chipSoldOut}
+          >
+            {v}
+          </button>
+        );
+      })}
+    </div>
   );
 
   if (variant === 'merch') {
@@ -146,20 +187,7 @@ export default function ProductCard({
       <div className={styles.info}>
         <div className={styles.infoLeft}>
           <span className={styles.name}>{name}</span>
-          {variantList && (
-            <div className={styles.variants}>
-              {variantList.map((v, i) => (
-                <button
-                  key={i}
-                  className={`${styles.variantChip} ${selectedVariant === v ? styles.variantChipSelected : ''}`}
-                  onClick={(e) => handleVariantClick(e, v)}
-                  aria-pressed={selectedVariant === v}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-          )}
+          {variantChips}
         </div>
         <div className={styles.pricing}>
           {oldPrice && <span className={styles.oldPrice}>{oldPrice}</span>}

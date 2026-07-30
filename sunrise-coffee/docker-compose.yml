@@ -1,68 +1,152 @@
 # ============================================================
 #  Capperificio E-commerce — Stack completo
 #
-#  Servizi:
-#    shopware   → Shopware 6 CMS/backend  http://localhost:8090
-#    frontend   → React + Express          http://localhost:3001
+#  Prima di avviare:
+#    cp .env.example .env.production   # poi compila i valori
+#    docker compose --env-file .env.production up -d --build
 #
-#  Avvio:  docker compose up -d --build
-#  Stop:   docker compose down
+#  Avvio standard (usa .env):
+#    docker compose up -d --build
 #
-#  Admin Shopware:  http://localhost:8090/admin  (admin / shopware)
-#  Adminer DB:      http://localhost:8891
-#  Mailcatcher:     http://localhost:9998
+#  Rebuild forzato dopo modifiche al codice:
+#    docker compose build --no-cache && docker compose up -d
+#
+#  Log in tempo reale:
+#    docker compose logs -f
+#
+#  Stop completo (mantiene i volumi):
+#    docker compose down
+#
+#  URL dopo l'avvio:
+#    Sito (PUBBLICO):  http://SERVER:3001
+#
+#  I pannelli di amministrazione NON sono esposti su internet: sono in ascolto
+#  solo su 127.0.0.1 del server. Per raggiungerli, apri un tunnel SSH dal tuo
+#  computer (vedi sotto) e poi usa gli URL localhost:
+#
+#    ssh -N -L 8090:localhost:8090 \
+#           -L 1337:localhost:1337 \
+#           -L 8891:localhost:8891 \
+#           -L 9998:localhost:9998 root@SERVER
+#
+#    Admin Shopware:  http://localhost:8090/admin
+#    Strapi admin:    http://localhost:1337/admin
+#    Adminer DB:      http://localhost:8891
+#    Mailcatcher:     http://localhost:9998
 # ============================================================
 
 services:
 
-  # ── Shopware 6 ───────────────────────────────────────────
+  # ── Shopware 6 ────────────────────────────────────────────────────────
   shopware:
     image: dockware/dev:latest
     container_name: capperificio-shopware
+    # Tutte su 127.0.0.1: raggiungibili SOLO dal server stesso o via tunnel SSH.
+    # Il browser non ha bisogno di queste porte — la store-api passa dal proxy
+    # nginx del frontend (location /store-api → http://shopware:80).
     ports:
-      - "8090:80"    # Shopware HTTP
-      - "8453:443"   # Shopware HTTPS
-      - "8891:8888"  # Adminer (gestore DB)
-      - "9998:9999"  # Mailcatcher (email di test)
+      - "127.0.0.1:8090:80"    # Shopware HTTP (admin panel)
+      - "127.0.0.1:8453:443"   # Shopware HTTPS
+      - "127.0.0.1:8891:8888"  # Adminer — gestore DB visuale
+      - "127.0.0.1:9998:9999"  # Mailcatcher — email di test
     environment:
-      - SHOP_DOMAIN=localhost:8090
+      - SHOP_DOMAIN=${SHOPWARE_DOMAIN:-localhost:8090}
       - APP_ENV=dev
     volumes:
       - shopware_data:/var/www/html
+      - shopware_mysql:/var/lib/mysql
     networks:
       - capperificio_net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost/admin"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s  # Shopware impiega 1-2 min al primo avvio
 
-  # ── Frontend React + Backend Express ─────────────────────
+  # ── Frontend React + Backend Express pagamenti ────────────────────────
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        # Le variabili VITE_* vengono embedded nel bundle al momento del build
-        - VITE_SHOPWARE_API_URL=${VITE_SHOPWARE_API_URL:-http://localhost:3000/store-api}
+        # VITE_* vengono embedded nel bundle al build time (URL pubblici del browser)
+        - VITE_SHOPWARE_API_URL=${VITE_SHOPWARE_API_URL}
         - VITE_SHOPWARE_ACCESS_KEY=${VITE_SHOPWARE_ACCESS_KEY}
         - VITE_SHOPWARE_STOREFRONT_URL=${VITE_SHOPWARE_STOREFRONT_URL:-default.headless0}
         - VITE_STRIPE_PUBLIC_KEY=${VITE_STRIPE_PUBLIC_KEY}
         - VITE_PAYPAL_CLIENT_ID=${VITE_PAYPAL_CLIENT_ID}
         - VITE_B2B_CATEGORY_ID=${VITE_B2B_CATEGORY_ID}
         - VITE_B2B_GROUP_NAME=${VITE_B2B_GROUP_NAME:-B2B}
-        - VITE_STRAPI_URL=${VITE_STRAPI_URL:-http://localhost:1337}
+        - VITE_STRAPI_URL=${VITE_STRAPI_URL}
         - VITE_STRAPI_TOKEN=${VITE_STRAPI_TOKEN}
     container_name: capperificio-frontend
     ports:
-      - "3001:80"    # Frontend (nginx)
+      - "3001:80"    # Sito principale (temp: Traefik occupa la 80)
     environment:
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
-      - NODE_ENV=${NODE_ENV:-production}
+      # Variabili RUNTIME per server.js Express (NON nel bundle Vite)
+      NODE_ENV: production
+      # Stripe — segreto server
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      # Shopware lato server: URL interno Docker (più veloce, non passa per nginx)
+      SHOPWARE_API_URL: http://shopware/store-api
+      SHOPWARE_ACCESS_KEY: ${VITE_SHOPWARE_ACCESS_KEY}
+      # Admin API (per segnare gli ordini "pagati") — URL interno docker
+      SHOPWARE_ADMIN_API_URL: http://shopware/api
+      SHOPWARE_ADMIN_CLIENT_ID: ${SHOPWARE_ADMIN_CLIENT_ID:-}
+      SHOPWARE_ADMIN_CLIENT_SECRET: ${SHOPWARE_ADMIN_CLIENT_SECRET:-}
+      SHOPWARE_ADMIN_USERNAME: ${SHOPWARE_ADMIN_USERNAME:-}
+      SHOPWARE_ADMIN_PASSWORD: ${SHOPWARE_ADMIN_PASSWORD:-}
+      # CORS: dominio pubblico del sito (es. http://157.90.241.97 o https://tuodominio.com)
+      FRONTEND_URL: ${SITE_URL:-http://localhost}
+      # Strapi proxy — URL interno alla rete Docker (NON l'IP pubblico:
+      # la porta 1337 è ora bound su 127.0.0.1 e non è raggiungibile dal container)
+      STRAPI_URL: ${STRAPI_URL:-http://strapi:1337}
+      STRAPI_TOKEN: ${STRAPI_TOKEN:-}
+      # Packlink PRO — spedizioni automatiche
+      PACKLINK_API_KEY: ${PACKLINK_API_KEY:-}
+      PACKLINK_SENDER_ZIP: ${PACKLINK_SENDER_ZIP:-73055}
+      PACKLINK_SENDER_COUNTRY: ${PACKLINK_SENDER_COUNTRY:-IT}
+      PACKLINK_SENDER_CITY: ${PACKLINK_SENDER_CITY:-Racale}
+      PACKLINK_SENDER_STATE: ${PACKLINK_SENDER_STATE:-LE}
+      PACKLINK_SENDER_STREET: ${PACKLINK_SENDER_STREET:-Via Montesanto 64}
+      PACKLINK_SENDER_NAME: ${PACKLINK_SENDER_NAME:-Capperificio di Racale}
+      PACKLINK_SENDER_EMAIL: ${PACKLINK_SENDER_EMAIL:-info@capperificiocaro.com}
+      PACKLINK_SENDER_PHONE: ${PACKLINK_SENDER_PHONE:-+390000000000}
+      PACKLINK_CONTENT: ${PACKLINK_CONTENT:-Capperi artigianali di Racale}
+      PACKLINK_PKG_WEIGHT_KG: ${PACKLINK_PKG_WEIGHT_KG:-1.5}
+      PACKLINK_PKG_WIDTH_CM: ${PACKLINK_PKG_WIDTH_CM:-22}
+      PACKLINK_PKG_HEIGHT_CM: ${PACKLINK_PKG_HEIGHT_CM:-12}
+      PACKLINK_PKG_LENGTH_CM: ${PACKLINK_PKG_LENGTH_CM:-28}
+      # Resend — email transazionali
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-Capperificio di Racale <ordini@capperificiocaro.com>}
+      RESEND_MERCHANT_TO: ${RESEND_MERCHANT_TO:-digital@capperificiocaro.com}
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '1.0'
     depends_on:
-      - shopware
+      shopware:
+        condition: service_healthy
+      # nginx risolve l'hostname "strapi" all'avvio (location /uploads):
+      # se il container non esiste, nginx non parte.
+      strapi:
+        condition: service_started
     networks:
       - capperificio_net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
-  # ── PostgreSQL per Strapi ────────────────────────────────
+  # ── PostgreSQL per Strapi ──────────────────────────────────────────────
   strapi-db:
     image: postgres:16-alpine
     container_name: capperificio-strapi-db
@@ -75,15 +159,23 @@ services:
     networks:
       - capperificio_net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U strapi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # ── Strapi CMS ───────────────────────────────────────────
+  # ── Strapi CMS ────────────────────────────────────────────────────────
   strapi:
-    image: node:20-alpine
+    build:
+      context: ./strapi
+      dockerfile: Dockerfile
     container_name: capperificio-strapi
-    working_dir: /srv/app
-    command: sh -c "npm install && npm run build && npm start"
+    # Solo 127.0.0.1: l'admin Strapi non va esposto su internet.
+    # Il frontend legge gli articoli via proxy server (/api/strapi) e le
+    # immagini via nginx (location /uploads → http://strapi:1337).
     ports:
-      - "1337:1337"
+      - "127.0.0.1:1337:1337"
     environment:
       NODE_ENV: production
       DATABASE_CLIENT: postgres
@@ -96,12 +188,14 @@ services:
       API_TOKEN_SALT: ${STRAPI_API_TOKEN_SALT}
       ADMIN_JWT_SECRET: ${STRAPI_ADMIN_JWT_SECRET}
       JWT_SECRET: ${STRAPI_JWT_SECRET}
-      URL: ${STRAPI_URL:-http://localhost:1337}
+      # URL con cui raggiungi l'admin Strapi: via tunnel SSH è localhost:1337.
+      # NON usare VITE_STRAPI_URL qui: quello ora punta al dominio del sito.
+      URL: ${STRAPI_PUBLIC_URL:-http://localhost:1337}
     volumes:
-      - ./strapi:/srv/app
-      - strapi_uploads:/srv/app/public/uploads
+      - strapi_uploads:/opt/app/public/uploads
     depends_on:
-      - strapi-db
+      strapi-db:
+        condition: service_healthy
     networks:
       - capperificio_net
     restart: unless-stopped
@@ -112,8 +206,6 @@ networks:
 
 volumes:
   shopware_data:
-    driver: local
+  shopware_mysql:
   strapi_db_data:
-    driver: local
   strapi_uploads:
-    driver: local

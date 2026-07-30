@@ -1,176 +1,482 @@
 [
   {
-    "productNumber": "CAP-OCCHIO-150",
-    "name": "Cappero di Racale Occhio di Pernice al Sale Marino",
-    "match": ["occhio di pernice", "occhio"],
-    "calibro": "Occhio di Pernice · Piccolo · Ø 6–9 mm",
-    "images": ["/images/20250611_CapperificioCaro_Capperi___-3635%20(1).webp", "/images/CAPPERI.jpg", "/images/capperi-al-sale.webp"],
-    "weightNet": "150 g",
-    "shippingWeightKg": 0.30,
-    "description": "Nel cuore di Racale siamo gli unici a classificare i capperi per calibro: un gesto di precisione che valorizza ogni sfumatura di gusto. L'<strong>Occhio di Pernice</strong> è il nostro calibro Piccolo, con un diametro che va dal 6 al 9 mm: il più versatile della nostra selezione, con un gusto equilibrato e adatto a ogni tipo di palato. Racchiude tutta l'intensità del cappero, ma con una sapidità più fine e armoniosa. Compatto e profumato, è perfetto per insalate, primi piatti, salse e preparazioni dove il cappero deve esaltare senza coprire.",
+    "productNumber": "CAP-SALE",
+    "name": "Capperi di Racale al Sale Marino Integrale",
+    "match": ["capperi al sale", "capperi sale", "sale marino integrale"],
+    "calibro": "Scegli il calibro",
+    "weightNet": "75–250 g",
+    "description": "I capperi del Capperificio Caro nascono a Racale, nel cuore del Salento, dove la famiglia li raccoglie e classifica a mano per calibro — un gesto di precisione artigianale che non esiste altrove. Ogni bocciolo viene subito stratificato con sale marino integrale delle saline pugliesi e rimescolato quotidianamente per almeno 25 giorni secondo la tradizione di famiglia. Scegli il calibro che preferisci: ogni formato ha un carattere diverso, tutte le varianti condividono la stessa origine e lo stesso processo.",
     "bullets": [
-      "Occhio di Pernice (calibro Piccolo, Ø 6–9 mm): il più versatile ed equilibrato della selezione",
-      "Raccolto e selezionato a mano a Racale",
-      "Esalta i piatti senza coprirli"
+      "Raccolti a mano e classificati per calibro a Racale, nel cuore del Salento",
+      "Conservati solo con sale marino integrale — nessun additivo né conservante",
+      "Scegli il calibro: dal minuto Lilliput al carnoso Capperone"
     ],
     "properties": [
       ["Origine", "Racale (Salento, Puglia)"],
-      ["Ingredienti", "Capperi 80% – Sale marino integrale 20%"],
-      ["Calibro", "Occhio di Pernice (Piccolo) · Ø 6–9 mm"],
-      ["Peso netto", "150 g"],
-      ["Note di gusto", ["Sapido", "Equilibrato", "Floreale"]],
-      ["Ideale per", "Insalate, primi piatti, salse"]
+      ["Ingredienti", "Capperi 80% – Sale marino integrale 20%"]
     ],
     "accordion": [
-      { "name": "In cucina", "html": "<p>Ideale per insalate, primi piatti e salse: esalta senza coprire gli altri ingredienti.</p>" },
-      { "name": "Abbinamenti", "html": "<p>Equilibrato e armonioso, si sposa con pesce, verdure e formaggi freschi.</p>" },
-      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Mantenere i capperi coperti dal sale dopo l'apertura.</p>" },
-      { "name": "Lo sapevi?", "html": "<p>A Racale siamo gli unici a classificare i capperi per calibro, uno per uno.</p>" }
+      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Dopo l'apertura tenere i capperi coperti dal sale; non necessitano di refrigerazione.</p>" }
     ]
   },
   {
-    "productNumber": "CAP-LILLIPUT-75",
-    "name": "Cappero di Racale Lilliput al Sale Marino",
+    "productNumber": "CAP-SALE-LILLIPUT",
+    "name": "Capperi di Racale al Sale — Lilliput",
     "match": ["lilliput"],
     "calibro": "Lilliput · Ø 4–6 mm",
     "images": ["/images/20250611_CapperificioCaro_Capperi___-3635%20(1).webp", "/images/CAPPERI.jpg", "/images/capperi-al-sale.webp"],
     "weightNet": "75 g",
     "shippingWeightKg": 0.20,
-    "description": "Il calibro <strong>Lilliput</strong> è il nostro orgoglio, il simbolo della cura e dell'identità che ci distingue. Unico nel suo genere, selezionato con meticolosa attenzione, rappresenta la nostra firma sul cappero di Racale. Con un diametro tra 4 e 6 mm, è il formato che meglio bilancia intensità e finezza. Compatti, fragranti e persistenti, questi capperi sprigionano l'essenza del Mediterraneo in ogni bocciolo. Ideali per chi cerca l'eccellenza: perfetti nella ristorazione gourmet, ma sorprendenti anche nelle preparazioni quotidiane. Lilliput non è solo un calibro: è il cuore del nostro lavoro, la nostra unicità in ogni vaso.",
+    "description": "I capperi del Capperificio Caro nascono a Racale, nel cuore del Salento, dove la famiglia li raccoglie e classifica a mano per calibro — un gesto di precisione artigianale che non esiste altrove. Ogni bocciolo viene subito stratificato con sale marino integrale delle saline pugliesi e rimescolato quotidianamente per almeno 25 giorni secondo la tradizione di famiglia. Scegli il calibro che preferisci: ogni formato ha un carattere diverso, tutte le varianti condividono la stessa origine e lo stesso processo.",
     "bullets": [
-      "Lilliput (Ø 4–6 mm): il calibro più piccolo e pregiato, la nostra firma — fragrante e persistente",
-      "Selezionato uno per uno, l'eccellenza per la cucina gourmet",
-      "L'essenza del Mediterraneo in ogni bocciolo"
+      "**Lilliput** (Ø 4–6 mm): il calibro più piccolo e pregiato, la firma del Capperificio Caro",
+      "Selezionato uno per uno a mano nei campi di Racale",
+      "Concentrato di aromi mediterranei, non di sale"
     ],
     "properties": [
       ["Origine", "Racale (Salento, Puglia)"],
       ["Ingredienti", "Capperi 80% – Sale marino integrale 20%"],
       ["Calibro", "Lilliput · Ø 4–6 mm"],
       ["Peso netto", "75 g"],
-      ["Note di gusto", ["Intenso", "Fragrante", "Persistente"]],
+      ["Note di gusto", ["Intenso", "Fragrante", "Persistente", "Floreale"]],
       ["Ideale per", "Cucina gourmet, crudi, finger food"]
     ],
     "accordion": [
-      { "name": "In cucina", "html": "<p>Perfetto crudo o a fine cottura su carpacci, tartare, primi piatti e finger food gourmet.</p>" },
-      { "name": "Abbinamenti", "html": "<p>Eccelle con pesce crudo, burrata, ricci di mare e piatti della ristorazione raffinata.</p>" },
-      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Mantenere i capperi coperti dal sale dopo l'apertura.</p>" },
-      { "name": "Lo sapevi?", "html": "<p>Fu Nonno Quintino a ideare per primo questo calibro minuscolo, poi battezzato dalla famiglia \"Lilliput\": dimensioni ridottissime ma un concentrato di sapore straordinario.</p>" }
+      { "name": "In cucina", "html": "<p>Aggiungilo crudo a fine cottura: su carpacci, tartare, burrata o crema di fave.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Perfetto con pesce crudo, burrata pugliese e formaggi freschi.</p>" },
+      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Dopo l'apertura tenere i capperi coperti dal sale; non necessitano di refrigerazione.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Fu Nonno Quintino a valorizzare questi boccioli minuscoli, battezzandoli \"Lilliput\": il nome racconta tutto.</p>" }
     ]
   },
   {
-    "productNumber": "CAP-LACRIMELLA-250",
-    "name": "Cappero di Racale Lacrimella al Sale Marino",
-    "match": ["lacrimella"],
-    "calibro": "Lacrimella · Medio · Ø 9–11 mm",
-    "images": ["/images/20250611_CapperificioCaro_Capperi___-3635%20(1).webp", "/images/CAPPERI.jpg", "/images/capperi-al-sale.webp"],
-    "weightNet": "250 g",
-    "shippingWeightKg": 0.42,
-    "description": "La <strong>Lacrimella</strong> è il nostro calibro medio (Ø 9–11 mm) e rappresenta l'armonia perfetta tra intensità aromatica e struttura. Più grande dei piccoli boccioli (come i Lilliput e l'Occhio di Pernice), ma non ancora completamente sviluppato come i capperoni, conserva una polpa carnosa, un gusto pieno ma non invadente e una consistenza che lo rende estremamente versatile in cucina. Con la maturazione diventa più morbido e leggermente più dolce rispetto ai calibri più piccoli. Questa evoluzione lo rende ideale anche per piatti quotidiani, dove si cerca equilibrio senza rinunciare al sapore.",
+    "productNumber": "CAP-SALE-OCCHIO",
+    "name": "Capperi di Racale al Sale — Occhio di Pernice",
+    "match": ["occhio di pernice", "occhio"],
+    "calibro": "Occhio di Pernice · Ø 7–9 mm",
+    "weightNet": "150 g",
+    "shippingWeightKg": 0.30,
+    "description": "I capperi del Capperificio Caro nascono a Racale, nel cuore del Salento, dove la famiglia li raccoglie e classifica a mano per calibro — un gesto di precisione artigianale che non esiste altrove. Ogni bocciolo viene subito stratificato con sale marino integrale delle saline pugliesi e rimescolato quotidianamente per almeno 25 giorni secondo la tradizione di famiglia. Scegli il calibro che preferisci: ogni formato ha un carattere diverso, tutte le varianti condividono la stessa origine e lo stesso processo.",
     "bullets": [
-      "Lacrimella (calibro Medio, Ø 9–11 mm): polpa carnosa, gusto pieno ma non invadente",
-      "Morbido e leggermente dolce, versatile in cucina",
-      "Perfetto per i piatti di tutti i giorni"
+      "**Occhio di Pernice** (Ø 7–9 mm): il più versatile della selezione",
+      "Sapidità fine, mai invadente — il punto di partenza ideale",
+      "Ottimo intero, tritato o in infusione nell'olio extravergine"
     ],
     "properties": [
       ["Origine", "Racale (Salento, Puglia)"],
       ["Ingredienti", "Capperi 80% – Sale marino integrale 20%"],
-      ["Calibro", "Lacrimella (Medio) · Ø 9–11 mm"],
-      ["Peso netto", "250 g"],
-      ["Note di gusto", ["Pieno", "Morbido", "Leggermente dolce"]],
-      ["Ideale per", "Risi, paste fredde, salse agrodolci"]
+      ["Calibro", "Occhio di Pernice · Ø 7–9 mm"],
+      ["Peso netto", "150 g"],
+      ["Note di gusto", ["Sapido", "Equilibrato", "Floreale", "Erbaceo"]],
+      ["Ideale per", "Insalate, primi piatti, salse, uso quotidiano"]
     ],
     "accordion": [
-      { "name": "In cucina", "html": "<p>Ottimo nel riso e nelle paste fredde: a questo livello di maturazione si fonde con gli altri ingredienti esaltandoli. Perfetto anche per ragù di pesce, caponata, farciture, paste fresche e salse agrodolci.</p>" },
-      { "name": "Abbinamenti", "html": "<p>Si abbina a pesce, verdure agrodolci, paste fresche, antipasti e farciture.</p>" },
-      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Mantenere i capperi coperti dal sale dopo l'apertura.</p>" },
-      { "name": "Lo sapevi?", "html": "<p>Con la maturazione il cappero medio diventa più morbido e leggermente più dolce dei calibri piccoli.</p>" }
+      { "name": "In cucina", "html": "<p>Versatile ovunque: intero nelle insalate, tritato nelle salse, in infusione nell'olio.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Con pesce al forno, verdure grigliate e pasta alla puttanesca.</p>" },
+      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Dopo l'apertura tenere i capperi coperti dal sale; non necessitano di refrigerazione.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>A Racale classifichiamo i capperi per calibro uno per uno: una precisione che non esiste altrove in Italia.</p>" }
     ]
   },
   {
-    "productNumber": "CAP-CAPPERONE-250",
-    "name": "Capperone di Racale al Sale Marino",
+    "productNumber": "CAP-SALE-LACRIMELLA",
+    "name": "Capperi di Racale al Sale — Lacrimella",
+    "match": ["lacrimella"],
+    "calibro": "Lacrimella · Ø 9–11 mm",
+    "weightNet": "250 g",
+    "shippingWeightKg": 0.42,
+    "description": "I capperi del Capperificio Caro nascono a Racale, nel cuore del Salento, dove la famiglia li raccoglie e classifica a mano per calibro — un gesto di precisione artigianale che non esiste altrove. Ogni bocciolo viene subito stratificato con sale marino integrale delle saline pugliesi e rimescolato quotidianamente per almeno 25 giorni secondo la tradizione di famiglia. Scegli il calibro che preferisci: ogni formato ha un carattere diverso, tutte le varianti condividono la stessa origine e lo stesso processo.",
+    "bullets": [
+      "**Lacrimella** (Ø 9–11 mm): polpa carnosa, gusto pieno e rotondo",
+      "Regge la cottura senza perdere struttura né aroma",
+      "Il cappero che convince anche chi credeva di non amarli"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Capperi 80% – Sale marino integrale 20%"],
+      ["Calibro", "Lacrimella · Ø 9–11 mm"],
+      ["Peso netto", "250 g"],
+      ["Note di gusto", ["Pieno", "Carnoso", "Morbido", "Leggermente dolce"]],
+      ["Ideale per", "Caponata, ragù di pesce, pasta fredda"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Perfetta in caponata, ragù di pesce e pasta alla Norma. La polpa carnosa regge la cottura.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Con melanzane, pomodori secchi, tonno sott'olio e acciughe.</p>" },
+      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Dopo l'apertura tenere i capperi coperti dal sale; non necessitano di refrigerazione.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>La polpa più spessa del calibro medio trattiene meglio i succhi durante la cottura.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CAP-SALE-CAPPERONE",
+    "name": "Capperi di Racale al Sale — Capperone",
     "match": ["capperone"],
     "calibro": "Capperone · Ø 12–15 mm",
     "images": ["/images/20250611_CapperificioCaro_Capperi___-3635%20(1).webp", "/images/CAPPERI.jpg", "/images/capperi-al-sale.webp"],
     "weightNet": "250 g",
     "shippingWeightKg": 0.42,
-    "description": "Il più grande tra i capperi, dall'audace consistenza carnosa e dal sapore marcato. Perfetto per essere tritato o disidratato. La sua peculiarità principale è quella di mantenere l'aroma anche dopo la cottura, grazie alla struttura più sviluppata e alla maggiore concentrazione di oli essenziali nella polpa. Questo tipo di cappero, noto come <strong>capperone</strong>, ha un diametro tra i 12 e i 15 mm. Viene raccolto in una fase più avanzata del bocciolo, poco prima che si trasformi in frutto.",
+    "description": "I capperi del Capperificio Caro nascono a Racale, nel cuore del Salento, dove la famiglia li raccoglie e classifica a mano per calibro — un gesto di precisione artigianale che non esiste altrove. Ogni bocciolo viene subito stratificato con sale marino integrale delle saline pugliesi e rimescolato quotidianamente per almeno 25 giorni secondo la tradizione di famiglia. Scegli il calibro che preferisci: ogni formato ha un carattere diverso, tutte le varianti condividono la stessa origine e lo stesso processo.",
     "bullets": [
-      "Capperone (Ø 12–15 mm): il calibro più grande, carnoso e dal sapore marcato",
-      "Mantiene l'aroma anche dopo la cottura",
-      "Ottimo tritato o disidratato"
+      "**Capperone** (Ø 12–15 mm): il più grande e audace, resiste alle cotture lunghe",
+      "Alta concentrazione di oli essenziali: sprigiona aroma a lungo",
+      "Perfetto tritato in sugo o disidratato come insaporitore"
     ],
     "properties": [
       ["Origine", "Racale (Salento, Puglia)"],
       ["Ingredienti", "Capperi 80% – Sale marino integrale 20%"],
       ["Calibro", "Capperone · Ø 12–15 mm"],
       ["Peso netto", "250 g"],
-      ["Note di gusto", ["Marcato", "Carnoso", "Aromatico"]],
-      ["Ideale per", "Cotture, sughi, tritato o disidratato"]
+      ["Note di gusto", ["Marcato", "Carnoso", "Aromatico", "Persistente"]],
+      ["Ideale per", "Sughi lunghi, tritato, disidratato, secondi"]
     ],
     "accordion": [
-      { "name": "In cucina", "html": "<p>Perfetto tritato o disidratato, in piatti cotti, sughi e secondi: rilascia aroma anche a fine cottura.</p>" },
-      { "name": "Abbinamenti", "html": "<p>Ideale con carni, sughi corposi e preparazioni che richiedono un cappero deciso.</p>" },
-      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Mantenere i capperi coperti dal sale dopo l'apertura.</p>" },
-      { "name": "Lo sapevi?", "html": "<p>Quello che nasce nel terreno racalino non è una semplice variante di qualcosa di già noto, ma un prodotto che trasuda autenticità, carattere e appartenenza.</p>" }
+      { "name": "In cucina", "html": "<p>Ideale nei sughi lunghi e nelle cotture in casseruola. Ottimo tritato su bruschette con pomodoro e origano.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Con carni saporite, pesce azzurro e piatti della cucina salentina tradizionale.</p>" },
+      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Dopo l'apertura tenere i capperi coperti dal sale; non necessitano di refrigerazione.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Il Capperone viene raccolto pochi giorni prima che il bocciolo diventi cucuncio.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CAP-ACETO",
+    "name": "Capperi di Racale all'Aceto",
+    "match": ["capperi aceto", "capperi all'aceto"],
+    "calibro": "Scegli il calibro",
+    "weightNet": "75–250 g",
+    "description": "I capperi di Racale classificati per calibro, marinati in aceto di vino bianco selezionato anziché sotto sale. La marinatura li rende pronti all'uso immediato: si aggiungono direttamente nel piatto preservando la vivacità aromatica e aggiungendo una nota acidula che bilancia la sapidità naturale del cappero. Scegli il calibro: ogni variante ha un carattere diverso.",
+    "bullets": [
+      "Pronti all'uso: nessuna dissalatura, nessun ammollo",
+      "Stessi calibri della linea al sale, in aceto di vino bianco",
+      "Il liquido di governo è un condimento: non buttarlo"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Capperi, aceto di vino bianco, sale"]
+    ],
+    "accordion": [
+      { "name": "Conservazione", "html": "<p>Luogo fresco e asciutto. Dopo l'apertura tenere in frigorifero immersi nel liquido di governo.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CAP-ACETO-LILLIPUT",
+    "name": "Capperi di Racale all'Aceto — Lilliput",
+    "match": ["lilliput aceto"],
+    "calibro": "Lilliput · Ø 4–6 mm · all'Aceto",
+    "weightNet": "75 g",
+    "shippingWeightKg": 0.20,
+    "description": "I capperi di Racale classificati per calibro, marinati in aceto di vino bianco selezionato anziché sotto sale. La marinatura li rende pronti all'uso immediato: si aggiungono direttamente nel piatto preservando la vivacità aromatica e aggiungendo una nota acidula che bilancia la sapidità naturale del cappero.",
+    "bullets": [
+      "**Lilliput all'Aceto** (Ø 4–6 mm): pronto all'uso, intenso e vivace",
+      "Nessuna dissalatura: direttamente dal barattolo al piatto",
+      "L'aceto esalta le note floreali del bocciolo più piccolo"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Capperi, aceto di vino bianco, sale"],
+      ["Calibro", "Lilliput · Ø 4–6 mm"],
+      ["Peso netto", "75 g"],
+      ["Note di gusto", ["Intenso", "Floreale", "Acidulo"]],
+      ["Ideale per", "Uso diretto, crudi, finger food, aperitivi"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Direttamente dal barattolo su carpacci, crudi di pesce e finger food.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Con ostriche, gamberi crudi, burrata e ovunque serva una nota acida brillante.</p>" },
+      { "name": "Conservazione", "html": "<p>Luogo fresco e asciutto. Dopo l'apertura tenere in frigorifero immersi nel liquido di governo.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Il liquido di governo è ottimo in vinaigrette o per degassare la padella: non buttarlo.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CAP-ACETO-OCCHIO",
+    "name": "Capperi di Racale all'Aceto — Occhio di Pernice",
+    "match": ["occhio aceto"],
+    "calibro": "Occhio di Pernice · Ø 7–9 mm · all'Aceto",
+    "weightNet": "150 g",
+    "shippingWeightKg": 0.30,
+    "description": "I capperi di Racale classificati per calibro, marinati in aceto di vino bianco selezionato anziché sotto sale. La marinatura li rende pronti all'uso immediato: si aggiungono direttamente nel piatto preservando la vivacità aromatica e aggiungendo una nota acidula che bilancia la sapidità naturale del cappero.",
+    "bullets": [
+      "**Occhio di Pernice all'Aceto** (Ø 7–9 mm): versatile e pronto all'uso",
+      "Sapidità fine e acidità vivace, mai aggressiva",
+      "Dal barattolo al piatto: nessuna preparazione"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Capperi, aceto di vino bianco, sale"],
+      ["Calibro", "Occhio di Pernice · Ø 7–9 mm"],
+      ["Peso netto", "150 g"],
+      ["Note di gusto", ["Sapido", "Acidulo", "Floreale", "Equilibrato"]],
+      ["Ideale per", "Insalate, salse fredde, pasta, formaggi"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Direttamente in insalate, salse fredde, pasta saltata o su formaggi.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Con tonno, acciughe, uova sode e pomodori freschi.</p>" },
+      { "name": "Conservazione", "html": "<p>Luogo fresco e asciutto. Dopo l'apertura tenere in frigorifero immersi nel liquido di governo.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Il liquido di governo è un condimento pronto: usalo in vinaigrette o per aromatizzare marinature.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CAP-ACETO-LACRIMELLA",
+    "name": "Capperi di Racale all'Aceto — Lacrimella",
+    "match": ["lacrimella aceto"],
+    "calibro": "Lacrimella · Ø 9–11 mm · all'Aceto",
+    "weightNet": "250 g",
+    "shippingWeightKg": 0.42,
+    "description": "I capperi di Racale classificati per calibro, marinati in aceto di vino bianco selezionato anziché sotto sale. La marinatura li rende pronti all'uso immediato: si aggiungono direttamente nel piatto preservando la vivacità aromatica e aggiungendo una nota acidula che bilancia la sapidità naturale del cappero.",
+    "bullets": [
+      "**Lacrimella all'Aceto** (Ø 9–11 mm): polpa carnosa, pronta all'uso",
+      "In cottura l'aceto evapora, il cappero resta integro e profumato",
+      "La più versatile della linea aceto"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Capperi, aceto di vino bianco, sale"],
+      ["Calibro", "Lacrimella · Ø 9–11 mm"],
+      ["Peso netto", "250 g"],
+      ["Note di gusto", ["Pieno", "Carnoso", "Acidulo", "Rotondo"]],
+      ["Ideale per", "Pasta, secondi, salse, caponata"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>In padella a metà cottura: l'aceto evapora e la polpa rimane intatta. Perfetta in puttanesca e caponata.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Con melanzane, tonno, acciughe e olive nere.</p>" },
+      { "name": "Conservazione", "html": "<p>Luogo fresco e asciutto. Dopo l'apertura tenere in frigorifero immersi nel liquido di governo.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Il liquido di governo ridotto con miele diventa una salsa agrodolce pronta in 2 minuti.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CAP-ACETO-CAPPERONE",
+    "name": "Capperi di Racale all'Aceto — Capperone",
+    "match": ["capperone aceto"],
+    "calibro": "Capperone · Ø 12–15 mm · all'Aceto",
+    "weightNet": "250 g",
+    "shippingWeightKg": 0.42,
+    "description": "I capperi di Racale classificati per calibro, marinati in aceto di vino bianco selezionato anziché sotto sale. La marinatura li rende pronti all'uso immediato: si aggiungono direttamente nel piatto preservando la vivacità aromatica e aggiungendo una nota acidula che bilancia la sapidità naturale del cappero.",
+    "bullets": [
+      "**Capperone all'Aceto** (Ø 12–15 mm): audace e persistente",
+      "Struttura carnosa che regge le cotture lunghe",
+      "Un ingrediente strutturale, non un semplice condimento"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Capperi, aceto di vino bianco, sale"],
+      ["Calibro", "Capperone · Ø 12–15 mm"],
+      ["Peso netto", "250 g"],
+      ["Note di gusto", ["Audace", "Selvatico", "Persistente"]],
+      ["Ideale per", "Sughi lunghi, secondi, cucina pugliese"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Protagonista in sughi lunghi, coniglio alla cacciatora e triglie alla livornese.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Con carni saporite, pesce azzurro, 'nduja e formaggi stagionati.</p>" },
+      { "name": "Conservazione", "html": "<p>Luogo fresco e asciutto. Dopo l'apertura tenere in frigorifero immersi nel liquido di governo.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Stesso calibro del cucuncio, pochi giorni prima della trasformazione in frutto: esperienze di gusto completamente diverse.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CUC-ACETO",
+    "name": "Cucunci di Racale all'Aceto",
+    "match": ["cucunci", "cucunci aceto"],
+    "calibro": "Scegli il tipo di aceto",
+    "weightNet": "200 g",
+    "description": "I cucunci sono i boccioli che non vengono raccolti in tempo: fioriscono e si trasformano in frutti allungati, con polpa più sviluppata e semi croccanti. Il gusto è diverso dal cappero — più morbido, fruttato, con una nota selvatica unica. A Racale vengono marinati in tre aceti differenti, ciascuno con un profilo aromatico ben distinto: scegli quello che si abbina meglio alla tua cucina.",
+    "bullets": [
+      "Frutti della pianta del cappero: più morbidi e fruttati del bocciolo",
+      "Tre aceti diversi, tre profili aromatici: scegli il tuo",
+      "Il liquido di governo è un ottimo condimento: non buttarlo"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Peso netto", "200 g"]
+    ],
+    "accordion": [
+      { "name": "Conservazione", "html": "<p>Luogo fresco. Dopo l'apertura tenere in frigorifero immersi nel liquido di governo. Il liquido è un ottimo condimento: non buttarlo.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CUC-ACETO-MELE",
+    "name": "Cucunci di Racale all'Aceto di Mele",
+    "match": ["cucunci mele"],
+    "calibro": "Cucunci · all'Aceto di Mele",
+    "weightNet": "200 g",
+    "shippingWeightKg": 0.35,
+    "description": "I cucunci sono i boccioli che non vengono raccolti in tempo: fioriscono e si trasformano in frutti allungati, con polpa più sviluppata e semi croccanti. Il gusto è diverso dal cappero — più morbido, fruttato, con una nota selvatica unica. In aceto di mele biologico per una dolcezza fruttata e un'acidità morbida.",
+    "bullets": [
+      "In aceto di mele biologico: dolcezza fruttata e acidità morbida",
+      "La versione più accessibile — il punto di partenza per chi scopre i cucunci",
+      "Polpa carnosa, semi croccanti, retrogusto di mela matura"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Cucunci di cappero, aceto di mele biologico, sale"],
+      ["Peso netto", "200 g"],
+      ["Note di gusto", ["Fruttato", "Morbido", "Dolce", "Rotondo"]],
+      ["Ideale per", "Taglieri, crostini, formaggi freschi, carni bianche"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>In un tagliere di salumi e formaggi, su crostini con stracciatella e miele.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Con formaggi freschi, prosciutto crudo e frutta secca. Ottimi in insalata con rucola, pere e noci.</p>" },
+      { "name": "Conservazione", "html": "<p>Luogo fresco. Dopo l'apertura tenere in frigorifero immersi nel liquido di governo.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Il cucuncio nasce dal bocciolo che sfugge alla raccolta: invece di diventare cappero, fiorisce e si trasforma in frutto.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CUC-ACETO-RISO",
+    "name": "Cucunci di Racale all'Aceto di Riso",
+    "match": ["cucunci riso"],
+    "calibro": "Cucunci · all'Aceto di Riso",
+    "weightNet": "200 g",
+    "shippingWeightKg": 0.35,
+    "description": "I cucunci sono i boccioli che non vengono raccolti in tempo: fioriscono e si trasformano in frutti allungati, con polpa più sviluppata e semi croccanti. Il gusto è diverso dal cappero — più morbido, fruttato, con una nota selvatica unica. In aceto di riso per un profilo delicato e floreale.",
+    "bullets": [
+      "In aceto di riso: l'aceto più delicato, lascia parlare il frutto",
+      "Gusto pulito e floreale, texture quasi seta con semi croccanti",
+      "La versione più raffinata — ispirazione fusion Salento-Oriente"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Cucunci di cappero, aceto di riso, sale"],
+      ["Peso netto", "200 g"],
+      ["Note di gusto", ["Pulito", "Delicato", "Floreale", "Erbaceo"]],
+      ["Ideale per", "Cucina fusion, carpacci, crudi"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Su carpacci di pesce spada, tartare di tonno e insalate con finocchio.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Con pesce crudo, ceviche mediterraneo e formaggi freschi a pasta molle.</p>" },
+      { "name": "Conservazione", "html": "<p>Luogo fresco. Dopo l'apertura tenere in frigorifero immersi nel liquido di governo.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>L'aceto di riso è usato in Giappone da oltre 2.000 anni per preservare senza coprire.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CUC-ACETO-MELOGRANO",
+    "name": "Cucunci di Racale all'Aceto di Melograno",
+    "match": ["cucunci melograno"],
+    "calibro": "Cucunci · all'Aceto di Melograno",
+    "weightNet": "200 g",
+    "shippingWeightKg": 0.35,
+    "description": "I cucunci sono i boccioli che non vengono raccolti in tempo: fioriscono e si trasformano in frutti allungati, con polpa più sviluppata e semi croccanti. Il gusto è diverso dal cappero — più morbido, fruttato, con una nota selvatica unica. In aceto di melograno per note vinose e un retrogusto fruttato amaro intenso.",
+    "bullets": [
+      "In aceto di melograno: note vinose, retrogusto fruttato amaro",
+      "Il liquido tinge la polpa di rosa rubino — bello nel piatto, straordinario al palato",
+      "La versione più intensa e complessa della linea"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Cucunci di cappero, aceto di melograno, sale"],
+      ["Peso netto", "200 g"],
+      ["Note di gusto", ["Intenso", "Vinoso", "Fruttato amaro", "Persistente"]],
+      ["Ideale per", "Carni rosse, formaggi stagionati, cucina creativa"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Con carni rosse marinate, selvaggina e piatti mediorientali. Ottimi in un risotto con melograno fresco.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Con formaggi stagionati, salumi di maiale e piatti agrodolci.</p>" },
+      { "name": "Conservazione", "html": "<p>Luogo fresco. Dopo l'apertura tenere in frigorifero immersi nel liquido di governo.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Il melograno e il cappero crescono nel bacino del Mediterraneo da millenni: questi cucunci sono il loro primo incontro.</p>" }
     ]
   },
   {
     "productNumber": "CAP-POLVERE-50",
-    "name": "Polvere di Cappero Extrafine",
+    "name": "Polvere di Cappero di Racale Extrafine",
     "match": ["polvere"],
     "calibro": "Polvere Extrafine",
     "images": ["/images/20250611_CapperificioCaro_Capperi___-3635%20(1).webp", "/images/CAPPERI.jpg", "/images/capperi-al-sale.webp"],
     "weightNet": "50 g",
     "shippingWeightKg": 0.12,
-    "description": "Capperi selezionati, dissalati, essiccati e ridotti in polvere. Un insaporitore naturale dal profumo intenso, sapido e dalla lunga persistenza aromatica, capace di richiamare tutta la complessità del cappero fresco in una forma più pratica e dosabile. Tutto il gusto del cappero in una forma concentrata e soprattutto <strong>100% naturale</strong>, senza conservanti né additivi. Si scioglie facilmente in fondi, brodi e salse: un cucchiaino basta per trasformare un piatto semplice in un'esperienza complessa e intensa, grazie alla naturale concentrazione aromatica ottenuta con un processo lento di essiccazione a bassa temperatura che preserva gli oli essenziali del cappero.",
+    "description": "La Polvere di Cappero Extrafine nasce dall'essiccazione lenta a meno di 40°C dei capperi di Racale: una temperatura che preserva intatti gli oli essenziali della pianta. Il risultato è una polvere verde salvia, profumatissima e concentratissima. Un cucchiaino basta per trasformare fondi, salse e finiture. 100% naturale, senza conservanti né additivi.",
     "bullets": [
-      "Tutto il gusto del cappero in forma concentrata e dosabile",
-      "100% naturale, senza conservanti né additivi",
-      "Un cucchiaino basta per insaporire"
+      "Essiccazione lenta a < 40°C: tutti gli oli essenziali del cappero preservati",
+      "100% naturale — solo cappero di Racale e sale marino",
+      "Un cucchiaino trasforma fondi, salse e finiture"
     ],
     "properties": [
       ["Origine", "Racale (Salento, Puglia)"],
-      ["Ingredienti", "Capperi disidratati e sale marino integrale — 100% naturale, senza conservanti né additivi"],
-      ["Tipo", "Polvere extrafine"],
+      ["Ingredienti", "Capperi disidratati, sale marino integrale — 100% naturale"],
+      ["Calibro", "Polvere extrafine"],
       ["Peso netto", "50 g"],
-      ["Note di gusto", ["Concentrato", "Sapido", "Persistente"]],
-      ["Ideale per", "Fondi, brodi, salse, marinature"]
+      ["Note di gusto", ["Concentrato", "Sapido", "Persistente", "Aromatico"]],
+      ["Ideale per", "Fondi, brodi, salse, finitura a crudo, burro aromatico"]
     ],
     "accordion": [
-      { "name": "In cucina", "html": "<p>Si scioglie in fondi, brodi e salse: un cucchiaino trasforma un piatto semplice in un'esperienza intensa.</p>" },
-      { "name": "Abbinamenti", "html": "<p>Insaporitore versatile per primi, secondi, marinature e finiture a crudo.</p>" },
-      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto, al riparo dall'umidità; richiudere bene dopo l'uso.</p>" },
-      { "name": "Lo sapevi?", "html": "<p>Nasce dal recupero di capperi troppo grandi o imperfetti per la conservazione intera: uno scarto che diventa prelibatezza grazie a essiccazione e macinatura.</p>" }
+      { "name": "In cucina", "html": "<p>Si scioglie in fondi e salse; spolverata a crudo su pasta o carpaccio; mischiata al burro per un condimento intenso. Dosare con parsimonia.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Insaporitore universale per primi, secondi e marinature. Eccellente nel burro per bistecche.</p>" },
+      { "name": "Conservazione", "html": "<p>Luogo fresco, asciutto e al riparo dalla luce. Richiudere bene dopo ogni uso.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Nasce dal recupero dei capperi imperfetti per la conservazione intera: uno scarto nobilitato dalla lentezza dell'essiccazione.</p>" }
     ]
   },
   {
     "productNumber": "CAP-FOGLIE",
-    "name": "Foglie di Cappero al Sale Marino",
+    "name": "Foglie di Cappero di Racale al Sale Marino",
     "match": ["foglie"],
     "calibro": "Foglie · 50 g / 150 g",
     "images": ["/images/20250611_CapperificioCaro_Capperi___-3635%20(1).webp", "/images/CAPPERI.jpg", "/images/capperi-al-sale.webp"],
     "weightNet": "50 g / 150 g",
     "variants": { "group": "Formato", "options": ["50 g", "150 g"], "skus": ["CAP-FOGLIE-50", "CAP-FOGLIE-150"] },
-    "description": "Le foglie della pianta del cappero, dal gusto fresco, minerale e dalla consistenza croccante. Una rarità mediterranea. Le foglie di cappero (<em>Capparis spinosa</em>) sono una parte meno conosciuta ma sempre più apprezzata della pianta. Non sono solo commestibili, ma anche estremamente versatili in cucina, soprattutto nella gastronomia mediterranea contemporanea e nella ristorazione gourmet. Vengono raccolte durante la stagione vegetativa, generalmente tra maggio e settembre, prima che diventino troppo coriacee: si scelgono le foglie giovani e tenere, dalla consistenza più delicata e dal gusto equilibrato, leggermente sapido.",
+    "description": "Le Foglie di Cappero (Capparis spinosa) sono la parte meno conosciuta della pianta, ma sempre più apprezzata in cucina. Gusto fresco e minerale con un lieve amarognolo, consistenza croccante. Si raccolgono tra maggio e settembre, solo le foglie giovani e tenere — quelle più vecchie vengono scartate. Perfette fritte in pastella, in involtini o tritate fresche su tartare.",
     "bullets": [
-      "Foglie di cappero: fresche, minerali e croccanti",
-      "Una rarità mediterranea, perfetta in cucina gourmet",
-      "Solo foglie giovani e tenere, raccolte a mano"
+      "Foglie giovani e tenere: fresche, minerali, croccanti",
+      "Raccolte a mano tra maggio e settembre, solo le più giovani",
+      "Fritte in pastella, in involtini o fresche su tartare"
     ],
     "properties": [
       ["Origine", "Racale (Salento, Puglia)"],
       ["Ingredienti", "Foglie di cappero 80% – Sale marino integrale 20%"],
-      ["Tipo", "Foglie giovani e tenere"],
-      ["Peso netto", "50 g / 150 g"],
-      ["Note di gusto", ["Fresco", "Minerale", "Amarognolo"]],
-      ["Ideale per", "Tartare, insalate, involtini, fritture"]
+      ["Calibro", "Foglie giovani e tenere, raccolta maggio–settembre"],
+      ["Note di gusto", ["Fresco", "Minerale", "Erbaceo", "Lieve amaro"]],
+      ["Ideale per", "Frittura in pastella, involtini, insalate, tartare"]
     ],
     "accordion": [
-      { "name": "In cucina", "html": "<p>Ideali per arricchire tartare di pesce, involtini di carne, insalate di stagione o persino da friggere.</p>" },
-      { "name": "Abbinamenti", "html": "<p>Perfette con pesce crudo, carni delicate e insalate estive; un tocco amarognolo e fresco.</p>" },
-      { "name": "Conservazione", "html": "<p>Conservare in luogo fresco e asciutto. Mantenere le foglie coperte dal sale dopo l'apertura.</p>" },
-      { "name": "Lo sapevi?", "html": "<p>Si raccolgono tra maggio e settembre, scegliendo solo le foglie giovani e tenere prima che diventino coriacee.</p>" }
+      { "name": "In cucina", "html": "<p>Dopo breve dissalatura: fritte in pastella, come foglie di vite per involtini, o tritate su tartare.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Con pesce crudo e carpacci. Fritte in pastella sono irresistibili con salsa allo yogurt e menta.</p>" },
+      { "name": "Conservazione", "html": "<p>Luogo fresco e asciutto. Tenere le foglie coperte dal sale dopo l'apertura.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Nella tradizione salentina tutto della pianta ha valore: le foglie non si buttavano. Oggi le cuciniamo.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CAP-FOGLIE-50",
+    "name": "Foglie di Cappero di Racale al Sale Marino — 50 g",
+    "match": [],
+    "calibro": "Foglie di Cappero · 50 g",
+    "weightNet": "50 g",
+    "shippingWeightKg": 0.15,
+    "description": "Le Foglie di Cappero (Capparis spinosa) sono la parte meno conosciuta della pianta, ma sempre più apprezzata in cucina. Gusto fresco e minerale con un lieve amarognolo, consistenza croccante. Si raccolgono tra maggio e settembre, solo le foglie giovani e tenere — quelle più vecchie vengono scartate.",
+    "bullets": [
+      "Foglie giovani e tenere: fresche, minerali, croccanti",
+      "Raccolte a mano tra maggio e settembre, solo le più giovani",
+      "Fritte in pastella, in involtini o fresche su tartare"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Foglie di cappero 80% – Sale marino integrale 20%"],
+      ["Calibro", "Foglie giovani e tenere, raccolta maggio–settembre"],
+      ["Peso netto", "50 g"],
+      ["Note di gusto", ["Fresco", "Minerale", "Erbaceo", "Lieve amaro"]],
+      ["Ideale per", "Frittura in pastella, involtini, insalate, tartare"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Dopo breve dissalatura: fritte in pastella, come foglie di vite per involtini, o tritate su tartare.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Con pesce crudo e carpacci. Fritte in pastella sono irresistibili con salsa allo yogurt e menta.</p>" },
+      { "name": "Conservazione", "html": "<p>Luogo fresco e asciutto. Tenere le foglie coperte dal sale dopo l'apertura.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Nella tradizione salentina tutto della pianta ha valore: le foglie non si buttavano. Oggi le cuciniamo.</p>" }
+    ]
+  },
+  {
+    "productNumber": "CAP-FOGLIE-150",
+    "name": "Foglie di Cappero di Racale al Sale Marino — 150 g",
+    "match": [],
+    "calibro": "Foglie di Cappero · 150 g",
+    "weightNet": "150 g",
+    "shippingWeightKg": 0.30,
+    "description": "Le Foglie di Cappero (Capparis spinosa) sono la parte meno conosciuta della pianta, ma sempre più apprezzata in cucina. Gusto fresco e minerale con un lieve amarognolo, consistenza croccante. Si raccolgono tra maggio e settembre, solo le foglie giovani e tenere — quelle più vecchie vengono scartate.",
+    "bullets": [
+      "Foglie giovani e tenere: fresche, minerali, croccanti",
+      "Raccolte a mano tra maggio e settembre, solo le più giovani",
+      "Fritte in pastella, in involtini o fresche su tartare"
+    ],
+    "properties": [
+      ["Origine", "Racale (Salento, Puglia)"],
+      ["Ingredienti", "Foglie di cappero 80% – Sale marino integrale 20%"],
+      ["Calibro", "Foglie giovani e tenere, raccolta maggio–settembre"],
+      ["Peso netto", "150 g"],
+      ["Note di gusto", ["Fresco", "Minerale", "Erbaceo", "Lieve amaro"]],
+      ["Ideale per", "Frittura in pastella, involtini, insalate, tartare"]
+    ],
+    "accordion": [
+      { "name": "In cucina", "html": "<p>Dopo breve dissalatura: fritte in pastella, come foglie di vite per involtini, o tritate su tartare.</p>" },
+      { "name": "Abbinamenti", "html": "<p>Con pesce crudo e carpacci. Fritte in pastella sono irresistibili con salsa allo yogurt e menta.</p>" },
+      { "name": "Conservazione", "html": "<p>Luogo fresco e asciutto. Tenere le foglie coperte dal sale dopo l'apertura.</p>" },
+      { "name": "Lo sapevi?", "html": "<p>Nella tradizione salentina tutto della pianta ha valore: le foglie non si buttavano. Oggi le cuciniamo.</p>" }
     ]
   },
   {

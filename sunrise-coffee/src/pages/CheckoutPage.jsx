@@ -1,18 +1,16 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useCartContext, useCustomerContext } from '../context/ShopwareContext';
+import { gtmBeginCheckout, gtmAddShippingInfo, gtmPurchase } from '../lib/utils/gtm';
 import {
-  getShippingMethods, getPaymentMethods, updateContext,
-  getContextToken, createStripePaymentIntent, confirmStripeOrder,
-  createPaypalOrder, capturePaypalOrder,
+  getShippingMethods, createCheckoutIntent, confirmCheckout,
 } from '../lib/api/checkout';
-import { getCountries, getSalutations, register } from '../lib/api/customer';
+import { getCountries, getSalutations } from '../lib/api/customer';
 import { useSEO } from '../hooks/useSEO';
 import { formatPrice } from '../lib/utils/price';
-import { isShopwareConfigured } from '../lib/shopware-client';
+import { isShopwareConfigured, getContextToken, setContextToken } from '../lib/shopware-client';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
-import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import StripePaymentForm from '../components/checkout/StripePaymentForm';
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
@@ -316,11 +314,10 @@ export default function CheckoutPage() {
   const [addrQuery, setAddrQuery] = useState('');
   const [addrSuggestions, setAddrSuggestions] = useState([]);
   const [addrLoading, setAddrLoading] = useState(false);
-  const [paymentTab, setPaymentTab] = useState('stripe'); // 'stripe' | 'paypal'
-  const [stripePaymentMethodId, setStripePaymentMethodId] = useState('');
-  const [paypalPaymentMethodId, setPaypalPaymentMethodId] = useState('');
   const [stripeClientSecret, setStripeClientSecret] = useState(null);
+  const [serverContextToken, setServerContextToken] = useState(null);
   const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeLoadError, setStripeLoadError] = useState(null);
 
   const detectedIso = useMemo(() => detectCountryIso(), []);
 
@@ -375,50 +372,59 @@ export default function CheckoutPage() {
     getShippingMethods().then((sm) => { setShippingMethods(sm); if (sm.length) setSelectedShipping(sm[0].id); }).catch(() => {}).finally(() => setLoadingMethods(false));
     getCountries().then((co) => setSwCountries(co)).catch(() => {});
     getSalutations().then((sa) => { if (sa.length) setSalutationId(sa[0].id); }).catch(() => {});
-    getPaymentMethods().then((methods) => {
-      const isStripe = (m) => /stripe/i.test(m.handlerIdentifier || '') || /stripe/i.test(m.name || '') || /stripe/i.test(m.translated?.name || '');
-      const isPaypal = (m) => /paypal/i.test(m.handlerIdentifier || '') || /paypal/i.test(m.name || '') || /paypal/i.test(m.translated?.name || '');
-      const stripePm = methods.find(isStripe);
-      const paypalPm = methods.find(isPaypal);
-      if (stripePm) setStripePaymentMethodId(stripePm.id);
-      if (paypalPm) setPaypalPaymentMethodId(paypalPm.id);
-    }).catch(() => {});
   }, []);
 
-  // Aggiorna contesto Shopware con il metodo di spedizione selezionato quando si arriva allo step 2
-  // → Shopware ricalcola il carrello e applica la regola "spedizione gratuita sopra X€"
-  useEffect(() => {
-    if (step !== 2 || !selectedShipping || !isShopwareConfigured()) return;
-    updateContext({ shippingMethodId: selectedShipping })
-      .then(() => fetchCart())
-      .catch(() => {}); // silenzioso, non blocca il flusso
-  }, [step, selectedShipping]);
+  // Se cambia il metodo di spedizione (l'importo può variare), invalida il
+  // PaymentIntent: verrà ricreato dal server con il totale aggiornato.
+  useEffect(() => { setStripeClientSecret(null); }, [selectedShipping]);
 
-  // Se il totale cambia (es. cambio spedizione) invalida il PaymentIntent:
-  // verrà ricreato con l'importo aggiornato, evitando mismatch in fase di verifica.
-  useEffect(() => { setStripeClientSecret(null); }, [totalPrice]);
-
-  // Crea PaymentIntent Stripe quando si arriva allo step 2 con tab stripe.
-  // L'importo è calcolato dal server sul carrello reale (anti price-tampering).
-  // Prima registra l'utente (guest) così il context token è stabile e coincide
-  // con quello con cui verrà poi verificato e piazzato l'ordine.
+  // ── Prepara il checkout e crea il PaymentIntent unico (carta/wallet/PayPal) ──
+  // Tutto lato server in un'unica chiamata atomica: registra il guest, imposta la
+  // spedizione, calcola il totale reale dal carrello e crea il PaymentIntent.
+  // Restituisce il context token autoritativo → niente più race condition sul token.
+  const preparingRef = useRef(false);
   useEffect(() => {
-    if (step !== 2 || paymentTab !== 'stripe' || !stripePromise || stripeClientSecret) return;
+    if (step !== 2 || !selectedShipping || !stripePromise) return;
+    if (stripeClientSecret || stripeLoadError || preparingRef.current) return;
     let cancelled = false;
+    preparingRef.current = true;
     setStripeLoading(true);
     (async () => {
       try {
-        const token = await ensurePreparedContext(stripePaymentMethodId);
-        const data = await createStripePaymentIntent(token);
-        if (!cancelled && data.clientSecret) setStripeClientSecret(data.clientSecret);
-      } catch {
-        if (!cancelled) setOrderError('Impossibile inizializzare il pagamento con carta. Riprova o usa PayPal.');
+        const data = await createCheckoutIntent({
+          contextToken: getContextToken(),
+          shippingMethodId: selectedShipping,
+          customer: {
+            email: address.email,
+            firstName: address.firstName,
+            lastName: address.lastName,
+            salutationId,
+            storefrontUrl: import.meta.env.VITE_SHOPWARE_STOREFRONT_URL || window.location.origin,
+          },
+          billingAddress: {
+            firstName: address.firstName,
+            lastName: address.lastName,
+            street: [address.street, address.houseNumber].filter(Boolean).join(', '),
+            zipcode: address.zipcode,
+            city: address.city,
+            salutationId,
+            ...(resolvedCountryId ? { countryId: resolvedCountryId } : {}),
+          },
+        });
+        if (cancelled) return;
+        // Adotta il token autoritativo del server (il carrello è migrato lì)
+        if (data.contextToken) { setContextToken(data.contextToken); setServerContextToken(data.contextToken); }
+        if (data.clientSecret) setStripeClientSecret(data.clientSecret);
+        fetchCart(); // aggiorna il riepilogo (spedizione/totale) sul token corretto
+      } catch (e) {
+        if (!cancelled) setStripeLoadError(e.message || 'Impossibile inizializzare il pagamento.');
       } finally {
+        preparingRef.current = false;
         if (!cancelled) setStripeLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [step, paymentTab, stripeClientSecret, stripePaymentMethodId]);
+  }, [step, selectedShipping, stripeClientSecret, stripeLoadError]);
 
   // Ricerca indirizzo con Nominatim (OpenStreetMap, gratuito)
   useEffect(() => {
@@ -539,83 +545,42 @@ export default function CheckoutPage() {
       }
     }
     setFormError('');
-    setStep((s) => s + 1);
+    const nextStep = step + 1;
+    if (nextStep === 2) {
+      gtmBeginCheckout(cart?.lineItems ?? [], totalPrice);
+    }
+    if (nextStep === 2 && step === 1) {
+      const method = shippingMethods.find(m => m.id === selectedShipping);
+      gtmAddShippingInfo(method?.translated?.name || method?.name, totalPrice);
+    }
+    setStep(nextStep);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Registra l'utente (guest) una sola volta e imposta spedizione + metodo di
-  // pagamento sul contesto Shopware. Ritorna il context token aggiornato, che è
-  // lo stesso usato dal server per verificare il pagamento e creare l'ordine.
-  const preparedGuest = useRef(false);
-  const ensurePreparedContext = async (paymentMethodId) => {
-    if (!isLoggedIn && !preparedGuest.current) {
-      const billingAddress = {
-        firstName: address.firstName,
-        lastName: address.lastName,
-        street: [address.street, address.houseNumber].filter(Boolean).join(', '),
-        zipcode: address.zipcode,
-        city: address.city,
-        salutationId,
-        ...(resolvedCountryId ? { countryId: resolvedCountryId } : {}),
-      };
-      try {
-        await register({
-          guest: true,
-          email: address.email,
-          firstName: address.firstName,
-          lastName: address.lastName,
-          salutationId,
-          storefrontUrl: import.meta.env.VITE_SHOPWARE_STOREFRONT_URL || window.location.origin,
-          billingAddress,
-        });
-      } catch (e) {
-        // Se è già registrato come guest in questa sessione, prosegui
-        if (!/already|exist/i.test(e?.message || '')) throw e;
-      }
-      preparedGuest.current = true;
-    }
-    await updateContext({
-      shippingMethodId: selectedShipping,
-      ...(paymentMethodId ? { paymentMethodId } : {}),
-    });
-    await fetchCart();
-    return getContextToken();
-  };
-
-  // ── Finalizzazione Stripe: il server verifica il pagamento prima di creare l'ordine
+  // ── Finalizzazione: il server verifica il pagamento, crea l'ordine e lo segna pagato.
   const handleStripeSuccess = async (paymentIntentId) => {
     setOrderError(null);
     setPlacing(true);
     try {
       if (!paymentIntentId) throw new Error('Pagamento non identificato. Riprova.');
-      const token = await ensurePreparedContext(stripePaymentMethodId);
-      const { orderNumber: num } = await confirmStripeOrder(paymentIntentId, token);
+      const token = serverContextToken || getContextToken();
+      const { orderNumber: num } = await confirmCheckout({ paymentIntentId, contextToken: token });
       setOrderNumber(num || '—');
+      gtmPurchase({
+        orderNumber: num || paymentIntentId,
+        total: totalPrice,
+        shipping: cart?.deliveries?.[0]?.shippingCosts?.totalPrice ?? 0,
+        lineItems: cart?.lineItems ?? [],
+      });
       await fetchCart();
     } catch (e) {
+      // 409 = ordine già elaborato (es. dal webhook Stripe): è un successo, non un errore.
+      if (/già elaborato|already/i.test(e?.message || '')) {
+        setOrderNumber('—');
+        await fetchCart();
+        return;
+      }
       setOrderError(e.message || 'Errore durante il completamento ordine. Riprova.');
-      throw e;
-    } finally {
-      setPlacing(false);
-    }
-  };
-
-  // ── Finalizzazione PayPal: cattura + verifica importo + ordine, tutto lato server
-  const handlePaypalCreateOrder = async () => {
-    const token = await ensurePreparedContext(paypalPaymentMethodId);
-    const { id } = await createPaypalOrder(token);
-    return id;
-  };
-  const handlePaypalApprove = async (data) => {
-    setOrderError(null);
-    setPlacing(true);
-    try {
-      const token = getContextToken();
-      const { orderNumber: num } = await capturePaypalOrder(data.orderID, token);
-      setOrderNumber(num || '—');
-      await fetchCart();
-    } catch (e) {
-      setOrderError(e.message || 'Errore durante il completamento ordine PayPal.');
       throw e;
     } finally {
       setPlacing(false);
@@ -907,41 +872,34 @@ export default function CheckoutPage() {
                   )}
                   {/* ── Pagamento ──────────────────────────── */}
                   <div style={{ paddingBottom: 40 }}>
-                    <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 14, marginTop: 0, color: 'var(--color-dark)' }}>
+                    <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 6, marginTop: 0, color: 'var(--color-dark)' }}>
                       Pagamento
                     </h2>
+                    <p style={{ fontSize: 13, color: 'var(--color-mid)', marginBottom: 20, marginTop: 0 }}>
+                      Carta, Apple Pay, Google Pay e altri metodi disponibili. 🔒 Pagamento sicuro.
+                    </p>
 
-                    {/* Tab Stripe | PayPal */}
-                    <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: '1.5px solid var(--color-border)' }}>
-                      {[
-                        { key: 'stripe', label: '💳 Carta di credito' },
-                        { key: 'paypal', label: '🅿 PayPal' },
-                      ].map(({ key, label }) => (
-                        <button
-                          key={key}
-                          onClick={() => setPaymentTab(key)}
-                          style={{
-                            flex: 1, padding: '10px 0',
-                            border: 'none',
-                            borderBottom: `2px solid ${paymentTab === key ? 'var(--color-dark)' : 'transparent'}`,
-                            marginBottom: -1.5,
-                            background: 'transparent',
-                            fontWeight: paymentTab === key ? 700 : 400, fontSize: 14,
-                            cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                            color: paymentTab === key ? 'var(--color-dark)' : 'var(--color-mid)',
-                            transition: 'all .2s',
-                          }}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Stripe Elements */}
-                    {paymentTab === 'stripe' && (
-                      stripeLoading || !stripeClientSecret
+                    {/* Payment Element unico (carta + wallet + PayPal via Stripe) */}
+                    {!stripePromise ? (
+                      <p style={{ color: 'var(--color-mid)', fontSize: 13 }}>
+                        Configura <code>VITE_STRIPE_PUBLIC_KEY</code> nel file <code>.env</code> per abilitare il pagamento.
+                      </p>
+                    ) : (
+                      stripeLoading
                         ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--color-mid)' }}>⏳ Caricamento pagamento...</div>
-                        : stripePromise && (
+                        : stripeLoadError
+                          ? (
+                            <div style={{ padding: '24px 0' }}>
+                              <p style={{ color: 'var(--color-red)', fontSize: 13, marginBottom: 12 }}>⚠ {stripeLoadError}</p>
+                              <button
+                                onClick={() => setStripeLoadError(null)}
+                                style={{ background: 'none', border: '1.5px solid var(--color-dark)', borderRadius: 'var(--radius-pill)', padding: '10px 24px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600 }}
+                              >
+                                Riprova
+                              </button>
+                            </div>
+                          )
+                        : stripeClientSecret && (
                           <Elements stripe={stripePromise} options={{
                             clientSecret: stripeClientSecret,
                             locale: 'it',
@@ -998,35 +956,6 @@ export default function CheckoutPage() {
                               isMobile={isMobile}
                             />
                           </Elements>
-                        )
-                    )}
-                    {paymentTab === 'stripe' && !stripePromise && (
-                      <p style={{ color: 'var(--color-mid)', fontSize: 13 }}>
-                        Configura <code>VITE_STRIPE_PUBLIC_KEY</code> nel file <code>.env</code> per abilitare il pagamento con carta.
-                      </p>
-                    )}
-
-                    {/* PayPal */}
-                    {paymentTab === 'paypal' && (
-                      import.meta.env.VITE_PAYPAL_CLIENT_ID
-                        ? (
-                          <PayPalScriptProvider options={{
-                            clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID,
-                            currency: 'EUR',
-                            locale: 'it_IT',
-                          }}>
-                            <PayPalButtons
-                              style={{ layout: 'vertical', shape: 'pill' }}
-                              createOrder={() => handlePaypalCreateOrder()}
-                              onApprove={(data) => handlePaypalApprove(data)}
-                              onError={(err) => setOrderError('Errore PayPal: ' + (err?.message || 'Riprova.'))}
-                            />
-                          </PayPalScriptProvider>
-                        )
-                        : (
-                          <p style={{ color: 'var(--color-mid)', fontSize: 13 }}>
-                            Configura <code>VITE_PAYPAL_CLIENT_ID</code> nel file <code>.env</code> per abilitare PayPal.
-                          </p>
                         )
                     )}
 

@@ -73,7 +73,7 @@ export default function Header() {
             Menu{' '}
             <span className={styles.triggerIcon}>+</span>
           </button>
-          <Link to="/" className={styles.navLink}>Chi siamo</Link>
+          <Link to="/storia" className={styles.navLink}>Chi siamo</Link>
         </nav>
 
         <div className={styles.navCenter}>

@@ -217,7 +217,7 @@ function B2BLanding() {
           <p className={styles.formHint}>
             Non hai ancora un account rivenditore?{' '}
             <a
-              href="mailto:info@capperificio.it?subject=Richiesta accesso B2B"
+              href="mailto:info@capperificiocaro.com?subject=Richiesta accesso B2B"
               className={styles.link}
             >
               Contattaci
@@ -259,10 +259,10 @@ function B2BPending({ customer }) {
         <div className={styles.pendingContact}>
           <p className={styles.pendingContactTitle}>Hai bisogno di assistenza?</p>
           <a
-            href="mailto:info@capperificio.it?subject=Accesso B2B — Urgente"
+            href="mailto:info@capperificiocaro.com?subject=Accesso B2B — Urgente"
             className={styles.btnOutline}
           >
-            Scrivi a info@capperificio.it
+            Scrivi a info@capperificiocaro.com
           </a>
         </div>
 
@@ -404,8 +404,8 @@ function B2BCatalog({ customer }) {
       <div className={styles.b2bFooter}>
         <p>
           Per ordini speciali o preventivi personalizzati:{' '}
-          <a href="mailto:b2b@capperificio.it" className={styles.link}>
-            b2b@capperificio.it
+          <a href="mailto:b2b@capperificiocaro.com" className={styles.link}>
+            b2b@capperificiocaro.com
           </a>
         </p>
         <Link to="/account" className={styles.link}>Il tuo account →</Link>

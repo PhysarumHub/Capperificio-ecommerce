@@ -6,3 +6,7 @@ dist
 .claude
 .vercel
 *.md
+strapi/node_modules
+strapi/build
+strapi/.strapi
+.poller-state.json

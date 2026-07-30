@@ -8,15 +8,32 @@ const accessKey = import.meta.env.VITE_SHOPWARE_ACCESS_KEY || '';
 
 const savedToken = Cookies.get(CONTEXT_TOKEN_COOKIE) || '';
 
+// Track the latest token in-memory so getContextToken() is always accurate,
+// even in the same microtask turn where Shopware issues a new token
+// (e.g. after guest registration changes the session).
+let _latestToken = savedToken;
+
 export const apiClient = createAPIClient({
   baseURL: apiUrl,
   accessToken: accessKey,
   contextToken: savedToken,
 });
 
-// Persist context token to cookie whenever it changes
+// Keep in-memory token and cookie in sync on every token change
 apiClient.hook('onContextChanged', (newToken) => {
+  _latestToken = newToken;
   Cookies.set(CONTEXT_TOKEN_COOKIE, newToken, { expires: 365, sameSite: 'Lax' });
+});
+
+// Also track tokens from responses that change the session mid-flight
+apiClient.hook('onSuccessResponse', (response) => {
+  const newToken = typeof response?.headers?.get === 'function'
+    ? response.headers.get('sw-context-token')
+    : null;
+  if (newToken && newToken !== _latestToken) {
+    _latestToken = newToken;
+    Cookies.set(CONTEXT_TOKEN_COOKIE, newToken, { expires: 365, sameSite: 'Lax' });
+  }
 });
 
 /**
@@ -58,6 +75,25 @@ export async function storeApiDelete(endpoint, body = {}) {
     body,
   });
   return data;
+}
+
+/** Returns the current Shopware context token (always up-to-date, even after mid-session token changes). */
+export function getContextToken() {
+  return _latestToken;
+}
+
+/**
+ * Force-adopt a context token issued elsewhere (e.g. returned by the payment
+ * server after server-side guest registration migrated the cart to a new token).
+ * Updates the api-client default header, the in-memory token and the cookie so
+ * every subsequent client request operates on the correct cart/session.
+ */
+export function setContextToken(token) {
+  if (!token || token === _latestToken) return;
+  _latestToken = token;
+  // Setting via the proxy triggers onContextChanged → cookie sync as well.
+  apiClient.defaultHeaders['sw-context-token'] = token;
+  Cookies.set(CONTEXT_TOKEN_COOKIE, token, { expires: 365, sameSite: 'Lax' });
 }
 
 /**

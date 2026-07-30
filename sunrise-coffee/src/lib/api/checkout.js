@@ -1,12 +1,7 @@
-import Cookies from 'js-cookie';
 import { storeApiPost, storeApiPatch } from '../shopware-client';
 
-const CONTEXT_TOKEN_COOKIE = 'sw-context-token';
-
-/** Legge il context token corrente della sessione Shopware (cookie). */
-export function getContextToken() {
-  return Cookies.get(CONTEXT_TOKEN_COOKIE) || '';
-}
+/** Legge il context token corrente della sessione Shopware. */
+export { getContextToken } from '../shopware-client';
 
 async function postJson(url, body) {
   const res = await fetch(url, {
@@ -19,37 +14,23 @@ async function postJson(url, body) {
   return data;
 }
 
-// ── Pagamenti sicuri (importo e verifica lato server) ──────────────────────────
-
-/** Crea il PaymentIntent Stripe; l'importo è calcolato dal server sul carrello reale. */
-export function createStripePaymentIntent(contextToken) {
-  return postJson('/api/stripe/create-payment-intent', { contextToken });
-}
-
-/** Finalizza l'ordine Stripe: il server verifica il pagamento prima di crearlo. */
-export function confirmStripeOrder(paymentIntentId, contextToken) {
-  return postJson('/api/stripe/confirm-and-order', { paymentIntentId, contextToken });
-}
-
-/** Crea l'ordine PayPal con importo dal server. */
-export function createPaypalOrder(contextToken) {
-  return postJson('/api/paypal/create-order', { contextToken });
-}
-
-/** Cattura PayPal + crea l'ordine, con verifica importo lato server. */
-export function capturePaypalOrder(orderId, contextToken) {
-  return postJson('/api/paypal/capture-order', { orderId, contextToken });
-}
+// ── Pagamento unificato (importo, registrazione e verifica lato server) ─────────
 
 /**
- * Get available payment methods.
+ * Prepara il checkout e crea il PaymentIntent Stripe unico (carta/wallet/PayPal).
+ * Il server registra il guest, imposta la spedizione, calcola il totale reale e
+ * ritorna il context token autoritativo da usare per la conferma.
+ *
+ * @param {object} payload - { contextToken, customer, billingAddress, shippingMethodId }
+ * @returns {Promise<{ clientSecret: string, contextToken: string, amount: number }>}
  */
-export async function getPaymentMethods() {
-  const result = await storeApiPost('/payment-method', {
-    onlyAvailable: true,
-    includes: { payment_method: ['id', 'name', 'translated', 'handlerIdentifier'] },
-  });
-  return result?.elements || [];
+export function createCheckoutIntent(payload) {
+  return postJson('/api/checkout/create-intent', payload);
+}
+
+/** Finalizza l'ordine: il server verifica il pagamento, crea l'ordine e lo segna pagato. */
+export function confirmCheckout({ paymentIntentId, contextToken }) {
+  return postJson('/api/checkout/confirm', { paymentIntentId, contextToken });
 }
 
 /**

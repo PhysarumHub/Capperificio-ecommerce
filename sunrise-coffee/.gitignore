@@ -14,3 +14,6 @@ scripts/.env
 *SECRET*
 *.key
 *.pem
+.poller-state.json
+strapi/.strapi
+strapi/.strapi-updater.json

@@ -8,6 +8,8 @@ import { formatPrice } from '../../lib/utils/price';
 import { getProductImage, getProductSlug, proxyUrl } from '../../lib/utils/image';
 import { getProductVariants } from '../../lib/api/products';
 import { getCatalogEntry } from '../../data/capperificioCatalog';
+import { resolveProductSoldOut } from '../../lib/utils/availability';
+import { gtmViewItem, gtmAddToCart } from '../../lib/utils/gtm';
 import useInView from '../../hooks/useInView';
 import styles from './ProductDetail.module.css';
 import anim from '../../styles/animations.module.css';
@@ -135,6 +137,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const [searchParams] = useSearchParams();
   const [selectedOptions, setSelectedOptions] = useState({});
   const [variants, setVariants] = useState([]);
+  const [variantsLoaded, setVariantsLoaded] = useState(false);
   const [size, setSize] = useState('250g');
   const [grind, setGrind] = useState('Beans');
   const [openBrew, setOpenBrew] = useState(null);
@@ -161,11 +164,14 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   };
 
   const handleAdd = async () => {
+    if (isSoldOut) return;
     cancelAddRef.current = false;
     const next = cartQty + 1;
     setCartQty(next);
     setShowControl(true);
     setShowTag(false);
+    const price = shopwareProduct?.calculatedPrice?.unitPrice ?? shopwareProduct?.price?.[0]?.gross ?? 0;
+    gtmAddToCart({ id: shopwareProduct?.id || '', name: shopwareProduct?.translated?.name || shopwareProduct?.name || '', price }, 1);
     if (hasApiProduct && shopwareProduct?.id) {
       const itemId = activeVariant?.id || shopwareProduct.id;
       try { await addItem(itemId, 1); } catch {}
@@ -229,10 +235,13 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   useEffect(() => {
     if (!shopwareProduct?.configuratorSettings?.length) {
       setVariants([]);
+      setVariantsLoaded(true);
       return;
     }
+    setVariantsLoaded(false);
     getProductVariants(shopwareProduct.id).then((res) => {
       setVariants(res?.elements || []);
+      setVariantsLoaded(true);
     });
   }, [shopwareProduct?.id]);
 
@@ -246,7 +255,13 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   }, [variants, selectedOptions]);
 
   const hasApiProduct = Boolean(shopwareProduct);
-  const isSoldOut = hasApiProduct && (shopwareProduct.availableStock ?? 1) <= 0;
+  const isSoldOut = hasApiProduct && resolveProductSoldOut({
+    product: shopwareProduct,
+    hasConfigurator,
+    activeVariant,
+    variants,
+    variantsLoaded,
+  });
 
   // Scheda catalogo Capperificio: fallback locale quando Shopware non ha ancora
   // description / properties / customFields popolati per questo prodotto.
@@ -419,20 +434,6 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         {/* LEFT COL */}
         <div className={styles.colLeft}>
           <p className={styles.description} dangerouslySetInnerHTML={{ __html: productDescription }} />
-
-          {(() => {
-            const cf = shopwareProduct?.customFields || {};
-            const cfBullets = [cf.capperificio_bullet_1, cf.capperificio_bullet_2, cf.capperificio_bullet_3].filter(Boolean);
-            const bullets = cfBullets.length ? cfBullets : (catalogEntry?.bullets || []);
-            if (!bullets.length) return null;
-            return (
-              <ul className={styles.bullets}>
-                {bullets.map((b) => (
-                  <li key={b}>{b}</li>
-                ))}
-              </ul>
-            );
-          })()}
 
           {techRows.length > 0 ? (
             <table className={styles.infoTable}>

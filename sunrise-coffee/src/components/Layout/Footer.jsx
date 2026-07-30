@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { FacebookIcon, InstagramIcon, TikTokIcon, YouTubeIcon, WhatsAppIcon, EmailIcon } from '../Icons';
+import { COMPANY } from '../../data/company';
 import styles from './Footer.module.css';
 
 const PAYMENT_METHODS = [
@@ -25,6 +26,12 @@ const LINKS_COL2 = [
   { label: 'Contatti',         href: '/contatti' },
   { label: 'FAQ',              href: '/faq' },
   { label: 'Gestione cookie',  href: '#', cookie: true },
+];
+
+const LEGAL_LINKS = [
+  { label: 'Privacy Policy',        href: '/privacy-policy' },
+  { label: 'Cookie Policy',         href: '/cookie-policy' },
+  { label: 'Termini e Condizioni',  href: '/termini-e-condizioni' },
 ];
 
 const SOCIAL_ICONS = [
@@ -70,6 +77,19 @@ export default function Footer() {
             </a>
           ))}
         </div>
+      </div>
+
+      <div className={styles.legalRow}>
+        <ul className={styles.legalLinks}>
+          {LEGAL_LINKS.map(({ label, href }) => (
+            <li key={label}><Link to={href}>{label}</Link></li>
+          ))}
+        </ul>
+        <p className={styles.legalInfo}>
+          {COMPANY.legalNameShort} — {COMPANY.addressLine}<br />
+          P.IVA e C.F. {COMPANY.vat} — REA {COMPANY.rea} — PEC{' '}
+          <a href={`mailto:${COMPANY.pec}`}>{COMPANY.pec}</a>
+        </p>
       </div>
 
       <div className={styles.bottom}>

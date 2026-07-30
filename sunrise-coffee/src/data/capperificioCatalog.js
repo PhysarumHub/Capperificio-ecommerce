@@ -25,8 +25,11 @@ const CATALOG = CATALOG_LIST.reduce((acc, entry) => {
 
 /**
  * Trova la scheda catalogo per un prodotto Shopware.
- * Strategia: productNumber esatto → SKU base (rimuove il suffisso taglia, es.
- * CAP-FOGLIE-50 → CAP-FOGLIE) → match per parole chiave nel nome.
+ * Strategia:
+ *   1. productNumber esatto (CAP-SALE-LILLIPUT → voce variante)
+ *   2. SKU base rimuovendo suffisso numerico (CAP-FOGLIE-50 → CAP-FOGLIE)
+ *   3. SKU base rimuovendo ultimo segmento testuale (CAP-SALE-LILLIPUT → CAP-SALE)
+ *   4. Match per parole chiave nel nome prodotto
  */
 export function getCatalogEntry(product) {
   if (!product) return null;
@@ -34,8 +37,13 @@ export function getCatalogEntry(product) {
   const pn = (product.productNumber || '').toUpperCase().trim();
   if (pn && CATALOG[pn]) return CATALOG[pn];
 
-  const base = pn.replace(/-\d+$/, '');
-  if (base && CATALOG[base]) return CATALOG[base];
+  // suffisso numerico: CAP-FOGLIE-50 → CAP-FOGLIE
+  const baseNumeric = pn.replace(/-\d+$/, '');
+  if (baseNumeric !== pn && CATALOG[baseNumeric]) return CATALOG[baseNumeric];
+
+  // ultimo segmento testuale: CAP-SALE-LILLIPUT → CAP-SALE
+  const baseText = pn.replace(/-[^-]+$/, '');
+  if (baseText && baseText !== pn && CATALOG[baseText]) return CATALOG[baseText];
 
   const name = (product.translated?.name || product.name || '').toLowerCase();
   if (name) {

@@ -9,12 +9,14 @@ import AboutSection from '../components/AboutSection/AboutSection';
 import GuidesEditorial from '../components/GuidesEditorial/GuidesEditorial';
 import StorySlider from '../components/StorySlider/StorySlider';
 import BlogGrid from '../components/BlogGrid/BlogGrid';
+import { useMemo } from 'react';
 import AnimateIn from '../components/AnimateIn';
 import useInView from '../hooks/useInView';
 import { useProducts } from '../hooks/useProducts';
 import { useSEO } from '../hooks/useSEO';
 import { formatPrice } from '../lib/utils/price';
 import { getProductImage, getProductSlug } from '../lib/utils/image';
+import { isProductAvailable, buildVariantAvailabilityMap } from '../lib/utils/availability';
 import styles from './HomePage.module.css';
 import anim from '../styles/animations.module.css';
 
@@ -43,43 +45,52 @@ const MERCH_PRODUCTS_FALLBACK = [
   { name: 'Sunrise Cap', image: '/images/PRODUCTSTILL.jpg', price: '$40.00' },
 ];
 
+function buildVariantMap(variants) {
+  const map = {};
+  for (const v of variants) {
+    const name = v.options?.[0]?.translated?.name || v.options?.[0]?.name;
+    if (name) map[name] = v.id;
+  }
+  return map;
+}
+
 function groupVariants(rawList) {
   const standalone = rawList.filter(p => !p.parentId);
   const children   = rawList.filter(p => !!p.parentId);
 
   const groups = {};
-  children.forEach(child => {
+  for (const child of children) {
     if (!groups[child.parentId]) groups[child.parentId] = [];
     groups[child.parentId].push(child);
-  });
-
-  const parentIds = new Set(Object.keys(groups));
-
-  const buildVariantMap = (children) => {
-    const map = {};
-    children.forEach(child => {
-      const name = child.options?.[0]?.translated?.name || child.options?.[0]?.name;
-      if (name) map[name] = child.id;
-    });
-    return map;
-  };
+  }
 
   const result = standalone.map(p => {
-    const flatSiblings = groups[p.id] || [];
-    if (!flatSiblings.length) return p;
-    const allOptions = [...new Set(
-      flatSiblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
-    )];
-    return { ...p, _allVariantOptions: allOptions, _firstVariantId: flatSiblings[0]?.id, _variantMap: buildVariantMap(flatSiblings) };
-  });
-
-  Object.entries(groups).forEach(([parentId, siblings]) => {
-    if (standalone.some(p => p.id === parentId)) return;
+    const siblings = groups[p.id] || [];
+    if (!siblings.length) return p;
     const allOptions = [...new Set(
       siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
     )];
-    result.push({ ...siblings[0], _allVariantOptions: allOptions, _variantMap: buildVariantMap(siblings) });
+    return {
+      ...p,
+      _allVariantOptions: allOptions,
+      _firstVariantId: siblings[0]?.id,
+      _variantMap: buildVariantMap(siblings),
+      _availabilityMap: buildVariantAvailabilityMap(siblings),
+    };
   });
+
+  for (const [parentId, siblings] of Object.entries(groups)) {
+    if (standalone.some(p => p.id === parentId)) continue;
+    const allOptions = [...new Set(
+      siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
+    )];
+    result.push({
+      ...siblings[0],
+      _allVariantOptions: allOptions,
+      _variantMap: buildVariantMap(siblings),
+      _availabilityMap: buildVariantAvailabilityMap(siblings),
+    });
+  }
 
   return result;
 }
@@ -102,6 +113,14 @@ function mapShopwareProduct(product) {
     ? [...new Set(fromConfigurator)]
     : (product._allVariantOptions?.length ? product._allVariantOptions : (fromOptions?.length ? fromOptions : undefined));
 
+  const availabilityMap = product._availabilityMap || {};
+  const hasPerVariantData = Object.keys(availabilityMap).length > 0;
+  // When we have per-variant data: sold-out only if ALL variants are unavailable.
+  // Otherwise fall back to the parent product's own availability fields.
+  const soldOut = hasPerVariantData
+    ? Object.values(availabilityMap).every(v => v === false)
+    : !isProductAvailable(product);
+
   return {
     id: product._firstVariantId || product.id,
     name: product.translated?.name || product.name,
@@ -112,6 +131,8 @@ function mapShopwareProduct(product) {
     badge: listPrice?.price ? 'Sale' : undefined,
     options,
     variantMap: product._variantMap || {},
+    availabilityMap,
+    soldOut,
   };
 }
 
@@ -138,8 +159,9 @@ export default function HomePage() {
     filters: [{ type: 'equals', field: 'tags.name', value: 'Materia prima' }],
   });
 
-  const shopwareProducts = groupVariants(rawProducts).filter(p =>
-    !B2B_CATEGORY_ID || !p.categoryTree?.includes(B2B_CATEGORY_ID)
+  const shopwareProducts = useMemo(
+    () => groupVariants(rawProducts).filter(p => !B2B_CATEGORY_ID || !p.categoryTree?.includes(B2B_CATEGORY_ID)),
+    [rawProducts],
   );
 
   // If Shopware data is available, split into sections; otherwise use fallbacks
@@ -149,9 +171,12 @@ export default function HomePage() {
     ? shopwareProducts.slice(0, 6).map(mapShopwareProduct)
     : SLIDER_PRODUCTS_FALLBACK;
 
-  const blendProducts = hasApiData && rawMateriaPrima.length > 0
-    ? groupVariants(rawMateriaPrima).slice(0, 3).map(mapShopwareProduct)
-    : BLEND_PRODUCTS_FALLBACK;
+  const blendProducts = useMemo(
+    () => hasApiData && rawMateriaPrima.length > 0
+      ? groupVariants(rawMateriaPrima).slice(0, 3).map(mapShopwareProduct)
+      : BLEND_PRODUCTS_FALLBACK,
+    [hasApiData, rawMateriaPrima],
+  );
 
   const [gridRef, gridInView] = useInView({ threshold: 0.1 });
 

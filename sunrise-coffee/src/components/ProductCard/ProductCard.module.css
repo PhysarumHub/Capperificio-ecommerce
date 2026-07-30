@@ -227,6 +227,16 @@
   opacity: 1;
 }
 
+.variantChipSoldOut {
+  opacity: 0.35;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.variantChipSoldOut:hover {
+  background: none;
+  color: var(--color-red);
+}
+
 .pricing {
   text-align: right;
   display: flex;

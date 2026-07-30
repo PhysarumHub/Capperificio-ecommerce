@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import ProductDetail from '../components/ProductDetail/ProductDetail';
 import { ProductsMarquee } from '../components/Marquee/Marquee';
 import { useProduct } from '../hooks/useProducts';
 import { useSEO } from '../hooks/useSEO';
 import { getProductImage } from '../lib/utils/image';
+import { gtmViewItem } from '../lib/utils/gtm';
 
 export default function ProductPage() {
   const { slug } = useParams();
@@ -28,10 +29,15 @@ export default function ProductPage() {
         price: price || 0,
         priceCurrency: 'EUR',
         availability: 'https://schema.org/InStock',
-        url: `https://www.capperificio.it/product/${slug}`,
+        url: `https://capperificiocaro.com/product/${slug}`,
       },
     };
   }, [product, productName, plainDesc, productImage, price, slug]);
+
+  useEffect(() => {
+    if (!product) return;
+    gtmViewItem({ id: product.id, name: productName, price: price ?? 0 });
+  }, [product?.id]);
 
   useSEO({
     title: productName || 'Prodotto',

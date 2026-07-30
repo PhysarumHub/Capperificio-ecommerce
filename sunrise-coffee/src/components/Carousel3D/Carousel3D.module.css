@@ -1,0 +1,196 @@
+.page {
+  background: #120c08;
+  color: #f3ece3;
+}
+
+/* Il wrapper è `fixed`, quindi è lui a dover coprire il viewport:
+   `.page` da solo non ha altezza e lascerebbe passare lo sfondo del sito. */
+.smoothWrapper {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #120c08;
+  color: #f3ece3;
+}
+
+.smoothContent {
+  width: 100%;
+}
+
+/* ── Intro / outro ─────────────────────────────────────────── */
+
+.intro {
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 1.5rem;
+}
+
+.introKicker {
+  font-size: 0.75rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: #c9a06a;
+  margin-bottom: 1.25rem;
+}
+
+.introTitle {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  font-weight: 400;
+  line-height: 1.05;
+  max-width: 18ch;
+  margin: 0;
+}
+
+.introHint {
+  margin-top: 2.5rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.outro {
+  height: 80svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1.5rem;
+  padding: 0 1.5rem;
+}
+
+.outroTitle {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  margin: 0;
+}
+
+.backLink {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #c9a06a;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(201, 160, 106, 0.5);
+  padding-bottom: 0.2em;
+}
+
+.backLink:hover {
+  color: #f3ece3;
+  border-color: #f3ece3;
+}
+
+/* ── 3D scene ──────────────────────────────────────────────── */
+
+.scene {
+  perspective: 900px;
+  position: relative;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sceneTitle {
+  position: relative;
+  z-index: 10;
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.5rem, 4vw, 2.75rem);
+  font-weight: 400;
+  text-align: center;
+  padding: 0 1rem;
+  pointer-events: none;
+}
+
+.sceneTitle span {
+  display: inline-block;
+}
+
+.char {
+  display: inline-block;
+  transform-style: preserve-3d;
+  transform-origin: 50% 0%;
+}
+
+/* Il box del carosello coincide con quello della card, così l'anello resta
+   simmetrico rispetto al centro della scena. */
+.carousel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 350px;
+  height: 420px;
+  margin: -210px 0 0 -175px;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transform: translateZ(-550px) rotateY(0deg);
+}
+
+.cell {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.cardFace {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  background-image: var(--img);
+  background-size: cover;
+  background-position: center;
+  border-radius: 8px;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7);
+}
+
+/* Girata verso il retro: la rotazione pre-specchia il contenuto, che torna
+   quindi leggibile quando il cilindro ruota e la si guarda dall'altro lato.
+   Non aggiungere `scaleX(-1)`: annullerebbe proprio questa compensazione. */
+.cardFaceBack {
+  transform: rotateY(180deg);
+}
+
+@media (max-width: 767px) {
+  .scene {
+    perspective: 700px;
+  }
+
+  .carousel {
+    width: 200px;
+    height: 270px;
+    margin: -135px 0 0 -100px;
+    transform: translateZ(-380px) rotateY(0deg);
+  }
+}
+
+/* ── Loader ────────────────────────────────────────────────── */
+
+.loading {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #120c08;
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(243, 236, 227, 0.6);
+}

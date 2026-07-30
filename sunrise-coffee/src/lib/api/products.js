@@ -144,7 +144,7 @@ export async function getProductVariants(parentId) {
       options: { associations: { group: {} } },
     },
     includes: {
-      product: ['id', 'productNumber', 'options', 'calculatedPrice', 'availableStock'],
+      product: ['id', 'productNumber', 'options', 'calculatedPrice', 'available', 'availableStock', 'customFields'],
     },
   });
 }
