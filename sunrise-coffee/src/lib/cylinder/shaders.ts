@@ -22,7 +22,11 @@ export const cylinderFragment = /* glsl */ `
   varying vec2 vUv;
 
   void main() {
-    vec4 tex = texture2D(tMap, vUv);
+    // Face culling is disabled so the cylinder is visible from inside too
+    // (the scroll camera flies through it). Without this, the backface
+    // shows the same UVs as the front and the baked-in text reads mirrored.
+    vec2 uv = gl_FrontFacing ? vUv : vec2(1.0 - vUv.x, vUv.y);
+    vec4 tex = texture2D(tMap, uv);
     tex.rgb *= (1.0 - uDarkness);
     gl_FragColor = tex;
   }
