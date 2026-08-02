@@ -21,7 +21,6 @@ const B2BPage                = lazy(() => import('./pages/B2BPage'));
 const BlogPage               = lazy(() => import('./pages/BlogPage'));
 const BlogArticlePage        = lazy(() => import('./pages/BlogArticlePage'));
 const AboutPage              = lazy(() => import('./pages/AboutPage'));
-const ProcessoProduttivoPage = lazy(() => import('./pages/ProcessoProduttivoPage'));
 const PrivacyPolicyPage      = lazy(() => import('./pages/PrivacyPolicyPage'));
 const CookiePolicyPage       = lazy(() => import('./pages/CookiePolicyPage'));
 const TerminiCondizioniPage  = lazy(() => import('./pages/TerminiCondizioniPage'));
@@ -55,7 +54,6 @@ export default function App() {
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:slug" element={<BlogArticlePage />} />
             <Route path="/storia" element={<AboutPage />} />
-            <Route path="/processo-produttivo" element={<ProcessoProduttivoPage />} />
 
             {/* ── Pagine legali ── */}
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
@@ -68,7 +66,7 @@ export default function App() {
           <Route path="/test-a" element={<TestPageA />} />
           <Route path="/test-b" element={<TestPageB />} />
           <Route path="/storia2" element={<Storia2Page />} />
-          <Route path="/carosello-3d" element={<Carousel3D />} />
+          <Route path="/processo-produttivo" element={<Carousel3D />} />
 
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

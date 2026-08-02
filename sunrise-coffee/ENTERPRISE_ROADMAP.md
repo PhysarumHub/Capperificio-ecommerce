@@ -341,8 +341,9 @@ Il progetto è già a un livello solido per un MVP, ma mancano le fondamenta per
 
 ### 9.3 Rimborsi e gestione ordine
 
-- [ ] 🟠 **Endpoint rimborso** — non esiste un endpoint per processare rimborsi via Stripe. Il rimborso va fatto manualmente dalla dashboard Stripe. Implementare `POST /api/stripe/refund` (solo con autenticazione admin) che chiami `stripe.refunds.create()` e invii `sendRefundIssued()`.
-- [ ] 🟡 **Webhook per rimborsi Stripe** — aggiungere gestione dell'evento `charge.refunded` nel webhook per aggiornare lo stato ordine in Shopware e inviare email di rimborso automaticamente.
+- [x] **Endpoint rimborso** — `POST /api/admin/refund` (autenticato via header `x-admin-key` / `ADMIN_API_KEY`) chiama `stripe.refunds.create()`, transiziona la transazione Shopware (`markTransactionRefunded` in `api/_shopware.js`) e invia `sendRefundIssued()`. v1: rimborso totale soltanto — un secondo rimborso parziale distinto sullo stesso ordine non è gestito correttamente dal guard di idempotenza (vedi item sotto).
+- [x] **Webhook per rimborsi Stripe** — il webhook gestisce anche `charge.refunded` (rete di sicurezza per i rimborsi fatti direttamente dalla Dashboard Stripe), con la stessa `markTransactionRefunded` idempotente usata da `/api/admin/refund`.
+- [ ] 🟡 **Rimborsi parziali multipli** — `markTransactionRefunded` verifica solo lo stato corrente della transazione (`refunded`/`refunded_partially`) per decidere se è già stata processata: un secondo rimborso parziale distinto sullo stesso ordine verrebbe scambiato per un duplicato. Serve tracciare i singoli `refund.id` (es. in `customFields`) invece dello stato aggregato.
 
 ### 9.4 Features aggiuntive (post-lancio)
 
@@ -379,7 +380,7 @@ Il progetto è già a un livello solido per un MVP, ma mancano le fondamenta per
   - Blocca carta se 3 tentativi falliti in 1 ora
   - Richiedi CVC su tutti i pagamenti
 - [ ] 🟠 **Test checkout end-to-end** con carta `4242 4242 4242 4242` (Stripe test) prima del go-live.
-- [ ] 🟡 **3D Secure fallback** — verificare che il `StripePaymentForm` gestisca correttamente il redirect 3DS e reinvii la conferma al server.
+- [x] **Redirect fallback (3DS / PayPal / iDEAL / Bancontact)** — `CheckoutPage.jsx` rileva il rientro da un redirect Stripe (`payment_intent_client_secret` in query string dopo il remount), recupera lo stato del PaymentIntent e riprende il flusso invece di lasciare il cliente su una pagina senza conferma.
 - [ ] 🟡 **Pulire le variabili PayPal deprecate** — `VITE_PAYPAL_CLIENT_ID` e tutto il codice PayPal diretto sono deprecati (ora passa da Stripe). Rimuovere dalla `docker-compose.yml` e dal `.env.example` per evitare confusione.
 
 ---

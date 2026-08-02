@@ -1,6 +1,6 @@
 .page {
-  background: #120c08;
-  color: #f3ece3;
+  background: #000;
+  color: #fff;
 }
 
 /* Il wrapper è `fixed`, quindi è lui a dover coprire il viewport:
@@ -9,81 +9,12 @@
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background: #120c08;
-  color: #f3ece3;
+  background: #000;
+  color: #fff;
 }
 
 .smoothContent {
   width: 100%;
-}
-
-/* ── Intro / outro ─────────────────────────────────────────── */
-
-.intro {
-  height: 100svh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 0 1.5rem;
-}
-
-.introKicker {
-  font-size: 0.75rem;
-  letter-spacing: 0.35em;
-  text-transform: uppercase;
-  color: #c9a06a;
-  margin-bottom: 1.25rem;
-}
-
-.introTitle {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(2.5rem, 7vw, 5rem);
-  font-weight: 400;
-  line-height: 1.05;
-  max-width: 18ch;
-  margin: 0;
-}
-
-.introHint {
-  margin-top: 2.5rem;
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  opacity: 0.5;
-}
-
-.outro {
-  height: 80svh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 1.5rem;
-  padding: 0 1.5rem;
-}
-
-.outroTitle {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
-  margin: 0;
-}
-
-.backLink {
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #c9a06a;
-  text-decoration: none;
-  border-bottom: 1px solid rgba(201, 160, 106, 0.5);
-  padding-bottom: 0.2em;
-}
-
-.backLink:hover {
-  color: #f3ece3;
-  border-color: #f3ece3;
 }
 
 /* ── 3D scene ──────────────────────────────────────────────── */
@@ -93,6 +24,7 @@
   position: relative;
   height: 100vh;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
@@ -111,6 +43,26 @@
 
 .sceneTitle span {
   display: inline-block;
+}
+
+.sceneDesc {
+  position: relative;
+  z-index: 10;
+  max-width: 32rem;
+  margin: 0.75rem auto 0;
+  font-size: clamp(0.9rem, 1.6vw, 1.05rem);
+  line-height: 1.5;
+  text-align: center;
+  opacity: 0.75;
+  padding: 0 1.5rem;
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .sceneDesc {
+    font-size: 0.85rem;
+    max-width: 22rem;
+  }
 }
 
 .char {
@@ -188,9 +140,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #120c08;
+  background: #000;
   font-size: 0.75rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: rgba(243, 236, 227, 0.6);
+  color: #fff;
 }

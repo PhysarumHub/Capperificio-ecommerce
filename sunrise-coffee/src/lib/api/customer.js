@@ -27,7 +27,10 @@ export async function register(data) {
  */
 export async function getCustomer() {
   return storeApiPost('/account/customer', {
-    associations: { group: {} },
+    associations: {
+      group: {},
+      defaultShippingAddress: { associations: { country: {} } },
+    },
   });
 }
 

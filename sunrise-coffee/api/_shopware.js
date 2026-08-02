@@ -399,3 +399,83 @@ export async function markTransactionPaid(orderId, paymentIntentId) {
     return { ok: false, reason: e.message };
   }
 }
+
+/**
+ * Trova l'ordine Shopware a partire dal PaymentIntent Stripe collegato
+ * (customFields.stripe_payment_intent_id, salvato da markTransactionPaid).
+ * Serve al webhook `charge.refunded`, che riceve solo il PaymentIntent id
+ * (l'ordine è già stato creato in precedenza, il context token non esiste più).
+ * Best-effort: ritorna null se non configurato o non trovato.
+ */
+export async function findOrderByPaymentIntentId(paymentIntentId) {
+  if (!paymentIntentId || !adminConfigured()) return null;
+  try {
+    const data = await adminFetch('/search/order', {
+      method: 'POST',
+      body: {
+        limit: 1,
+        filter: [{ type: 'equals', field: 'customFields.stripe_payment_intent_id', value: paymentIntentId }],
+        associations: {
+          deliveries: { associations: { shippingOrderAddress: { associations: { country: {} } } } },
+          lineItems: {},
+          orderCustomer: {},
+        },
+      },
+    });
+    return data?.data?.[0] || null;
+  } catch (e) {
+    console.warn('findOrderByPaymentIntentId fallita:', e.message);
+    return null;
+  }
+}
+
+/**
+ * Segna come "refunded" (o "refunded_partially") la transazione di pagamento
+ * dell'ordine via Admin API. Idempotente: se la transazione è già in uno stato
+ * di rimborso non fa nulla — questo protegge sia da doppie chiamate webhook
+ * sia dal caso in cui /api/admin/refund e il webhook `charge.refunded` per lo
+ * stesso rimborso arrivino entrambi.
+ * Best-effort: se l'Admin API non è configurata o la chiamata fallisce, NON lancia;
+ * ritorna { ok, reason } per il logging del chiamante.
+ *
+ * ⚠ v1: pensata per un SOLO rimborso totale per ordine. Un secondo rimborso
+ * parziale distinto sullo stesso ordine non verrebbe distinto da questo guard
+ * (la transazione risulterebbe già "refunded_partially") — non gestito in questa
+ * versione, richiede tracciare i singoli refund id.
+ */
+export async function markTransactionRefunded(orderId, refundId, { partial = false } = {}) {
+  if (!orderId) return { ok: false, reason: 'orderId mancante' };
+  if (!adminConfigured()) return { ok: false, reason: 'Admin API non configurata' };
+  try {
+    const search = await adminFetch('/search/order-transaction', {
+      method: 'POST',
+      body: {
+        filter: [{ type: 'equals', field: 'orderId', value: orderId }],
+        associations: { stateMachineState: {} },
+        limit: 1,
+      },
+    });
+    const tx = search?.data?.[0];
+    if (!tx?.id) return { ok: false, reason: 'transazione non trovata' };
+
+    const currentState = tx.stateMachineState?.technicalName;
+    if (currentState === 'refunded' || currentState === 'refunded_partially') {
+      return { ok: true, reason: 'già rimborsato (idempotente)' };
+    }
+
+    const transition = partial ? 'refund_partially' : 'refund';
+    await adminFetch(`/_action/order_transaction/${tx.id}/state/${transition}`, { method: 'POST' });
+
+    if (refundId) {
+      try {
+        await adminFetch(`/order/${orderId}`, {
+          method: 'PATCH',
+          body: { customFields: { stripe_refund_id: refundId } },
+        });
+      } catch { /* custom field assente: non bloccante */ }
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: e.message };
+  }
+}

@@ -3,6 +3,8 @@ dist
 .env
 .env.local
 backups/*.tar.gz
+backups/*.sql
+backups/shopware_*/
 
 # Credenziali script Python — NON committare mai questo file
 scripts/.env

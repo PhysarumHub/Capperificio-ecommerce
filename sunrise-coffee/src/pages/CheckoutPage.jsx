@@ -63,6 +63,13 @@ function detectCountryIso() {
   return parts.length > 1 ? parts[1].toUpperCase() : 'IT';
 }
 
+// Shopware salva via e civico in un unico campo "street" (es. "Via Roma 12/A"):
+// lo spezziamo per popolare i due campi separati del form.
+function splitStreetHouseNumber(street) {
+  const match = /^(.*?)[,\s]+(\d+[a-zA-Z/\-]*)\s*$/.exec((street || '').trim());
+  return match ? { street: match[1].trim(), houseNumber: match[2] } : { street: (street || '').trim(), houseNumber: '' };
+}
+
 // ── Step bar ───────────────────────────────────────────────────────
 function StepBar({ step, isMobile }) {
   const steps = ['Contatti', 'Indirizzo', 'Pagamento'];
@@ -318,6 +325,13 @@ export default function CheckoutPage() {
   const [serverContextToken, setServerContextToken] = useState(null);
   const [stripeLoading, setStripeLoading] = useState(false);
   const [stripeLoadError, setStripeLoadError] = useState(null);
+  // Rientro da un metodo di pagamento con redirect (PayPal/iDEAL/Bancontact via
+  // Stripe): true già al primo render se l'URL contiene il client secret, per
+  // evitare che lampeggi la schermata "carrello vuoto" prima della verifica.
+  const [verifyingRedirect, setVerifyingRedirect] = useState(
+    () => new URLSearchParams(window.location.search).has('payment_intent_client_secret')
+  );
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   const detectedIso = useMemo(() => detectCountryIso(), []);
 
@@ -362,7 +376,22 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (isLoggedIn && customer) {
-      setAddress((p) => ({ ...p, email: customer.email || '', firstName: customer.firstName || '', lastName: customer.lastName || '' }));
+      const saved = customer.defaultShippingAddress;
+      setAddress((p) => {
+        const next = { ...p, email: customer.email || '', firstName: customer.firstName || '', lastName: customer.lastName || '' };
+        if (saved) {
+          const { street, houseNumber } = splitStreetHouseNumber(saved.street);
+          Object.assign(next, {
+            street, houseNumber,
+            zipcode: saved.zipcode || '',
+            city: saved.city || '',
+            countryIso: saved.country?.iso || p.countryIso,
+          });
+        }
+        return next;
+      });
+      if (saved) setTouched((p) => ({ ...p, street: true, houseNumber: true, zipcode: true, city: true }));
+      if (saved) setShowManual(true);
       setStep(1);
     }
   }, [isLoggedIn, customer]);
@@ -386,6 +415,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (step !== 2 || !selectedShipping || !stripePromise) return;
     if (stripeClientSecret || stripeLoadError || preparingRef.current) return;
+    if (verifyingRedirect || paymentProcessing || orderNumber) return;
     let cancelled = false;
     preparingRef.current = true;
     setStripeLoading(true);
@@ -424,7 +454,7 @@ export default function CheckoutPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [step, selectedShipping, stripeClientSecret, stripeLoadError]);
+  }, [step, selectedShipping, stripeClientSecret, stripeLoadError, verifyingRedirect, paymentProcessing, orderNumber]);
 
   // Ricerca indirizzo con Nominatim (OpenStreetMap, gratuito)
   useEffect(() => {
@@ -586,6 +616,69 @@ export default function CheckoutPage() {
       setPlacing(false);
     }
   };
+
+  // ── Rientro da un metodo di pagamento con redirect (PayPal/iDEAL/Bancontact) ──
+  // Stripe reindirizza il browser fuori e poi torna su return_url (/checkout) con
+  // il client secret in query string: il componente rimonta da zero, quindi qui
+  // recuperiamo lo stato del PaymentIntent e riprendiamo il flusso da lì.
+  const redirectHandledRef = useRef(false);
+  useEffect(() => {
+    const clientSecret = new URLSearchParams(window.location.search).get('payment_intent_client_secret');
+    if (!clientSecret || !stripePromise || redirectHandledRef.current) {
+      if (!clientSecret) setVerifyingRedirect(false);
+      return;
+    }
+    redirectHandledRef.current = true;
+    // Pulisce subito la query string: un refresh a metà verifica o una seconda
+    // invocazione dell'effetto diventano no-op.
+    window.history.replaceState(null, '', window.location.pathname);
+    (async () => {
+      try {
+        const stripe = await stripePromise;
+        const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+        if (paymentIntent?.status === 'succeeded') {
+          try { await handleStripeSuccess(paymentIntent.id); } catch { /* orderError già impostato */ }
+        } else if (paymentIntent?.status === 'processing') {
+          setPaymentProcessing(true);
+        } else {
+          setStripeClientSecret(null);
+          setOrderError('Pagamento non completato. Riprova.');
+        }
+      } catch (e) {
+        setOrderError(e.message || 'Impossibile verificare il pagamento. Riprova.');
+      } finally {
+        setVerifyingRedirect(false);
+      }
+    })();
+  }, []);
+
+  // ── Verifica pagamento in corso (rientro da redirect) ───────────
+  if (verifyingRedirect) return (
+    <div style={{ padding: '80px 24px', textAlign: 'center' }}>
+      <div style={{ fontSize: 28, marginBottom: 12 }}>⏳</div>
+      <p style={{ color: 'var(--color-mid)' }}>Verifica del pagamento in corso…</p>
+    </div>
+  );
+
+  // ── Pagamento in elaborazione (metodi asincroni: es. bonifici istantanei) ──
+  if (paymentProcessing) return (
+    <div style={{ padding: isMobile ? '60px 24px' : '80px 40px', textAlign: 'center', maxWidth: 520, margin: '0 auto' }}>
+      <div style={{ fontSize: 56, color: 'var(--color-red)', marginBottom: 16 }}>⏳</div>
+      <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: isMobile ? 'var(--text-3xl)' : 'var(--text-4xl)', marginBottom: 12 }}>
+        Pagamento in elaborazione
+      </h1>
+      <p style={{ color: 'var(--color-mid)', fontSize: 14, marginBottom: 36, lineHeight: 1.6 }}>
+        Stiamo confermando il tuo pagamento. Riceverai una email di conferma ordine a breve.
+      </p>
+      <Link to="/" style={{
+        display: 'inline-block', background: 'var(--color-red)', color: '#fff',
+        padding: '14px 36px', borderRadius: 'var(--radius-pill)',
+        textDecoration: 'none', fontWeight: 600, fontSize: 16,
+      }}>
+        Torna allo shop
+      </Link>
+    </div>
+  );
 
   // ── Ordine confermato ──────────────────────────────────────────
   if (orderNumber) return (

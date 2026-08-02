@@ -84,13 +84,29 @@ services:
         - VITE_GTM_ID=${VITE_GTM_ID}
     container_name: capperificio-frontend
     ports:
-      - "3001:80"    # Sito principale (temp: Traefik occupa la 80)
+      - "3001:80"    # Accesso diretto per test; il traffico pubblico passa da Traefik (80/443)
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=sunrise-coffee_capperificio_net"
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.capperificio-http.rule=Host(`www.capperificiocaro.com`) || Host(`capperificiocaro.com`)"
+      - "traefik.http.routers.capperificio-http.entrypoints=http"
+      - "traefik.http.routers.capperificio-http.middlewares=capperificio-https-redirect"
+      - "traefik.http.middlewares.capperificio-https-redirect.redirectscheme.scheme=https"
+      # HTTPS
+      - "traefik.http.routers.capperificio-https.rule=Host(`www.capperificiocaro.com`) || Host(`capperificiocaro.com`)"
+      - "traefik.http.routers.capperificio-https.entrypoints=https"
+      - "traefik.http.routers.capperificio-https.tls=true"
+      - "traefik.http.routers.capperificio-https.tls.certresolver=letsencrypt"
+      - "traefik.http.services.capperificio.loadbalancer.server.port=80"
     environment:
       # Variabili RUNTIME per server.js Express (NON nel bundle Vite)
       NODE_ENV: production
       # Stripe — segreto server
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      # Secret condiviso per POST /api/admin/refund (vedi .env.example)
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-}
       # Shopware lato server: URL interno Docker (più veloce, non passa per nginx)
       SHOPWARE_API_URL: http://shopware/store-api
       SHOPWARE_ACCESS_KEY: ${VITE_SHOPWARE_ACCESS_KEY}

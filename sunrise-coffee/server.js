@@ -40,12 +40,12 @@ import {
   setShippingMethod, markTransactionPaid, adminConfigured,
   fetchOrderDetails, savePacklinkReference,
   fetchOrdersInDeliveryState, fetchOrdersInOrderState,
-  fetchLowStockProducts,
+  fetchLowStockProducts, findOrderByPaymentIntentId, markTransactionRefunded,
 } from './api/_shopware.js';
 import { createShipmentForOrder, packlinkConfigured } from './api/_packlink.js';
 import {
   sendOrderConfirmation, sendOrderShipped, sendOrderCancelled,
-  sendMerchantAlert, sendReviewRequest, sendMerchantLowStock, resendConfigured,
+  sendMerchantAlert, sendReviewRequest, sendMerchantLowStock, sendRefundIssued, resendConfigured,
 } from './api/_resend.js';
 
 // ── Validazione env vars obbligatorie ────────────────────────────────────────
@@ -115,6 +115,29 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
         // Carrello vuoto = ordine già creato dal confirm lato client (idempotente)
         console.log('Webhook: ordine già creato o carrello vuoto:', e.message);
       }
+    }
+  } else if (event.type === 'charge.refunded') {
+    // Rete di sicurezza per i rimborsi fatti direttamente dalla Dashboard Stripe
+    // (bypassano /api/admin/refund): aggiorna comunque lo stato su Shopware e
+    // invia l'email. markTransactionRefunded è idempotente, quindi è sicuro anche
+    // se il rimborso è già stato gestito da /api/admin/refund.
+    const charge = event.data.object;
+    const paymentIntentId = charge.payment_intent;
+    try {
+      const order = await findOrderByPaymentIntentId(paymentIntentId);
+      if (!order) {
+        console.log('Webhook charge.refunded: nessun ordine trovato per PI', paymentIntentId);
+      } else {
+        const partial = !charge.refunded;
+        const refundId = charge.refunds?.data?.[0]?.id;
+        const result = await markTransactionRefunded(order.id, refundId, { partial });
+        if (!result.ok) console.log('Webhook: mark refunded non riuscito:', result.reason);
+        else if (result.reason !== 'già rimborsato (idempotente)' && resendConfigured()) {
+          await sendRefundIssued(order, charge.amount_refunded / 100);
+        }
+      }
+    } catch (e) {
+      console.warn('Webhook charge.refunded:', e.message);
     }
   }
   res.status(200).json({ received: true });
@@ -229,6 +252,50 @@ app.post('/api/checkout/confirm', paymentLimiter, async (req, res) => {
     }
     console.error('confirm:', err.message);
     res.status(500).json({ error: 'Errore nel completamento ordine' });
+  }
+});
+
+// ── Admin: rimborso Stripe ────────────────────────────────────────────────────
+// Protetto da un secret condiviso (nessun pannello admin/login in questo backend).
+// ⚠ /api non è ristretto a 127.0.0.1 in nginx (a differenza di Shopware/Strapi
+// admin): questo endpoint è raggiungibile da internet, protetto solo dall'header.
+// v1: rimborso TOTALE soltanto (no importo parziale).
+function requireAdminKey(req, res, next) {
+  const configured = process.env.ADMIN_API_KEY;
+  if (!configured) return res.status(503).json({ error: 'Rimborsi non configurati' });
+  if (req.headers['x-admin-key'] !== configured) return res.status(401).json({ error: 'Non autorizzato' });
+  next();
+}
+
+app.post('/api/admin/refund', paymentLimiter, requireAdminKey, async (req, res) => {
+  try {
+    const { orderId } = req.body || {};
+    if (!orderId) return res.status(400).json({ error: 'orderId mancante' });
+
+    const order = await fetchOrderDetails(orderId);
+    const paymentIntentId = order?.customFields?.stripe_payment_intent_id;
+    if (!paymentIntentId)
+      return res.status(404).json({ error: 'Nessun pagamento Stripe associato a questo ordine' });
+
+    // Stripe prima (azione reale/irreversibile), Shopware dopo: se lo step
+    // Shopware fallisce il cliente ha comunque ricevuto il rimborso — recuperabile
+    // manualmente. Il contrario (Shopware "refunded" ma soldi mai tornati) sarebbe peggio.
+    const refund = await stripe.refunds.create(
+      { payment_intent: paymentIntentId },
+      { idempotencyKey: `refund_${orderId}_full` }
+    );
+
+    const result = await markTransactionRefunded(orderId, refund.id);
+    if (!result.ok) console.warn('refund: rimborso Stripe ok ma Shopware non aggiornato:', result.reason);
+
+    if (resendConfigured()) {
+      sendRefundIssued(order, refund.amount / 100).catch(e => console.warn('refund: email fallita:', e.message));
+    }
+
+    res.json({ refundId: refund.id, amount: refund.amount / 100, status: refund.status, shopwareUpdated: result.ok });
+  } catch (err) {
+    console.error('refund:', err.message);
+    res.status(err.status === 400 ? 400 : 502).json({ error: 'Impossibile elaborare il rimborso' });
   }
 });
 
@@ -382,6 +449,13 @@ app.listen(PORT, '0.0.0.0', () => {
   if (!adminConfigured()) {
     console.warn('⚠  Admin API Shopware non configurata: gli ordini verranno creati ma NON segnati "pagati". ' +
       'Imposta SHOPWARE_ADMIN_API_URL + SHOPWARE_ADMIN_CLIENT_ID/SECRET (o ADMIN_USERNAME/PASSWORD).');
+  }
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    console.warn('⚠  STRIPE_WEBHOOK_SECRET non configurato: il webhook Stripe (rete di sicurezza per i checkout ' +
+      'interrotti, es. cliente che chiude il browser dopo aver pagato) risponderà 500 a ogni chiamata.');
+  }
+  if (!process.env.ADMIN_API_KEY) {
+    console.warn('⚠  ADMIN_API_KEY non configurata: l\'endpoint di rimborso POST /api/admin/refund è disabilitato.');
   }
   if (resendConfigured() && adminConfigured()) startOrderPoller();
 });

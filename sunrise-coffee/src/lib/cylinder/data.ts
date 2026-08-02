@@ -4,22 +4,32 @@ export const images: string[] = Array.from({ length: 12 }, (_, i) => `/img/img${
 
 export const perspectives: Perspective[] = [
   {
-    title: 'Immersive experiences',
-    description: 'Where creativity comes to life',
+    title: 'Racale, terra di capperi',
+    description: 'Nel cuore del Salento, dove il sole asciuga la terra e la pietra ne trattiene il calore, il cappero ha trovato casa. Non da poco: da sempre.',
     position: 'top',
   },
   {
-    title: 'Infinite Perspective',
-    description: 'Explore new dimensions',
+    title: 'Una vocazione, non una scelta',
+    description: 'Muretti a secco, terra rossa, un microclima quasi disegnato apposta. Racale non ha scelto il cappero: lo custodisce da generazioni, come una vocazione di famiglia.',
     position: 'center',
   },
   {
-    title: 'Inside the Universe',
-    description: 'Immerse yourself in the extraordinary',
+    title: 'Quando tutta la famiglia usciva nei campi',
+    description: "All'alba, prima che il sole si facesse duro, si usciva insieme. Nonni, genitori, figli: ogni bocciolo va colto a mano, uno per uno, e serviva ogni mano di casa.",
     position: 'center',
   },
   {
-    title: 'Cinematic GSAP Scroll Experiences',
+    title: 'Un sapere che si imparava guardando',
+    description: 'Nessun libro insegnava il gesto giusto tra i cespugli, il momento esatto della raccolta, il rispetto per una pianta che il giorno dopo avrebbe dato ancora. Si imparava standoci accanto.',
+    position: 'center',
+  },
+  {
+    title: 'La salatura, il rito di fine giornata',
+    description: 'Tornati a casa, i capperi si stendevano e si salavano insieme, in cortile, tra chi raccontava e chi ascoltava. La raccolta finiva nei campi, la cura continuava in famiglia.',
+    position: 'center',
+  },
+  {
+    title: 'Stesso territorio, stesse mani',
     position: 'bottom',
   },
 ];
