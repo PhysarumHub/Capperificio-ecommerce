@@ -96,13 +96,6 @@
     <priority>0.7</priority>
   </url>
 
-  <!-- Blog -->
-  <url>
-    <loc>https://www.capperificiocaro.com/blog</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
   <!-- B2B -->
   <url>
     <loc>https://www.capperificiocaro.com/b2b</loc>

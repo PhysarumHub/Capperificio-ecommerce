@@ -21,7 +21,6 @@ const LINKS_COL1 = [
 ];
 
 const LINKS_COL2 = [
-  { label: 'Blog',             href: '/blog' },
   { label: 'Area B2B',         href: '/b2b' },
   { label: 'Contatti',         href: '/contatti' },
   { label: 'FAQ',              href: '/faq' },

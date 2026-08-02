@@ -12,14 +12,12 @@ import CollectionPage from './pages/CollectionPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 /* ── Lazy: tutto il resto ───────────────────────────────────────────────
-   Checkout (Stripe), blog (Strapi) ed esperienze GSAP pesano molto e non
-   servono al primo render: escono dal bundle iniziale. */
+   Checkout (Stripe) ed esperienze GSAP pesano molto e non servono al primo
+   render: escono dal bundle iniziale. */
 const CartPage               = lazy(() => import('./pages/CartPage'));
 const CheckoutPage           = lazy(() => import('./pages/CheckoutPage'));
 const AccountPage            = lazy(() => import('./pages/AccountPage'));
 const B2BPage                = lazy(() => import('./pages/B2BPage'));
-const BlogPage               = lazy(() => import('./pages/BlogPage'));
-const BlogArticlePage        = lazy(() => import('./pages/BlogArticlePage'));
 const AboutPage              = lazy(() => import('./pages/AboutPage'));
 const PrivacyPolicyPage      = lazy(() => import('./pages/PrivacyPolicyPage'));
 const CookiePolicyPage       = lazy(() => import('./pages/CookiePolicyPage'));
@@ -50,8 +48,6 @@ export default function App() {
             <Route path="/account/login" element={<AccountPage />} />
             <Route path="/account/register" element={<AccountPage />} />
             <Route path="/b2b" element={<B2BPage />} />
-            <Route path="/blog" element={<BlogPage />} />
-            <Route path="/blog/:slug" element={<BlogArticlePage />} />
             <Route path="/storia" element={<AboutPage />} />
 
             {/* ── Pagine legali ── */}

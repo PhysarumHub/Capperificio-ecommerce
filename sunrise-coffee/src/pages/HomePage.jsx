@@ -8,7 +8,6 @@ import CategoryBanners from '../components/CategoryBanner/CategoryBanner';
 import AboutSection from '../components/AboutSection/AboutSection';
 import GuidesEditorial from '../components/GuidesEditorial/GuidesEditorial';
 import StorySlider from '../components/StorySlider/StorySlider';
-import BlogGrid from '../components/BlogGrid/BlogGrid';
 import { useMemo } from 'react';
 import AnimateIn from '../components/AnimateIn';
 import useInView from '../hooks/useInView';
@@ -234,9 +233,6 @@ export default function HomePage() {
       </AnimateIn>
 
       <GuidesEditorial image="/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp" />
-
-      <SectionHeader label="Dal blog" title="Storie e ricette" viewAllHref="/" viewAllText="Tutti gli articoli →" style={{ marginTop: 60 }} />
-      <BlogGrid />
     </>
   );
 }
