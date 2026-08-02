@@ -17,32 +17,33 @@ export const images: string[] = [
 
 export const perspectives: Perspective[] = [
   {
-    title: 'Racale, terra di capperi',
-    description: 'Nel cuore del Salento, dove il sole asciuga la terra e la pietra ne trattiene il calore, il cappero ha trovato casa. Non da poco: da sempre.',
+    title: 'Il cappero di Racale',
+    description: 'Qui non si è piantato. È nato insieme al paese.',
     position: 'top',
   },
   {
-    title: 'Una vocazione, non una scelta',
-    description: 'Muretti a secco, terra rossa, un microclima quasi disegnato apposta. Racale non ha scelto il cappero: lo custodisce da generazioni, come una vocazione di famiglia.',
+    title: 'Nato tra le pietre',
+    description: 'Dove non cresce altro, cresce lui. Noi ci siamo solo adattati.',
     position: 'center',
   },
   {
-    title: 'Quando tutta la famiglia usciva nei campi',
-    description: "All'alba, prima che il sole si facesse duro, si usciva insieme. Nonni, genitori, figli: ogni bocciolo va colto a mano, uno per uno, e serviva ogni mano di casa.",
+    title: 'A mano, sempre',
+    description: 'Bocciolo per bocciolo. Le macchine qui non sono mai entrate.',
     position: 'center',
   },
   {
-    title: 'Un sapere che si imparava guardando',
-    description: 'Nessun libro insegnava il gesto giusto tra i cespugli, il momento esatto della raccolta, il rispetto per una pianta che il giorno dopo avrebbe dato ancora. Si imparava standoci accanto.',
+    title: 'Occhio, non libro',
+    description: 'Il momento giusto si impara a vista. Nessun manuale te lo insegna.',
     position: 'center',
   },
   {
-    title: 'La salatura, il rito di fine giornata',
-    description: 'Tornati a casa, i capperi si stendevano e si salavano insieme, in cortile, tra chi raccontava e chi ascoltava. La raccolta finiva nei campi, la cura continuava in famiglia.',
+    title: 'Come si è sempre fatto',
+    description: 'Sotto sale, a strati, senza fretta. Non cambia da tre generazioni.',
     position: 'center',
   },
   {
-    title: 'Stesso territorio, stesse mani',
+    title: 'Stessa pianta, altre mani',
+    description: 'Tre generazioni, stesso posto, stesso cespuglio.',
     position: 'bottom',
   },
 ];
