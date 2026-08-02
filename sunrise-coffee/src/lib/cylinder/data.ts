@@ -1,6 +1,19 @@
 import type { Breakpoint, CylinderConfig, ImageConfig, ParticleConfig, Perspective, ResponsiveSettings } from './types';
 
-export const images: string[] = Array.from({ length: 12 }, (_, i) => `/img/img${i + 1}.svg`);
+export const images: string[] = [
+  '/images/territorio/capperificio-caro-raccolta.webp',
+  '/images/territorio/capperificio-caro-lavorazione-jul-23.webp',
+  '/images/territorio/capperificio-caro-capperi.webp',
+  '/images/territorio/raccolta-capperificio-caro-lug-12-2024.webp',
+  '/images/territorio/capperificio-caro-lavorazione-jul-23-1.webp',
+  '/images/territorio/capperificio-caro-raccolta-2024.webp',
+  '/images/territorio/lavorazione-capperificio-caro-23-lug-2024.webp',
+  '/images/territorio/raccolta-capperificio-caro-lug-12-2024-1.webp',
+  '/images/territorio/capperificio-caro-raccolta-2024-1.webp',
+  '/images/territorio/capperificio-caro-raccolta-jul-12-2024.webp',
+  '/images/territorio/capperi-condivisione-pubblica-giugno-11-2025.webp',
+  '/images/territorio/foto-lug-29-2024-da-aruba-drive.webp',
+];
 
 export const perspectives: Perspective[] = [
   {

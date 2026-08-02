@@ -26,7 +26,6 @@ const CookiePolicyPage       = lazy(() => import('./pages/CookiePolicyPage'));
 const TerminiCondizioniPage  = lazy(() => import('./pages/TerminiCondizioniPage'));
 const TestPageA              = lazy(() => import('./pages/TestPageA'));
 const TestPageB              = lazy(() => import('./pages/TestPageB'));
-const Storia2Page            = lazy(() => import('./pages/Storia2Page'));
 const CylinderCarousel       = lazy(() => import('./components/CylinderCarousel'));
 const Carousel3D             = lazy(() => import('./components/Carousel3D/Carousel3D'));
 
@@ -65,7 +64,6 @@ export default function App() {
           <Route path="/territorio" element={<CylinderCarousel />} />
           <Route path="/test-a" element={<TestPageA />} />
           <Route path="/test-b" element={<TestPageB />} />
-          <Route path="/storia2" element={<Storia2Page />} />
           <Route path="/processo-produttivo" element={<Carousel3D />} />
 
           <Route path="*" element={<NotFoundPage />} />
