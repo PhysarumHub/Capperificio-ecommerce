@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FacebookIcon, InstagramIcon, TikTokIcon, YouTubeIcon, WhatsAppIcon, EmailIcon } from '../Icons';
+import { FacebookIcon, InstagramIcon } from '../Icons';
 import { COMPANY } from '../../data/company';
 import styles from './Footer.module.css';
 
@@ -34,12 +34,8 @@ const LEGAL_LINKS = [
 ];
 
 const SOCIAL_ICONS = [
-  { Icon: FacebookIcon,  label: 'Facebook' },
-  { Icon: InstagramIcon, label: 'Instagram' },
-  { Icon: TikTokIcon,    label: 'TikTok' },
-  { Icon: YouTubeIcon,   label: 'YouTube' },
-  { Icon: WhatsAppIcon,  label: 'WhatsApp' },
-  { Icon: EmailIcon,     label: 'Email' },
+  { Icon: FacebookIcon,  label: 'Facebook',  href: 'https://www.facebook.com/p/Capperificio-Caro-100093341396615/' },
+  { Icon: InstagramIcon, label: 'Instagram', href: 'https://www.instagram.com/capperificiocaro/' },
 ];
 
 export default function Footer() {
@@ -70,8 +66,8 @@ export default function Footer() {
         </ul>
 
         <div className={styles.socials}>
-          {SOCIAL_ICONS.map(({ Icon, label }) => (
-            <a key={label} href="#" className={styles.socialLink} aria-label={label}>
+          {SOCIAL_ICONS.map(({ Icon, label, href }) => (
+            <a key={label} href={href} target="_blank" rel="noopener noreferrer" className={styles.socialLink} aria-label={label}>
               <Icon />
             </a>
           ))}
