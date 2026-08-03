@@ -3,15 +3,6 @@ import { FacebookIcon, InstagramIcon } from '../Icons';
 import { COMPANY } from '../../data/company';
 import styles from './Footer.module.css';
 
-const PAYMENT_METHODS = [
-  { label: 'VISA', bg: '#1A1F71' },
-  { label: 'MC',   bg: '#EB001B' },
-  { label: 'AMEX', bg: '#006FCF' },
-  { label: 'PAY',  bg: '#003087' },
-  { label: 'DIN',  bg: '#0079BE' },
-  { label: 'DISC', bg: '#FF6000' },
-];
-
 const LINKS_COL1 = [
   { label: 'Home',                href: '/' },
   { label: 'I nostri prodotti',   href: '/collections/all' },
@@ -85,19 +76,6 @@ export default function Footer() {
           P.IVA e C.F. {COMPANY.vat} — REA {COMPANY.rea} — PEC{' '}
           <a href={`mailto:${COMPANY.pec}`}>{COMPANY.pec}</a>
         </p>
-      </div>
-
-      <div className={styles.bottom}>
-        <div className={styles.copy}>
-          &copy; 2026. Capperificio di Racale.<br />Tutti i diritti riservati.
-        </div>
-        <div className={styles.payments}>
-          {PAYMENT_METHODS.map(({ label, bg }) => (
-            <span key={label} className={styles.payIcon} style={{ background: bg }}>
-              {label}
-            </span>
-          ))}
-        </div>
       </div>
 
       <div className={styles.tagline}>
