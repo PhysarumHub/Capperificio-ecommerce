@@ -41,7 +41,7 @@ export default function Carousel3D() {
   useSEO({
     title: 'Processo Produttivo',
     description: 'Dalla raccolta a mano alla salatura artigianale: scopri come nascono i capperi del Capperificio Caro di Racale.',
-    path: '/processo-produttivo',
+    path: '/territorio',
     jsonLd: PROCESSO_JSON_LD,
   });
 

@@ -57,10 +57,10 @@ export default function App() {
           </Route>
 
           {/* ── Fullscreen experiences (no header/footer) ── */}
-          <Route path="/territorio" element={<CylinderCarousel />} />
+          <Route path="/territorio" element={<Carousel3D />} />
           <Route path="/test-a" element={<TestPageA />} />
           <Route path="/test-b" element={<TestPageB />} />
-          <Route path="/processo-produttivo" element={<Carousel3D />} />
+          <Route path="/processo-produttivo" element={<CylinderCarousel />} />
 
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
