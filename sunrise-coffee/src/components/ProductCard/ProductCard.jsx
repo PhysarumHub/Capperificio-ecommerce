@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCartContext } from '../../context/ShopwareContext';
+import { getCartQuantity } from '../../lib/utils/availability';
 import styles from './ProductCard.module.css';
 
 export default function ProductCard({
@@ -27,9 +28,15 @@ export default function ProductCard({
   const debounceRef = useRef(null);
 
   const variantList = options?.length ? options : sizes ? [sizes] : null;
-  const [selectedVariant, setSelectedVariant] = useState(variantList?.[0] ?? null);
 
   const hasPerVariantAvailability = Object.keys(availabilityMap).length > 0;
+
+  // Default sulla prima variante acquistabile: partire da una esaurita quando
+  // altri formati sono disponibili nasconde il prodotto senza motivo.
+  const defaultVariant = variantList
+    ? (variantList.find((v) => availabilityMap[v] !== false) ?? variantList[0])
+    : null;
+  const [selectedVariant, setSelectedVariant] = useState(defaultVariant);
 
   // Sold-out for the currently selected state:
   // 1. Whole product sold-out (soldOut prop from parent)
@@ -48,6 +55,22 @@ export default function ProductCard({
     ? ((selectedVariant && variantMap[selectedVariant]) || null)
     : id;
   const canDirectAdd = Boolean(directCartId) && !isCurrentVariantSoldOut;
+
+  // Il carrello è la verità: Shopware risponde 200 anche quando riduce o rifiuta
+  // la riga (stock esaurito), quindi il contatore ottimistico va riallineato.
+  const showControlRef = useRef(false);
+  showControlRef.current = showControl;
+  useEffect(() => {
+    if (!cart || !directCartId) return;
+    const realQty = getCartQuantity(cart, directCartId);
+    setQty(realQty);
+    if (realQty === 0) {
+      setShowControl(false);
+      setShowTag(false);
+    } else if (!showControlRef.current) {
+      setShowTag(true);
+    }
+  }, [cart, directCartId]);
 
   const base = `/product/${slug || name.toLowerCase().replace(/\s+/g, '-')}`;
   const href = selectedVariant ? `${base}?variant=${encodeURIComponent(selectedVariant)}` : base;

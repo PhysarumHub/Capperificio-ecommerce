@@ -25,6 +25,12 @@
   color: var(--color-red);
 }
 
+.error {
+  font-size: 14px;
+  color: var(--color-red);
+  margin-top: 8px;
+}
+
 .form {
   display: flex;
   gap: 0;

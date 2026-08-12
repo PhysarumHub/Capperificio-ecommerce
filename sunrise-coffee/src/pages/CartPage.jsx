@@ -1,8 +1,12 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCartContext } from '../context/ShopwareContext';
 import { useSEO } from '../hooks/useSEO';
 import { formatPrice } from '../lib/utils/price';
 import { getProductImage, proxyUrl } from '../lib/utils/image';
+import { getLineItemMaxQty } from '../lib/utils/availability';
+import { gtmViewCart, gtmRemoveFromCart } from '../lib/utils/gtm';
+import CartStockNotices from '../components/CartStockNotices/CartStockNotices';
 
 function getVariantLabel(item) {
   const options = item.payload?.options;
@@ -14,6 +18,29 @@ export default function CartPage() {
   useSEO({ title: 'Carrello', path: '/cart', noindex: true });
 
   const { cart, loading, error, updateQuantity, removeItem, mergeUpdate, removeItems, clearCart, itemCount, positionPrice } = useCartContext();
+
+  const rawItems = (cart?.lineItems || []).filter((item) => item.type === 'product');
+
+  // Group duplicate line items for the same product into one row
+  const groupedMap = {};
+  rawItems.forEach((item) => {
+    const key = item.referencedId || item.id;
+    if (!groupedMap[key]) {
+      groupedMap[key] = { ...item, _allIds: [item.id], _totalPrice: item.price?.totalPrice || 0 };
+    } else {
+      groupedMap[key].quantity += item.quantity;
+      groupedMap[key]._totalPrice += item.price?.totalPrice || 0;
+      groupedMap[key]._allIds.push(item.id);
+    }
+  });
+  const lineItems = Object.values(groupedMap);
+
+  useEffect(() => {
+    if (!loading && lineItems.length > 0) {
+      gtmViewCart(lineItems, positionPrice);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, lineItems.length]);
 
   if (loading && !cart) {
     return (
@@ -32,28 +59,18 @@ export default function CartPage() {
     );
   }
 
-  const rawItems = (cart?.lineItems || []).filter((item) => item.type === 'product');
-
-  // Group duplicate line items for the same product into one row
-  const groupedMap = {};
-  rawItems.forEach((item) => {
-    const key = item.referencedId || item.id;
-    if (!groupedMap[key]) {
-      groupedMap[key] = { ...item, _allIds: [item.id], _totalPrice: item.price?.totalPrice || 0 };
-    } else {
-      groupedMap[key].quantity += item.quantity;
-      groupedMap[key]._totalPrice += item.price?.totalPrice || 0;
-      groupedMap[key]._allIds.push(item.id);
-    }
-  });
-  const lineItems = Object.values(groupedMap);
-
   const handleUpdateQty = (group, newQty) => {
     const [firstId, ...duplicates] = group._allIds;
     mergeUpdate(firstId, newQty, duplicates);
   };
 
-  const handleRemoveGroup = (group) => removeItems(group._allIds);
+  const handleRemoveGroup = (group) => {
+    gtmRemoveFromCart(
+      { id: group.referencedId || group.id, name: group.label, price: group.price?.unitPrice ?? 0 },
+      group.quantity
+    );
+    removeItems(group._allIds);
+  };
 
   if (lineItems.length === 0) {
     return (
@@ -84,8 +101,12 @@ export default function CartPage() {
         Il tuo carrello ({itemCount})
       </h1>
 
+      <CartStockNotices cart={cart} />
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {lineItems.map((item) => (
+        {lineItems.map((item) => {
+          const maxQty = getLineItemMaxQty(item);
+          return (
           <div
             key={item.id}
             style={{
@@ -117,20 +138,32 @@ export default function CartPage() {
                 {formatPrice(item.price?.unitPrice)}
               </p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button
-                onClick={() => handleUpdateQty(item, Math.max(1, item.quantity - 1))}
-                style={{ width: 32, height: 32, border: '1px solid var(--color-border)', background: '#fff', cursor: 'pointer', borderRadius: 4 }}
-              >
-                &minus;
-              </button>
-              <span style={{ minWidth: 24, textAlign: 'center' }}>{item.quantity}</span>
-              <button
-                onClick={() => handleUpdateQty(item, item.quantity + 1)}
-                style={{ width: 32, height: 32, border: '1px solid var(--color-border)', background: '#fff', cursor: 'pointer', borderRadius: 4 }}
-              >
-                +
-              </button>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  onClick={() => handleUpdateQty(item, Math.max(1, item.quantity - 1))}
+                  style={{ width: 32, height: 32, border: '1px solid var(--color-border)', background: '#fff', cursor: 'pointer', borderRadius: 4 }}
+                >
+                  &minus;
+                </button>
+                <span style={{ minWidth: 24, textAlign: 'center' }}>{item.quantity}</span>
+                <button
+                  onClick={() => handleUpdateQty(item, item.quantity + 1)}
+                  disabled={item.quantity >= maxQty}
+                  title={item.quantity >= maxQty ? `Disponibili solo ${maxQty} pezzi` : undefined}
+                  style={{
+                    width: 32, height: 32, border: '1px solid var(--color-border)', background: '#fff',
+                    cursor: item.quantity >= maxQty ? 'not-allowed' : 'pointer',
+                    opacity: item.quantity >= maxQty ? 0.35 : 1,
+                    borderRadius: 4,
+                  }}
+                >
+                  +
+                </button>
+              </div>
+              {item.quantity >= maxQty && (
+                <span style={{ fontSize: 12, color: 'var(--color-red)' }}>Ultimi {maxQty} pezzi</span>
+              )}
             </div>
             <div style={{ minWidth: 80, textAlign: 'right', fontWeight: 600 }}>
               {formatPrice(item._totalPrice)}
@@ -143,7 +176,8 @@ export default function CartPage() {
               &times;
             </button>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <div style={{ marginTop: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

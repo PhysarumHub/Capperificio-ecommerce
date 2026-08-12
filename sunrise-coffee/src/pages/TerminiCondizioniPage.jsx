@@ -163,9 +163,6 @@ const SECTIONS = [
             <strong>Carte di credito e debito</strong> (Visa, Mastercard, American Express) e wallet
             digitali (Apple Pay, Google Pay), tramite <strong>Stripe</strong>.
           </li>
-          <li>
-            <strong>PayPal</strong>, secondo le condizioni contrattuali del fornitore.
-          </li>
         </ul>
         <p>
           I dati delle carte di pagamento sono trasmessi tramite connessione cifrata direttamente al

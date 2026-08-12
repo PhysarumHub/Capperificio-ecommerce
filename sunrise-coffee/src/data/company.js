@@ -18,7 +18,7 @@ export const COMPANY = {
 
   /* Sede legale */
   address: {
-    street: 'Via Montesanto 64',
+    street: 'Via Ospina 1/3',
     zip: '73055',
     city: 'Racale',
     province: 'LE',
@@ -37,6 +37,10 @@ export const COMPANY = {
   emailOrders: 'ordini@capperificiocaro.com',
   emailB2B: 'b2b@capperificiocaro.com',
   pec: 'farmetechsrls@pec.agritel.it',
+  whatsapp: '+39 379 234 2642',
+  get whatsappLink() {
+    return `https://wa.me/${this.whatsapp.replace(/[^\d]/g, '')}`;
+  },
 
   /* Web */
   domain: 'capperificiocaro.com',

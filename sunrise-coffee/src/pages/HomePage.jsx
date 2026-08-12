@@ -15,7 +15,8 @@ import { useProducts } from '../hooks/useProducts';
 import { useSEO } from '../hooks/useSEO';
 import { formatPrice } from '../lib/utils/price';
 import { getProductImage, getProductSlug } from '../lib/utils/image';
-import { isProductAvailable, buildVariantAvailabilityMap } from '../lib/utils/availability';
+import { resolveListingSoldOut } from '../lib/utils/availability';
+import { groupVariants, resolveCardCartId, resolveVariantOptions } from '../lib/utils/variants';
 import styles from './HomePage.module.css';
 import anim from '../styles/animations.module.css';
 
@@ -47,94 +48,22 @@ const MERCH_PRODUCTS_FALLBACK = [
   { name: 'Sunrise Cap', image: '/images/PRODUCTSTILL.jpg', price: '$40.00' },
 ];
 
-function buildVariantMap(variants) {
-  const map = {};
-  for (const v of variants) {
-    const name = v.options?.[0]?.translated?.name || v.options?.[0]?.name;
-    if (name) map[name] = v.id;
-  }
-  return map;
-}
-
-function groupVariants(rawList) {
-  const standalone = rawList.filter(p => !p.parentId);
-  const children   = rawList.filter(p => !!p.parentId);
-
-  const groups = {};
-  for (const child of children) {
-    if (!groups[child.parentId]) groups[child.parentId] = [];
-    groups[child.parentId].push(child);
-  }
-
-  const result = standalone.map(p => {
-    const siblings = groups[p.id] || [];
-    if (!siblings.length) return p;
-    const allOptions = [...new Set(
-      siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
-    )];
-    return {
-      ...p,
-      _allVariantOptions: allOptions,
-      _firstVariantId: siblings[0]?.id,
-      _variantMap: buildVariantMap(siblings),
-      _availabilityMap: buildVariantAvailabilityMap(siblings),
-    };
-  });
-
-  for (const [parentId, siblings] of Object.entries(groups)) {
-    if (standalone.some(p => p.id === parentId)) continue;
-    const allOptions = [...new Set(
-      siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
-    )];
-    result.push({
-      ...siblings[0],
-      _allVariantOptions: allOptions,
-      _variantMap: buildVariantMap(siblings),
-      _availabilityMap: buildVariantAvailabilityMap(siblings),
-    });
-  }
-
-  return result;
-}
-
 function mapShopwareProduct(product) {
   const price = product.calculatedPrice || product.price?.[0];
   const listPrice = price?.listPrice;
 
-  // configuratorSettings = tutte le varianti del prodotto padre (es. 250g, 500g, 1kg)
-  // options = variante specifica di un prodotto figlio
-  const fromConfigurator = product.configuratorSettings
-    ?.map((s) => s.option?.translated?.name || s.option?.name)
-    .filter(Boolean);
-  const fromOptions = product.options
-    ?.map((o) => o.translated?.name || o.name)
-    .filter(Boolean);
-  // configuratorSettings è sempre completo (viene dal padre);
-  // _allVariantOptions deriva solo dai figli presenti nella risposta, può essere incompleto.
-  const options = fromConfigurator?.length
-    ? [...new Set(fromConfigurator)]
-    : (product._allVariantOptions?.length ? product._allVariantOptions : (fromOptions?.length ? fromOptions : undefined));
-
-  const availabilityMap = product._availabilityMap || {};
-  const hasPerVariantData = Object.keys(availabilityMap).length > 0;
-  // When we have per-variant data: sold-out only if ALL variants are unavailable.
-  // Otherwise fall back to the parent product's own availability fields.
-  const soldOut = hasPerVariantData
-    ? Object.values(availabilityMap).every(v => v === false)
-    : !isProductAvailable(product);
-
   return {
-    id: product._firstVariantId || product.id,
+    id: resolveCardCartId(product),
     name: product.translated?.name || product.name,
     slug: getProductSlug(product),
     image: getProductImage(product),
     price: formatPrice(price?.unitPrice),
     oldPrice: listPrice?.price ? formatPrice(listPrice.price) : undefined,
     badge: listPrice?.price ? 'Sale' : undefined,
-    options,
+    options: resolveVariantOptions(product),
     variantMap: product._variantMap || {},
-    availabilityMap,
-    soldOut,
+    availabilityMap: product._availabilityMap || {},
+    soldOut: resolveListingSoldOut(product),
   };
 }
 

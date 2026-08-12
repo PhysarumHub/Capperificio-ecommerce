@@ -8,7 +8,7 @@
 | `/product/:slug` | `ProductPage` | Dettaglio prodotto, varianti |
 | `/collections/:slug` | `CollectionPage` | Griglia prodotti per categoria |
 | `/cart` | `CartPage` | Riepilogo carrello |
-| `/checkout` | `CheckoutPage` | Stripe + PayPal |
+| `/checkout` | `CheckoutPage` | Stripe Payment Element |
 | `/account` | `AccountPage` | Login / Register / Ordini |
 | `/account/login` | `AccountPage` | |
 | `/account/register` | `AccountPage` | |

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ScrollSmoother } from 'gsap/ScrollSmoother';
@@ -157,6 +158,10 @@ export default function Carousel3D() {
 
   return (
     <div className={styles.page}>
+      <Link to="/" className={styles.backLink} aria-label="Torna alla home">
+        <span aria-hidden="true">&larr;</span>
+      </Link>
+
       {isLoading && <div className={styles.loading}>Caricamento</div>}
 
       <div ref={wrapperRef} className={styles.smoothWrapper}>

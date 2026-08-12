@@ -7,9 +7,9 @@
 | Frontend | React 19 + Vite 7 | SPA, CSS Modules, React Router 7 |
 | Shopware | Shopware 6 (dockware/dev) | Backend headless, Store API |
 | Blog CMS | Strapi v5 (node:20-alpine) | PostgreSQL 16 |
-| Pagamenti | Stripe + PayPal | Express proxy per Stripe secret |
+| Pagamenti | Stripe (Payment Element) | Express proxy per Stripe secret |
 | Animazioni | GSAP 3 + ScrollTrigger | StorySlider, AboutPage |
-| Deploy | Docker Compose + nginx | Vercel per preview |
+| Deploy | Docker Compose + nginx + Traefik | VPS self-hosted, no serverless |
 
 ## Servizi Docker
 
@@ -56,9 +56,6 @@ VITE_STRAPI_TOKEN=
 # Stripe
 STRIPE_SECRET_KEY=sk_...
 VITE_STRIPE_PUBLIC_KEY=pk_...
-
-# PayPal
-VITE_PAYPAL_CLIENT_ID=
 ```
 
 > Le variabili `VITE_*` vengono embedded nel bundle Vite al build time.

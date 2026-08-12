@@ -41,6 +41,7 @@ import {
   fetchOrderDetails, savePacklinkReference,
   fetchOrdersInDeliveryState, fetchOrdersInOrderState,
   fetchLowStockProducts, findOrderByPaymentIntentId, markTransactionRefunded,
+  swFetch,
 } from './api/_shopware.js';
 import { createShipmentForOrder, packlinkConfigured } from './api/_packlink.js';
 import {
@@ -64,7 +65,7 @@ app.set('trust proxy', 1);
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  contentSecurityPolicy: false, // gestita da Vercel/nginx
+  contentSecurityPolicy: false, // gestita interamente da nginx (vedi nginx.conf)
 }));
 
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
@@ -87,30 +88,19 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
       try {
         // Backup di fulfillment: se il client non ha completato il confirm
         // (es. ha chiuso il browser), l'ordine viene creato comunque qui.
-        const cart = await getCartTotal(token);
-        if (pi.amount === cart.amountInCents && pi.currency === cart.currency) {
-          const order = await placeOrder(token);
-          const orderId = order?.id;
-          const result = await markTransactionPaid(orderId, pi.id);
-          if (!result.ok) console.log('Webhook: mark paid non riuscito:', result.reason);
-          // Background: Packlink + email (best-effort, non blocca la risposta)
-          if (packlinkConfigured() || resendConfigured()) {
-            fetchOrderDetails(orderId).then(async (fullOrder) => {
-              if (!fullOrder) return;
-              let packlinkRef = null;
-              if (packlinkConfigured()) {
-                packlinkRef = await createShipmentForOrder(fullOrder);
-                if (packlinkRef) await savePacklinkReference(orderId, packlinkRef);
-              }
-              if (resendConfigured()) {
-                await Promise.all([
-                  sendOrderConfirmation(fullOrder),
-                  sendMerchantAlert(fullOrder, packlinkRef),
-                ]);
-              }
-            }).catch(e => console.warn('Webhook background:', e.message));
+        // Sotto lock: se /api/checkout/confirm sta già creando l'ordine per
+        // questo stesso carrello, qui si attende e si trova il carrello vuoto.
+        await withOrderLock(token, async () => {
+          const cart = await getCartTotal(token);
+          if (pi.amount === cart.amountInCents && pi.currency === cart.currency) {
+            const order = await placeOrder(token);
+            const orderId = order?.id;
+            const result = await markTransactionPaid(orderId, pi.id);
+            if (!result.ok) console.log('Webhook: mark paid non riuscito:', result.reason);
+            // Background: Packlink + email (best-effort, non blocca la risposta)
+            fulfillOrderInBackground(orderId, { label: 'Webhook' });
           }
-        }
+        });
       } catch (e) {
         // Carrello vuoto = ordine già creato dal confirm lato client (idempotente)
         console.log('Webhook: ordine già creato o carrello vuoto:', e.message);
@@ -157,8 +147,53 @@ const paymentLimiter = rateLimit({
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const MAX_ORDER_TOTAL = 5000; // tetto di sicurezza anti-frode (€)
+const STRIPE_MIN_CENTS = 50;  // importo minimo accettato da Stripe in EUR (0,50 €)
 
-// ── Checkout: prepara contesto + crea PaymentIntent unico (carta/wallet/PayPal) ─
+// ── Lock per context token ───────────────────────────────────────────────────
+// Il webhook Stripe e /api/checkout/confirm possono arrivare in parallelo per lo
+// stesso pagamento: senza serializzazione entrambi leggerebbero un carrello
+// ancora pieno e creerebbero DUE ordini a fronte di un solo incasso.
+// Accodandoli sullo stesso contextToken, il secondo trova il carrello già
+// svuotato e cade nel ramo idempotente ("ordine già creato").
+// Un lock in-process basta: il backend Express gira in un unico container.
+const orderLocks = new Map();
+
+function withOrderLock(token, fn) {
+  const previous = orderLocks.get(token) || Promise.resolve();
+  // .catch() sulla catena precedente: un errore a monte non deve impedire
+  // l'esecuzione delle richieste accodate dopo.
+  const current = previous.catch(() => {}).then(fn);
+  orderLocks.set(token, current);
+  // Rimuove la voce solo se nel frattempo non si è accodata un'altra richiesta.
+  current.catch(() => {}).then(() => {
+    if (orderLocks.get(token) === current) orderLocks.delete(token);
+  });
+  return current;
+}
+
+/**
+ * Post-ordine: spedizione Packlink + email di conferma.
+ * Fire-and-forget — non deve mai bloccare (né far fallire) la risposta HTTP.
+ */
+function fulfillOrderInBackground(orderId, { label = 'order' } = {}) {
+  if (!orderId || (!packlinkConfigured() && !resendConfigured())) return;
+  fetchOrderDetails(orderId).then(async (fullOrder) => {
+    if (!fullOrder) return;
+    let packlinkRef = null;
+    if (packlinkConfigured()) {
+      packlinkRef = await createShipmentForOrder(fullOrder);
+      if (packlinkRef) await savePacklinkReference(orderId, packlinkRef);
+    }
+    if (resendConfigured()) {
+      await Promise.all([
+        sendOrderConfirmation(fullOrder),
+        sendMerchantAlert(fullOrder, packlinkRef),
+      ]);
+    }
+  }).catch(e => console.warn(`${label} background:`, e.message));
+}
+
+// ── Checkout: prepara contesto + crea PaymentIntent unico (carta/wallet) ──────
 // Il server registra il guest, imposta la spedizione, legge il totale REALE dal
 // carrello e crea il PaymentIntent. Ritorna il context token autoritativo: niente
 // più gestione del token lato client (elimina le race condition).
@@ -182,8 +217,18 @@ app.post('/api/checkout/create-intent', paymentLimiter, async (req, res) => {
     if (cart.total > MAX_ORDER_TOTAL)
       return res.status(400).json({ error: `Importo superiore al massimo (€${MAX_ORDER_TOTAL})` });
 
+    // 3b. Totale 0 (es. codice sconto 100%): Stripe non accetta pagamenti da 0 €.
+    //     Nessun PaymentIntent: il client conferma via /api/checkout/confirm-free,
+    //     che ri-verifica il totale prima di creare l'ordine.
+    if (cart.amountInCents === 0)
+      return res.json({ free: true, contextToken: token, amount: 0 });
+
+    // 3c. Importo sotto il minimo Stripe ma > 0: non è pagabile online.
+    if (cart.amountInCents < STRIPE_MIN_CENTS)
+      return res.status(400).json({ error: 'Importo troppo basso per il pagamento online (minimo 0,50 €).' });
+
     // 4. PaymentIntent unico: automatic_payment_methods abilita carta + wallet +
-    //    PayPal (in base a ciò che è attivo nella Dashboard Stripe).
+    //    e gli altri metodi attivi nella Dashboard Stripe.
     //    Idempotency key legata al token+importo per evitare doppioni alle riprove.
     const pi = await stripe.paymentIntents.create(
       {
@@ -213,36 +258,31 @@ app.post('/api/checkout/confirm', paymentLimiter, async (req, res) => {
     if (pi.metadata?.contextToken !== contextToken)
       return res.status(403).json({ error: 'Pagamento non valido per questa sessione' });
 
-    const cart = await getCartTotal(contextToken);
-    if (pi.amount !== cart.amountInCents || pi.currency !== cart.currency)
+    // Sotto lock: serializza con il webhook Stripe, che può creare lo stesso
+    // ordine in parallelo (vedi withOrderLock).
+    const result = await withOrderLock(contextToken, async () => {
+      const cart = await getCartTotal(contextToken);
+      if (pi.amount !== cart.amountInCents || pi.currency !== cart.currency)
+        return { mismatch: true };
+
+      const order = await placeOrder(contextToken);
+      const orderId = order?.id;
+
+      // Segna la transazione come pagata (best-effort: non blocca se l'Admin API manca)
+      const paid = await markTransactionPaid(orderId, pi.id);
+      if (!paid.ok) console.warn('confirm: ordine creato ma non segnato pagato:', paid.reason);
+
+      return { order, orderId, paid };
+    });
+
+    if (result.mismatch)
       return res.status(409).json({ error: 'Importo pagato non corrisponde al carrello' });
 
-    const order = await placeOrder(contextToken);
-    const orderId = order?.id;
-
-    // Segna la transazione come pagata (best-effort: non blocca se l'Admin API manca)
-    const paid = await markTransactionPaid(orderId, pi.id);
-    if (!paid.ok) console.warn('confirm: ordine creato ma non segnato pagato:', paid.reason);
-
+    const { order, orderId, paid } = result;
     res.json({ orderNumber: order?.orderNumber || orderId || null, paid: paid.ok });
 
     // Background: Packlink + email — fire-and-forget, non blocca la risposta
-    if (packlinkConfigured() || resendConfigured()) {
-      fetchOrderDetails(orderId).then(async (fullOrder) => {
-        if (!fullOrder) return;
-        let packlinkRef = null;
-        if (packlinkConfigured()) {
-          packlinkRef = await createShipmentForOrder(fullOrder);
-          if (packlinkRef) await savePacklinkReference(orderId, packlinkRef);
-        }
-        if (resendConfigured()) {
-          await Promise.all([
-            sendOrderConfirmation(fullOrder),
-            sendMerchantAlert(fullOrder, packlinkRef),
-          ]);
-        }
-      }).catch(e => console.warn('confirm background:', e.message));
-    }
+    fulfillOrderInBackground(orderId, { label: 'confirm' });
   } catch (err) {
     // Se il carrello è vuoto qui, l'ordine è già stato creato (es. dal webhook):
     // trattiamo come idempotente per non mostrare un errore all'utente.
@@ -251,6 +291,47 @@ app.post('/api/checkout/confirm', paymentLimiter, async (req, res) => {
       return res.status(409).json({ error: 'Ordine già elaborato' });
     }
     console.error('confirm:', err.message);
+    res.status(500).json({ error: 'Errore nel completamento ordine' });
+  }
+});
+
+// ── Checkout: ordine a totale 0,00 € (es. codice sconto 100%) ────────────────
+// Non c'è nessun pagamento da verificare, quindi l'unica difesa è ricalcolare il
+// totale lato server: se non è esattamente 0, la richiesta viene rifiutata.
+app.post('/api/checkout/confirm-free', paymentLimiter, async (req, res) => {
+  try {
+    const { contextToken } = req.body || {};
+    if (!contextToken) return res.status(400).json({ error: 'Sessione carrello mancante' });
+
+    // Stesso lock degli altri percorsi di creazione ordine: due submit ravvicinati
+    // dello stesso carrello gratuito non devono generare due ordini.
+    const result = await withOrderLock(contextToken, async () => {
+      const cart = await getCartTotal(contextToken);
+      if (cart.amountInCents !== 0) return { notFree: true };
+
+      const order = await placeOrder(contextToken);
+      const orderId = order?.id;
+
+      // Nessun PaymentIntent da tracciare: la transazione è comunque "paid" (0 €)
+      const paid = await markTransactionPaid(orderId, null);
+      if (!paid.ok) console.warn('confirm-free: ordine creato ma non segnato pagato:', paid.reason);
+
+      return { order, orderId, paid };
+    });
+
+    if (result.notFree)
+      return res.status(409).json({ error: 'Il totale del carrello non è 0: completa il pagamento.' });
+
+    const { order, orderId, paid } = result;
+    res.json({ orderNumber: order?.orderNumber || orderId || null, paid: paid.ok });
+
+    fulfillOrderInBackground(orderId, { label: 'confirm-free' });
+  } catch (err) {
+    if (err.status === 400) {
+      console.log('confirm-free: carrello vuoto (ordine probabilmente già creato)');
+      return res.status(409).json({ error: 'Ordine già elaborato' });
+    }
+    console.error('confirm-free:', err.message);
     res.status(500).json({ error: 'Errore nel completamento ordine' });
   }
 });
@@ -299,6 +380,45 @@ app.post('/api/admin/refund', paymentLimiter, requireAdminKey, async (req, res) 
   }
 });
 
+// ── Newsletter: iscrizione + conferma double opt-in ───────────────────────────
+// Il form in Newsletter.jsx chiama /subscribe; Shopware invia una email con un
+// link a {SITE_URL}/newsletter-subscribe?em=...&hash=... (o iscrive subito, in
+// base alla configurazione "double opt-in" del sales channel). NewsletterConfirmPage
+// legge quei parametri e chiama /confirm per completare l'iscrizione.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+app.post('/api/newsletter/subscribe', paymentLimiter, async (req, res) => {
+  try {
+    const { email } = req.body || {};
+    if (!email || !EMAIL_RE.test(email)) return res.status(400).json({ error: 'Email non valida' });
+
+    await swFetch('/newsletter/subscribe', {
+      method: 'POST',
+      body: {
+        email,
+        option: 'subscribe',
+        storefrontUrl: process.env.FRONTEND_URL || process.env.SITE_URL || 'https://www.capperificiocaro.com',
+      },
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('newsletter/subscribe:', err.message);
+    res.status(err.status === 400 ? 400 : 502).json({ error: 'Iscrizione non riuscita. Riprova più tardi.' });
+  }
+});
+
+app.post('/api/newsletter/confirm', async (req, res) => {
+  try {
+    const { em, hash } = req.body || {};
+    if (!em || !hash) return res.status(400).json({ error: 'Link di conferma non valido' });
+    await swFetch('/newsletter/confirm', { method: 'POST', body: { em, hash } });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('newsletter/confirm:', err.message);
+    res.status(err.status === 400 ? 400 : 502).json({ error: 'Conferma non riuscita: il link potrebbe essere scaduto o già usato.' });
+  }
+});
+
 // ── Strapi proxy: GET /api/strapi/* → Strapi CMS ─────────────────────────────
 const STRAPI_ALLOWED = [/^articles(\/|\?|$)/, /^articles$/];
 app.get('/api/strapi/*path', async (req, res) => {
@@ -331,7 +451,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 // ── Sitemap XML dinamica ──────────────────────────────────────────────────────
-// Aggrega: pagine statiche + prodotti Shopware (con SEO URL) + articoli Strapi.
+// Aggrega: pagine statiche + prodotti Shopware (con SEO URL).
 // Cacheable da nginx (1h) e da CDN (2h).
 app.get('/sitemap.xml', async (_req, res) => {
   const SITE = 'https://www.capperificiocaro.com';
@@ -343,54 +463,62 @@ app.get('/sitemap.xml', async (_req, res) => {
     { path: '/storia',                priority: '0.7', changefreq: 'monthly' },
     { path: '/territorio',            priority: '0.6', changefreq: 'monthly' },
     { path: '/processo-produttivo',   priority: '0.6', changefreq: 'monthly' },
-    { path: '/blog',                  priority: '0.7', changefreq: 'weekly'  },
     { path: '/b2b',                   priority: '0.6', changefreq: 'monthly' },
+    { path: '/contatti',              priority: '0.5', changefreq: 'yearly'  },
+    { path: '/faq',                   priority: '0.5', changefreq: 'monthly' },
     { path: '/privacy-policy',        priority: '0.3', changefreq: 'yearly'  },
     { path: '/cookie-policy',         priority: '0.3', changefreq: 'yearly'  },
     { path: '/termini-e-condizioni',  priority: '0.3', changefreq: 'yearly'  },
   ];
 
   // Fetch prodotti da Shopware Store API (senza contextToken — lettura pubblica)
+  // La Store API rifiuta limit > 100 (MAX_LIMIT): una singola richiesta da 500
+  // tornava 400 e, poiché il corpo dell'errore non ha `elements`, la sitemap
+  // finiva senza NESSUN prodotto senza che venisse loggato nulla. Qui si pagina
+  // a 100 e si controlla esplicitamente lo stato della risposta.
+  const SW_PAGE_SIZE = 100;
+  const SW_MAX_PAGES = 50; // tetto di sicurezza: 5.000 prodotti
+
   async function fetchShopwareProducts() {
     const SW_URL = (process.env.SHOPWARE_API_URL || '').replace(/\/$/, '');
     const SW_KEY = process.env.SHOPWARE_ACCESS_KEY || '';
-    if (!SW_URL || !SW_KEY) return [];
-    try {
-      const res = await fetch(`${SW_URL}/product`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'sw-access-key': SW_KEY },
-        body: JSON.stringify({
-          limit: 500,
-          filter: [{ type: 'equals', field: 'active', value: true }],
-          associations: { seoUrls: {} },
-          includes: { product: ['id', 'updatedAt', 'createdAt', 'seoUrls', 'productNumber'] },
-        }),
-        signal: AbortSignal.timeout(8_000),
-      });
-      const data = await res.json().catch(() => ({}));
-      return data?.elements || [];
-    } catch (e) {
-      console.warn('Sitemap: fetch prodotti Shopware fallita:', e.message);
+    if (!SW_URL || !SW_KEY) {
+      console.warn('Sitemap: SHOPWARE_API_URL o SHOPWARE_ACCESS_KEY mancanti, nessun prodotto in sitemap');
       return [];
     }
-  }
 
-  // Fetch articoli da Strapi
-  async function fetchStrapiArticles() {
-    const STRAPI_URL = (process.env.STRAPI_URL || '').replace(/\/$/, '');
-    const STRAPI_TOKEN = process.env.STRAPI_TOKEN || '';
-    if (!STRAPI_URL) return [];
-    try {
-      const res = await fetch(`${STRAPI_URL}/api/articles?fields[0]=slug&fields[1]=updatedAt&pagination[pageSize]=200`, {
-        headers: STRAPI_TOKEN ? { Authorization: `Bearer ${STRAPI_TOKEN}` } : {},
-        signal: AbortSignal.timeout(6_000),
-      });
-      const data = await res.json().catch(() => ({}));
-      return data?.data || [];
-    } catch (e) {
-      console.warn('Sitemap: fetch articoli Strapi fallita:', e.message);
-      return [];
+    const all = [];
+    for (let page = 1; page <= SW_MAX_PAGES; page++) {
+      try {
+        const resp = await fetch(`${SW_URL}/product`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'sw-access-key': SW_KEY },
+          body: JSON.stringify({
+            limit: SW_PAGE_SIZE,
+            page,
+            filter: [{ type: 'equals', field: 'active', value: true }],
+            associations: { seoUrls: {} },
+            includes: { product: ['id', 'updatedAt', 'createdAt', 'seoUrls', 'productNumber'] },
+          }),
+          signal: AbortSignal.timeout(8_000),
+        });
+
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          console.warn(`Sitemap: Store API ha risposto ${resp.status} a pagina ${page}:`,
+            data?.errors?.[0]?.detail || '(nessun dettaglio)');
+          break;
+        }
+
+        const batch = data?.elements || [];
+        all.push(...batch);
+        if (batch.length < SW_PAGE_SIZE) break; // ultima pagina
+      } catch (e) {
+        console.warn(`Sitemap: fetch prodotti pagina ${page} fallita:`, e.message);
+        break;
+      }
     }
+    return all;
   }
 
   function xmlUrl({ loc, lastmod, changefreq, priority }) {
@@ -405,7 +533,7 @@ app.get('/sitemap.xml', async (_req, res) => {
   }
 
   try {
-    const [products, articles] = await Promise.all([fetchShopwareProducts(), fetchStrapiArticles()]);
+    const products = await fetchShopwareProducts();
 
     const productUrls = products.map(p => {
       // Usa la SEO URL se disponibile, altrimenti l'ID
@@ -414,13 +542,6 @@ app.get('/sitemap.xml', async (_req, res) => {
       const lastmod = (p.updatedAt || p.createdAt || '').split('T')[0] || now;
       return xmlUrl({ loc: `${SITE}${path}`, lastmod, changefreq: 'monthly', priority: '0.7' });
     });
-
-    const articleUrls = articles.map(a => {
-      const slug = a.attributes?.slug || a.slug;
-      if (!slug) return null;
-      const lastmod = (a.attributes?.updatedAt || a.updatedAt || '').split('T')[0] || now;
-      return xmlUrl({ loc: `${SITE}/blog/${slug}`, lastmod, changefreq: 'weekly', priority: '0.6' });
-    }).filter(Boolean);
 
     const staticUrls = STATIC_PAGES.map(p =>
       xmlUrl({ loc: `${SITE}${p.path}`, lastmod: now, changefreq: p.changefreq, priority: p.priority })
@@ -431,7 +552,6 @@ app.get('/sitemap.xml', async (_req, res) => {
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
       ...staticUrls,
       ...productUrls,
-      ...articleUrls,
       '</urlset>',
     ].join('\n');
 

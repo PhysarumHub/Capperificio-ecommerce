@@ -17,7 +17,7 @@ async function postJson(url, body) {
 // ── Pagamento unificato (importo, registrazione e verifica lato server) ─────────
 
 /**
- * Prepara il checkout e crea il PaymentIntent Stripe unico (carta/wallet/PayPal).
+ * Prepara il checkout e crea il PaymentIntent Stripe unico (carta/wallet).
  * Il server registra il guest, imposta la spedizione, calcola il totale reale e
  * ritorna il context token autoritativo da usare per la conferma.
  *
@@ -31,6 +31,15 @@ export function createCheckoutIntent(payload) {
 /** Finalizza l'ordine: il server verifica il pagamento, crea l'ordine e lo segna pagato. */
 export function confirmCheckout({ paymentIntentId, contextToken }) {
   return postJson('/api/checkout/confirm', { paymentIntentId, contextToken });
+}
+
+/**
+ * Finalizza un ordine a totale 0,00 € (es. codice sconto 100%): non c'è nessun
+ * pagamento da verificare, ma il server ricontrolla che il totale sia davvero 0
+ * prima di creare l'ordine (mai fidarsi del client).
+ */
+export function confirmFreeCheckout({ contextToken }) {
+  return postJson('/api/checkout/confirm-free', { contextToken });
 }
 
 /**

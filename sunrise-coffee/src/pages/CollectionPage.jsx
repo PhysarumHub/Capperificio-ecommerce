@@ -10,6 +10,8 @@ import { useProducts } from '../hooks/useProducts';
 import { formatPrice } from '../lib/utils/price';
 import { getProductImage, getProductSlug } from '../lib/utils/image';
 import { isShopwareConfigured } from '../lib/shopware-client';
+import { resolveListingSoldOut } from '../lib/utils/availability';
+import { groupVariants, resolveCardCartId, resolveVariantOptions } from '../lib/utils/variants';
 import styles from './CollectionPage.module.css';
 
 /* ─── Catalogo fallback (usato quando Shopware non è connesso) ─── */
@@ -197,53 +199,6 @@ function getSortCriteria(sortValue) {
 
 /* ─── Mapping prodotto Shopware ─── */
 
-/** Costruisce { optionName → childId } da una lista di figli */
-function buildVariantMap(siblings) {
-  const map = {};
-  siblings.forEach(child => {
-    (child.options || []).forEach(o => {
-      const name = o.translated?.name || o.name;
-      if (name) map[name] = child.id;
-    });
-  });
-  return map;
-}
-
-function groupVariants(rawList) {
-  const standalone = rawList.filter(p => !p.parentId);
-  const children   = rawList.filter(p => !!p.parentId);
-
-  // Group children by parentId
-  const groups = {};
-  children.forEach(child => {
-    if (!groups[child.parentId]) groups[child.parentId] = [];
-    groups[child.parentId].push(child);
-  });
-
-  const parentIds = new Set(Object.keys(groups));
-
-  // If the parent is already in the list, enrich it with children's options
-  const result = standalone.map(p => {
-    if (!parentIds.has(p.id)) return p;
-    const siblings = groups[p.id];
-    const allOptions = [...new Set(
-      siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
-    )];
-    return { ...p, _allVariantOptions: allOptions, _variantMap: buildVariantMap(siblings) };
-  });
-
-  // Only add a representative for children whose parent is NOT in the list
-  Object.entries(groups).forEach(([parentId, siblings]) => {
-    if (standalone.some(p => p.id === parentId)) return;
-    const allOptions = [...new Set(
-      siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
-    )];
-    result.push({ ...siblings[0], _allVariantOptions: allOptions, _variantMap: buildVariantMap(siblings) });
-  });
-
-  return result;
-}
-
 function mapShopwareProduct(product) {
   const price     = product.calculatedPrice || product.price?.[0];
   const listPrice = price?.listPrice;
@@ -253,25 +208,20 @@ function mapShopwareProduct(product) {
   const formato        = props.find((p) => p.group?.name === 'Formato')?.name       || null;
   const conservazione  = props.find((p) => p.group?.name === 'Conservazione')?.name || null;
 
-  const fromConfigurator = product.configuratorSettings
-    ?.map(s => s.option?.translated?.name || s.option?.name).filter(Boolean);
-  const fromOptions = product.options
-    ?.map(o => o.translated?.name || o.name).filter(Boolean);
-  const options = product._allVariantOptions?.length
-    ? product._allVariantOptions
-    : fromConfigurator?.length ? [...new Set(fromConfigurator)] : (fromOptions?.length ? fromOptions : undefined);
-
   return {
-    id:             product.id,
+    // Mai l'id del padre: per un prodotto a varianti il carrello vuole il figlio
+    // (resolveCardCartId torna undefined se i figli non sono nella risposta).
+    id:             resolveCardCartId(product),
     name:           product.translated?.name || product.name,
     slug:           getProductSlug(product),
     image:          getProductImage(product),
     price:          formatPrice(price?.unitPrice),
     oldPrice:       listPrice?.price ? formatPrice(listPrice.price) : undefined,
     badge:          listPrice?.price ? 'Sale' : undefined,
-    soldOut:        (product.availableStock ?? 1) <= 0,
-    options,
+    soldOut:        resolveListingSoldOut(product),
+    options:        resolveVariantOptions(product),
     variantMap:     product._variantMap || {},
+    availabilityMap: product._availabilityMap || {},
     collections:    ['all'],
     tipo,
     formato,
@@ -419,6 +369,7 @@ export default function CollectionPage() {
                   badgeColor={p.badgeColor}
                   options={p.options}
                   variantMap={p.variantMap}
+                  availabilityMap={p.availabilityMap}
                   soldOut={p.soldOut}
                 />
               ))}

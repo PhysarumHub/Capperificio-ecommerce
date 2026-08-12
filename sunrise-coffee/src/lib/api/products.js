@@ -61,11 +61,21 @@ const PRODUCT_DETAIL_ASSOCIATIONS = {
   },
 };
 
+// I campi stock DEVONO essere richiesti esplicitamente: senza `available` /
+// `isCloseout` la PDP giudicherebbe la disponibilità con dati diversi dalle
+// card delle liste (che li ricevono per default) → "Esaurito" incoerente.
+// Vedi lib/utils/availability.js.
+export const STOCK_FIELDS = [
+  'available', 'availableStock', 'stock', 'isCloseout',
+  'minPurchase', 'maxPurchase', 'purchaseSteps',
+];
+
 const PRODUCT_DETAIL_INCLUDES = {
   product: [
-    'id', 'name', 'description', 'translated', 'calculatedPrice',
-    'cover', 'media', 'seoUrls', 'categories', 'properties',
-    'configuratorSettings', 'crossSellings', 'customFields', 'availableStock',
+    'id', 'parentId', 'productNumber', 'name', 'description', 'translated', 'calculatedPrice',
+    'cover', 'media', 'seoUrls', 'categories', 'properties', 'options',
+    'configuratorSettings', 'crossSellings', 'customFields',
+    ...STOCK_FIELDS,
   ],
 };
 
@@ -144,7 +154,10 @@ export async function getProductVariants(parentId) {
       options: { associations: { group: {} } },
     },
     includes: {
-      product: ['id', 'productNumber', 'options', 'calculatedPrice', 'available', 'availableStock', 'customFields'],
+      product: [
+        'id', 'parentId', 'productNumber', 'options', 'calculatedPrice', 'customFields',
+        ...STOCK_FIELDS,
+      ],
     },
   });
 }

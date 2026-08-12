@@ -11,18 +11,22 @@ Operazioni:
 
 Uso:
   python scripts/setup-b2b.py
-  python scripts/setup-b2b.py --base http://localhost:8080 --pass mia_password
-  python scripts/setup-b2b.py --base http://127.0.0.1 --user admin --pass shopware
+  python scripts/setup-b2b.py --base http://localhost:8080 --pass LA_TUA_PASSWORD
+  python scripts/setup-b2b.py --base http://127.0.0.1 --user admin --pass LA_TUA_PASSWORD
 """
 
 import urllib.request, urllib.error, urllib.parse, json, uuid, sys, math
 
 # ── Configurazione ────────────────────────────────────────────────────────────
-_args      = dict(zip(sys.argv[1::2], sys.argv[2::2]))
-_base_raw  = _args.get('--base', 'http://SHOPWARE_HOST_REDACTED:8090').rstrip('/')
-BASE       = _base_raw + '/api' if not _base_raw.endswith('/api') else _base_raw
-ADMIN_USER = _args.get('--user', 'admin')
-ADMIN_PASS = _args.get('--pass', 'shopware')
+import sys as _sys, pathlib as _pathlib
+_sys.path.insert(0, str(_pathlib.Path(__file__).parent))
+from _config import shopware_config as _shopware_config
+
+_cfg       = _shopware_config()
+_args      = _cfg.args
+BASE       = _cfg.api_base
+ADMIN_USER = _cfg.user
+ADMIN_PASS = _cfg.password
 
 # Prodotti B2B (formati industriali)
 B2B_SIZES = ['500g', '1kg', '3kg', '5kg']

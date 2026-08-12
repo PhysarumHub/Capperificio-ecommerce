@@ -4,9 +4,12 @@ import { useCartContext, useCustomerContext } from '../../context/ShopwareContex
 import { formatPrice } from '../../lib/utils/price';
 import { getProductImage, proxyUrl } from '../../lib/utils/image';
 import { useDrawerDrag } from '../../hooks/useDrawerDrag';
+import CartStockNotices from '../CartStockNotices/CartStockNotices';
+import { getLineItemMaxQty } from '../../lib/utils/availability';
+import { gtmViewCart, gtmRemoveFromCart } from '../../lib/utils/gtm';
+import { FREE_SHIPPING_THRESHOLD } from '../../lib/utils/shipping';
 import styles from './CartDrawer.module.css';
 
-const FREE_SHIPPING_THRESHOLD = 50;
 
 function getVariantLabel(item) {
   const options = item.payload?.options;
@@ -78,7 +81,20 @@ export default function CartDrawer({ open, onClose }) {
       }
     }, 350);
   };
-  const handleRemove = (group) => removeItems(group._allIds);
+  const handleRemove = (group) => {
+    gtmRemoveFromCart(
+      { id: group.referencedId || group.id, name: group.label, price: group.price?.unitPrice ?? 0 },
+      group.quantity
+    );
+    removeItems(group._allIds);
+  };
+
+  useEffect(() => {
+    if (open && lineItems.length > 0) {
+      gtmViewCart(lineItems, positionPrice);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const remaining = FREE_SHIPPING_THRESHOLD - (positionPrice || 0);
   const freeShippingUnlocked = remaining <= 0;
@@ -131,6 +147,7 @@ export default function CartDrawer({ open, onClose }) {
 
         {/* Items */}
         <div className={styles.items}>
+          <CartStockNotices cart={cart} />
           {loading && !cart ? (
             <p className={styles.empty}>Caricamento...</p>
           ) : lineItems.length === 0 ? (
@@ -141,7 +158,9 @@ export default function CartDrawer({ open, onClose }) {
               </Link>
             </div>
           ) : (
-            lineItems.map((item) => (
+            lineItems.map((item) => {
+              const maxQty = getLineItemMaxQty(item);
+              return (
               <div key={item.id} className={styles.item}>
                 <img
                   src={proxyUrl(item.cover?.url) || getProductImage(item)}
@@ -163,15 +182,21 @@ export default function CartDrawer({ open, onClose }) {
                     <button
                       className={styles.qtyBtn}
                       onClick={() => handleUpdateQty(item, item.quantity + 1)}
+                      disabled={item.quantity >= maxQty}
+                      title={item.quantity >= maxQty ? `Disponibili solo ${maxQty} pezzi` : undefined}
                     >+</button>
                   </div>
+                  {item.quantity >= maxQty && (
+                    <span className={styles.itemStockNote}>Ultimi {maxQty} pezzi disponibili</span>
+                  )}
                   <button className={styles.removeBtn} onClick={() => handleRemove(item)}>
                     Rimuovi
                   </button>
                 </div>
                 <span className={styles.itemTotal}>{formatPrice(item._totalPrice)}</span>
               </div>
-            ))
+              );
+            })
           )}
         </div>
 

@@ -5,18 +5,22 @@ Configura: lingua IT, paesi Europa, spedizioni, prodotti con varianti.
 
 Uso:
   python scripts/setup-capperificio.py
-  python scripts/setup-capperificio.py --base http://localhost:8080 --pass mia_password
-  python scripts/setup-capperificio.py --base http://127.0.0.1 --user admin --pass shopware
+  python scripts/setup-capperificio.py --base http://localhost:8080 --pass LA_TUA_PASSWORD
+  python scripts/setup-capperificio.py --base http://127.0.0.1 --user admin --pass LA_TUA_PASSWORD
 """
 
 import urllib.request, urllib.error, json, uuid, sys
 
 # ── Configurazione (override via CLI: --base / --user / --pass) ──────────────
-_args = dict(zip(sys.argv[1::2], sys.argv[2::2]))
-_base_raw = _args.get('--base', 'http://SHOPWARE_HOST_REDACTED:8090').rstrip('/')
-BASE       = _base_raw + '/api' if not _base_raw.endswith('/api') else _base_raw
-ADMIN_USER = _args.get('--user', 'admin')
-ADMIN_PASS = _args.get('--pass', 'shopware')
+import sys as _sys, pathlib as _pathlib
+_sys.path.insert(0, str(_pathlib.Path(__file__).parent))
+from _config import shopware_config as _shopware_config
+
+_cfg       = _shopware_config()
+_args      = _cfg.args
+BASE       = _cfg.api_base
+ADMIN_USER = _cfg.user
+ADMIN_PASS = _cfg.password
 
 # Paesi UE (esclusa IT) – ISO 3166-1 alpha-2
 EU_ISO = [

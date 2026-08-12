@@ -1,251 +1,184 @@
-# 🚀 Deploy su Vercel — capperificiocaro.com
+# 🚀 Deploy in produzione — capperificiocaro.com
 
-> Progetto: **React + Vite** · API serverless Stripe · Repo: `PhysarumHub/Capperificio-ecommerce`
+> **Target: VPS self-hosted con Docker Compose + Traefik.**
+> Non si deploya su Vercel: il backend è un server Express persistente
+> (`server.js`) e nginx fa da proxy verso i container Shopware e Strapi,
+> cose che una piattaforma serverless non può servire.
+>
+> Prima installazione da zero → [SETUP-LINUX.md](SETUP-LINUX.md).
+> Questo documento copre il **go-live** e gli **aggiornamenti successivi**.
 
 ---
 
-## Indice
+## Architettura
 
-1. [Prepara il branch](#1-prepara-il-branch)
-2. [Crea il progetto su Vercel](#2-crea-il-progetto-su-vercel)
-3. [Configura build e root directory](#3-configura-build-e-root-directory)
-4. [Imposta le variabili d'ambiente](#4-imposta-le-variabili-dambiente)
-5. [Primo deploy](#5-primo-deploy)
-6. [Aggiungi il dominio capperificiocaro.com](#6-aggiungi-il-dominio-capperificiocароcom)
-7. [Configura i DNS](#7-configura-i-dns)
-8. [Aggiornamenti post-deploy](#8-aggiornamenti-post-deploy)
-9. [Passare a Stripe LIVE](#9-passare-a-stripe-live)
-10. [Workflow deploy futuro](#10-workflow-deploy-futuro)
+Un solo container (`frontend`) contiene sia nginx sia il backend Node:
+
+```
+Internet
+   │
+   ▼
+Traefik (80/443, TLS Let's Encrypt)
+   │
+   ▼
+container "frontend"
+   ├── nginx (porta 80)
+   │     ├── /                → SPA React (dist/) — allowlist rotte, 404 reali
+   │     ├── /api/*           → 127.0.0.1:3001  (Express)
+   │     ├── /sitemap.xml     → 127.0.0.1:3001  (generata con i prodotti live)
+   │     ├── /store-api/*     → shopware:80     (rate limit 10 r/s)
+   │     ├── /media, /thumbnail → shopware:80
+   │     └── /uploads         → strapi:1337
+   └── node server.js (porta 3001, solo loopback)
+         ├── /api/checkout/create-intent | confirm | confirm-free
+         ├── /api/stripe/webhook
+         ├── /api/newsletter/subscribe | confirm
+         ├── /api/admin/refund     (header x-admin-key)
+         ├── /api/strapi/*         (proxy read-only)
+         └── order poller → email Resend + spedizioni Packlink
+
+container "shopware"   → 127.0.0.1:8090  (admin via tunnel SSH)
+container "strapi"     → 127.0.0.1:1337  (admin via tunnel SSH)
+container "strapi-db"  → solo rete Docker
+```
+
+Nessuna porta di amministrazione è esposta su internet: si raggiungono
+via tunnel SSH (vedi l'intestazione di `docker-compose.yml`).
 
 ---
 
 ## 1. Prepara il branch
 
-Il codice è sul branch `feature/shopware-integration`. Prima di andare live **mergia su `main`**:
-
 ```bash
 git checkout main
 git merge feature/shopware-integration
 git push origin main
 ```
 
-> Vercel di default deploya il branch `main` in produzione. Puoi anche deployare direttamente `feature/shopware-integration` (vedi step 2), ma per la produzione è buona pratica usare `main`.
-
 ---
 
-## 2. Crea il progetto su Vercel
-
-1. Vai su **[vercel.com](https://vercel.com)** → accedi o crea un account gratuito
-2. Dashboard → **"Add New…" → "Project"**
-3. Clicca **"Import Git Repository"**
-4. Seleziona **GitHub** e autorizza Vercel ad accedere ai tuoi repo
-5. Trova e seleziona **`PhysarumHub/Capperificio-ecommerce`**
-6. Clicca **"Import"**
-
----
-
-## 3. Configura build e root directory
-
-⚠️ **Passaggio critico** — il progetto non è nella root del repo, ma nella sottocartella `sunrise-coffee`.
-
-Nella schermata di configurazione del progetto:
-
-| Campo | Valore |
-|---|---|
-| **Root Directory** | `sunrise-coffee` |
-| **Framework Preset** | `Vite` |
-| **Build Command** | `vite build` |
-| **Output Directory** | `dist` |
-| **Install Command** | `npm install` |
-
-Per impostare la Root Directory:
-- Clicca su **"Edit"** accanto a *Root Directory*
-- Digita `sunrise-coffee`
-- Spunta **"Include source files outside of the Root Directory in the Build Step"** → **NO** (lascia deselezionato)
-
----
-
-## 4. Imposta le variabili d'ambiente
-
-Sempre nella schermata di configurazione, sezione **"Environment Variables"**.
-
-Aggiungi **una per una** le seguenti variabili (copia i valori reali dal tuo `.env` locale):
-
-### Shopware
-
-| Nome | Valore |
-|---|---|
-| `VITE_SHOPWARE_API_URL` | `https://TUO-SHOPWARE.com/store-api` |
-| `VITE_SHOPWARE_ACCESS_KEY` | `SWSC...` (la tua chiave headless) |
-| `VITE_SHOPWARE_STOREFRONT_URL` | `https://capperificiocaro.com` ← metti il dominio finale |
-
-### Stripe (inizia con le chiavi TEST, poi passa a LIVE — vedi step 9)
-
-| Nome | Valore |
-|---|---|
-| `VITE_STRIPE_PUBLIC_KEY` | `pk_test_...` |
-| `STRIPE_SECRET_KEY` | `sk_test_...` ⚠️ questa è **segreta** — non condividerla mai |
-
-> `STRIPE_SECRET_KEY` (senza `VITE_`) è usata solo lato server dalla serverless function e non viene mai esposta al browser.
-
-### PayPal
-
-| Nome | Valore |
-|---|---|
-| `VITE_PAYPAL_CLIENT_ID` | `AXxx...` |
-
-### Strapi CMS (blog) — solo se hai un'istanza attiva
-
-| Nome | Valore |
-|---|---|
-| `VITE_STRAPI_URL` | `https://TUO-STRAPI.com` |
-| `VITE_STRAPI_TOKEN` | il token read-only da Strapi Admin |
-
-### B2B — opzionale
-
-| Nome | Valore |
-|---|---|
-| `VITE_B2B_CATEGORY_ID` | l'ID categoria B2B da Shopware |
-| `VITE_B2B_GROUP_NAME` | `B2B` |
-
----
-
-## 5. Primo deploy
-
-1. Dopo aver inserito tutte le variabili → clicca **"Deploy"**
-2. Vercel builderà il progetto (circa 1-2 minuti)
-3. Se il build va a buon fine vedrai **"Congratulations!"** con un URL tipo:
-   `https://capperificio-ecommerce.vercel.app`
-4. Testa l'URL temporaneo prima di collegare il dominio
-
-### ❌ Se il build fallisce
-
-Clicca su **"View Build Logs"** e cerca righe rosse. Gli errori più comuni:
-
-- **`Cannot find module`** → una dipendenza manca dal `package.json`
-- **Env var undefined** → hai dimenticato una variabile d'ambiente
-- **Root directory errata** → ricontrolla che sia `sunrise-coffee`
-
----
-
-## 6. Aggiungi il dominio capperificiocaro.com
-
-1. Nel progetto Vercel → tab **"Settings"** → sezione **"Domains"**
-2. Clicca **"Add"**
-3. Digita `capperificiocaro.com` → **"Add"**
-4. Aggiungi anche `www.capperificiocaro.com` → Vercel configurerà automaticamente il redirect `www → apex`
-5. Vercel ti mostrerà i record DNS da configurare (vedi step 7)
-
----
-
-## 7. Configura i DNS
-
-Accedi al pannello del tuo registrar/DNS (es. Aruba, Register.it, GoDaddy, Cloudflare…) e aggiungi questi record:
-
-### Opzione A — Dominio apex su Vercel (consigliata)
-
-| Tipo | Nome | Valore | TTL |
-|---|---|---|---|
-| `A` | `@` | `76.76.21.21` | 3600 |
-| `CNAME` | `www` | `cname.vercel-dns.com` | 3600 |
-
-> **Nota:** Vercel mostra l'IP esatto nella schermata Domains — usa quello se diverso da `76.76.21.21`.
-
-### Opzione B — Se usi Cloudflare
-
-| Tipo | Nome | Valore | Proxy |
-|---|---|---|---|
-| `A` | `@` | `76.76.21.21` | ☁️ **DNS only** (nuvola grigia) |
-| `CNAME` | `www` | `cname.vercel-dns.com` | ☁️ **DNS only** |
-
-⚠️ Con Cloudflare la modalità **Proxy (arancione) va disabilitata** — Vercel gestisce già CDN e SSL.
-
-### ⏱ Propagazione DNS
-
-I DNS possono impiegare da **5 minuti a 48 ore** per propagarsi globalmente.  
-Puoi controllare lo stato su [dnschecker.org](https://dnschecker.org) cercando `capperificiocaro.com`.
-
-Quando Vercel vede i DNS corretti, attiva automaticamente il **certificato SSL gratuito (HTTPS)** tramite Let's Encrypt.
-
----
-
-## 8. Aggiornamenti post-deploy
-
-### 8a. Aggiorna VITE_SHOPWARE_STOREFRONT_URL
-
-In Shopware Admin → **Canali di vendita → Headless → Domini**, assicurati che il dominio sia `https://capperificiocaro.com`.
-
-Su Vercel → **Settings → Environment Variables** aggiorna:
-```
-VITE_SHOPWARE_STOREFRONT_URL = https://capperificiocaro.com
-```
-Poi fai un **Redeploy** (Settings → Deployments → "Redeploy").
-
-### 8b. Aggiorna CORS su Shopware
-
-In Shopware Admin → **Sales Channel → Headless → Allowed Origins** aggiungi:
-```
-https://capperificiocaro.com
-https://www.capperificiocaro.com
-```
-
----
-
-## 9. Passare a Stripe LIVE
-
-Quando sei pronto per i pagamenti reali:
-
-1. Vai su [dashboard.stripe.com/apikeys](https://dashboard.stripe.com/apikeys) (sezione **Live**, non Test)
-2. Su Vercel → **Settings → Environment Variables** aggiorna:
-
-| Variabile | Da | A |
-|---|---|---|
-| `VITE_STRIPE_PUBLIC_KEY` | `pk_test_...` | `pk_live_...` |
-| `STRIPE_SECRET_KEY` | `sk_test_...` | `sk_live_...` |
-
-3. Fai un **Redeploy**
-4. Testa un pagamento reale con importo minimo (es. €0.50) per verificare
-
-> ⚠️ **Non committare mai** le chiavi `sk_live_` su GitHub. Esistono solo come variabili d'ambiente su Vercel.
-
----
-
-## 10. Workflow deploy futuro
-
-Ogni volta che fai modifiche al codice:
+## 2. Configura `.env` sul server
 
 ```bash
-# Lavori sul branch feature
-git add -A
-git commit -m "feat: descrizione modifica"
-git push origin feature/shopware-integration
-
-# Quando sei pronto per la produzione
-git checkout main
-git merge feature/shopware-integration
-git push origin main
+cp .env.example .env   # poi compila
 ```
 
-**Vercel deploya automaticamente** ogni push su `main` → in pochi secondi il sito è aggiornato.
+`docker-compose.yml` legge questo file sia per i build arg `VITE_*`
+(che finiscono nel bundle JS pubblico) sia per le variabili runtime di
+`server.js`. Le voci che **devono** essere corrette prima del go-live:
 
-### Preview deployments
+| Variabile | Perché è bloccante |
+|---|---|
+| `VITE_SHOPWARE_ACCESS_KEY` | Senza, il catalogo non carica |
+| `VITE_STRIPE_PUBLIC_KEY` / `STRIPE_SECRET_KEY` | Chiavi **live** (`pk_live_`/`sk_live_`) |
+| `STRIPE_WEBHOOK_SECRET` | Senza, il webhook risponde 500 e si perde la rete di sicurezza sui checkout interrotti |
+| `SITE_URL` | Origine CORS di Express. Se sbagliata, il browser blocca `/api` e **il checkout non parte** |
+| `SHOPWARE_ADMIN_*` | Senza, gli ordini vengono creati ma **non** segnati "pagati" |
+| `ADMIN_API_KEY` | Senza, `/api/admin/refund` resta disabilitato |
+| `RESEND_API_KEY` | Senza, nessuna email transazionale |
+| `VITE_GTM_ID` | Vuoto = GTM non caricato affatto (sito cookie-free) |
 
-Ogni push su un branch diverso da `main` crea automaticamente un **URL di preview** (es. `https://capperificio-ecommerce-git-feature-shopware.vercel.app`) — utile per testare prima di mandare in produzione.
-
----
-
-## Checklist finale
-
-- [ ] Branch `feature/shopware-integration` mergiato su `main`
-- [ ] Root Directory impostata a `sunrise-coffee` su Vercel
-- [ ] Tutte le variabili d'ambiente inserite
-- [ ] Build completato senza errori
-- [ ] DNS configurati sul registrar
-- [ ] SSL attivo (HTTPS verde sul browser)
-- [ ] `VITE_SHOPWARE_STOREFRONT_URL` aggiornato a `capperificiocaro.com`
-- [ ] CORS aggiornato su Shopware
-- [ ] Chiavi Stripe LIVE inserite quando pronto
+> ⚠️ Regola: tutto ciò che ha prefisso `VITE_` finisce nel bundle JS
+> **pubblico**. I segreti (`sk_`, token, password) non devono mai averlo.
 
 ---
 
-*Generato il 26/05/2026 — progetto Capperificio Caro*
+## 3. Avvia / aggiorna lo stack
+
+```bash
+docker compose up -d --build
+```
+
+Le variabili `VITE_*` sono baked nel bundle al **build time**: dopo averle
+modificate serve sempre un rebuild, non basta un restart.
+
+```bash
+# Solo il frontend, dopo una modifica al codice o al .env
+docker compose up -d --build frontend
+
+# Log
+docker compose logs -f frontend
+```
+
+---
+
+## 4. Configura il webhook Stripe
+
+Dashboard Stripe → Developers → Webhooks → **Add endpoint**
+
+- URL: `https://www.capperificiocaro.com/api/stripe/webhook`
+- Eventi: `payment_intent.succeeded`, `charge.refunded`
+- Copia il signing secret (`whsec_...`) in `STRIPE_WEBHOOK_SECRET`, poi rebuild.
+
+Il webhook è la rete di sicurezza per chi paga e chiude il browser prima
+della conferma: senza, quell'ordine non viene mai creato.
+
+---
+
+## 5. Checklist go-live
+
+### Bloccanti
+
+- [ ] Chiavi Stripe **live** (non `pk_test_`/`sk_test_`)
+- [ ] `STRIPE_WEBHOOK_SECRET` configurato e webhook attivo
+- [ ] `SITE_URL` = host canonico esatto (`https://www.capperificiocaro.com`)
+- [ ] Password admin Shopware cambiata (mai lasciare `shopware`)
+- [ ] Access Key Shopware rigenerata se mai finita in un repo
+- [ ] **`APP_ENV=prod`** per il container Shopware in `docker-compose.yml`
+      (attualmente `dev`: espone il profiler e rallenta tutto — vedi sotto)
+- [ ] DNS di `www` e apex puntati al server, certificato Let's Encrypt emesso
+- [ ] Ordine di prova reale completato: pagamento → ordine su Shopware → email
+
+### Da verificare a mano
+
+- [ ] Container GTM **pubblicato** (i tag creati da `scripts/gtm-setup.js`
+      restano in un workspace non pubblicato: gli eventi partono dal sito ma
+      non arrivano a GA4/Meta finché non pubblichi la versione)
+- [ ] Metodi di spedizione e paesi configurati sul Sales Channel
+- [ ] Prezzi IVA inclusa corretti
+- [ ] Email transazionali con mittente reale (non `noreply@shopware.com`)
+
+---
+
+## Nota — `APP_ENV=dev` sul container Shopware
+
+`docker-compose.yml` usa l'immagine `dockware/dev` con `APP_ENV=dev`.
+In produzione va portato a `prod`: in `dev` Shopware tiene attivi profiler
+e debug, è sensibilmente più lento e può esporre informazioni interne.
+
+Il passaggio richiede di rigenerare la cache dentro il container, quindi
+va fatto in una finestra in cui il sito può essere brevemente non
+disponibile:
+
+```bash
+# 1. Cambia APP_ENV=dev → APP_ENV=prod in docker-compose.yml
+docker compose up -d shopware
+docker compose exec shopware bash -lc \
+  "cd /var/www/html && APP_ENV=prod bin/console cache:clear && APP_ENV=prod bin/console theme:compile"
+```
+
+Verifica il catalogo subito dopo: se qualcosa si rompe, riportare
+`APP_ENV=dev` e ripetere `cache:clear` ripristina lo stato precedente.
+
+---
+
+## Backup
+
+```bash
+npm run backup    # dump del DB Shopware in backups/
+npm run restore   # ripristino
+```
+
+I dump in `backups/*.sql` sono esclusi da git: non committarli mai.
+
+---
+
+## Rollback di un deploy
+
+```bash
+git revert <commit>          # oppure git checkout <tag-precedente>
+docker compose up -d --build frontend
+```
+
+I dati (Shopware, Strapi, Postgres) vivono in volumi Docker e non vengono
+toccati dal rebuild del frontend.

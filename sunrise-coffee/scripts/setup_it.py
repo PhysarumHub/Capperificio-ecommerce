@@ -1,10 +1,15 @@
-import urllib.request, urllib.error, json, uuid
+import urllib.request, urllib.error, json, uuid, sys, os
 
-BASE = 'http://127.0.0.1/api'
+# Credenziali da scripts/.env (o --base/--user/--pass). Vedi scripts/_config.py.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _config import shopware_config
+
+_cfg = shopware_config()
+BASE = _cfg.api_base
 
 req = urllib.request.Request(
     f'{BASE}/oauth/token',
-    data=json.dumps({'client_id':'administration','grant_type':'password','scopes':'write','username':'admin','password':'shopware'}).encode(),
+    data=json.dumps({'client_id':'administration','grant_type':'password','scopes':'write','username':_cfg.user,'password':_cfg.password}).encode(),
     headers={'Content-Type':'application/json'},
     method='POST'
 )

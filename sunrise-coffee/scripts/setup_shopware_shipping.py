@@ -21,9 +21,15 @@ except ImportError:
 import json
 
 # ── Configurazione ──────────────────────────────────────────────────────────
-SHOPWARE_URL  = "http://SHOPWARE_HOST_REDACTED:8090"   # URL del tuo Shopware
-ADMIN_USER    = "admin"
-ADMIN_PASS    = "shopware"
+# Credenziali da scripts/.env (o --base/--user/--pass). Vedi scripts/_config.py.
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _config import shopware_config
+
+_cfg          = shopware_config(api_suffix=False)
+SHOPWARE_URL  = _cfg.base_url
+ADMIN_USER    = _cfg.user
+ADMIN_PASS    = _cfg.password
 
 # ── Paesi europei divisi per zona ───────────────────────────────────────────
 EUROPA_OVEST = [

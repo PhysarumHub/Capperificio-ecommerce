@@ -10,7 +10,7 @@
 | [shopware-api.md](shopware-api.md) | Store API endpoints, filtri, body shapes — lavoro lato Shopware |
 | [frontend-map.md](frontend-map.md) | Componenti, pagine, hooks, routing — lavoro lato codice React |
 | [shopware-setup.md](shopware-setup.md) | Script admin, configurazione Shopware, B2B, custom fields |
-| [payments.md](payments.md) | Stripe, PayPal — flow checkout e backend Express |
+| [payments.md](payments.md) | Stripe — flow checkout e backend Express |
 | [strapi.md](strapi.md) | Blog CMS Strapi v5, API blog, hooks useBlogPosts |
 
 ## Snapshot rapido

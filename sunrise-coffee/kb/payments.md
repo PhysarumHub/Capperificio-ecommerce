@@ -7,7 +7,7 @@ Browser → POST /api/checkout/create-intent  → server.js (Express)
                                              → Shopware (guest + spedizione + totale reale)
                                              → Stripe API (server-side, secret key)
                                              ← { clientSecret, contextToken, amount }
-Browser → Stripe.js (Payment Element) → conferma pagamento (carta/wallet/PayPal/redirect)
+Browser → Stripe.js (Payment Element) → conferma pagamento (carta/wallet/redirect)
 Browser → POST /api/checkout/confirm        → server.js verifica il PaymentIntent, crea l'ordine
                                                su Shopware e lo segna "paid"
 ```
@@ -16,9 +16,9 @@ Il backend Express (`server.js`) gira su porta 3001, dietro nginx (`location ^~ 
 In dev: `npm run dev` avvia sia Vite (5173) che Express (3001) in parallelo via `concurrently`.
 In produzione: Express è servito dallo stesso container Docker del frontend (`docker-compose.yml`).
 
-Esiste anche un set di funzioni serverless Vercel (`api/stripe/*.js`, più vecchie e
-NON allineate a questo flusso) mantenute solo per i preview deploy su Vercel — la
-produzione reale gira su Docker/nginx/server.js come sopra.
+`server.js` è l'unico backend: le vecchie funzioni serverless Vercel (`api/stripe/`,
+`api/paypal/`) sono state rimosse perché duplicavano — in versioni più vecchie e
+incomplete — questa logica senza mai essere eseguite.
 
 ## Endpoint (`server.js`)
 
@@ -30,7 +30,7 @@ Response: { clientSecret, contextToken, amount }
 Registra il guest (se serve), imposta la spedizione, legge il totale REALE dal
 carrello Shopware (mai dal client) e crea un PaymentIntent Stripe con
 `automatic_payment_methods: { enabled: true }` (redirect NON disabilitati: il
-Payment Element può proporre metodi che richiedono un redirect, es. PayPal/iDEAL/
+Payment Element può proporre metodi che richiedono un redirect, es. iDEAL/
 Bancontact — vedi sezione "Rientro da redirect" sotto). Idempotency key legata a
 token+importo. Cap anti-frode: `MAX_ORDER_TOTAL = 5000` EUR.
 
@@ -77,7 +77,7 @@ Il webhook gestisce anche `charge.refunded` con la stessa
 direttamente dalla Dashboard Stripe (senza passare da `/api/admin/refund`).
 Idempotente rispetto a entrambi i percorsi.
 
-## Rientro da redirect (PayPal/iDEAL/Bancontact via Stripe)
+## Rientro da redirect (iDEAL/Bancontact/3DS via Stripe)
 
 Poiché i redirect non sono disabilitati, alcuni metodi del Payment Element
 portano il cliente fuori dal sito e poi lo riportano su `return_url`

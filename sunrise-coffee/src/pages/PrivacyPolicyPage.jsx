@@ -61,7 +61,7 @@ const SECTIONS = [
         <p>
           I dati della carta di credito e degli strumenti di pagamento{' '}
           <strong>non transitano né vengono memorizzati sui nostri server</strong>: sono raccolti e
-          trattati direttamente dai prestatori di servizi di pagamento (Stripe, PayPal), in qualità
+          trattati direttamente dal prestatore di servizi di pagamento (Stripe), in qualità
           di titolari autonomi del trattamento. Riceviamo unicamente l'esito della transazione e i
           dati minimi necessari alla riconciliazione contabile.
         </p>
@@ -184,11 +184,6 @@ const SECTIONS = [
               <tr>
                 <td>Stripe Payments Europe Ltd.</td>
                 <td>Elaborazione dei pagamenti con carta e wallet</td>
-                <td>Titolare autonomo</td>
-              </tr>
-              <tr>
-                <td>PayPal (Europe) S.à r.l. et Cie, S.C.A.</td>
-                <td>Elaborazione dei pagamenti PayPal</td>
                 <td>Titolare autonomo</td>
               </tr>
               <tr>

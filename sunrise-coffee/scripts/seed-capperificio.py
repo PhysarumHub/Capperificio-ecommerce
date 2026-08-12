@@ -19,7 +19,7 @@ Prerequisito (per vedere i campi nell'admin): lanciare prima
 I valori dei custom field vengono comunque scritti anche senza le definizioni.
 
 Uso:
-  python scripts/seed-capperificio.py --base http://localhost:8080 --pass shopware
+  python scripts/seed-capperificio.py --base http://localhost:8080 --pass LA_TUA_PASSWORD
   python scripts/seed-capperificio.py --base ... --pass ... --dry-run     # anteprima, non scrive
   python scripts/seed-capperificio.py --base ... --pass ... --no-create   # solo arricchimento, non crea prodotti
   python scripts/seed-capperificio.py --base ... --pass ... --price 12.90 # prezzo placeholder per i NUOVI prodotti
@@ -28,14 +28,16 @@ Uso:
 import urllib.request, urllib.error, urllib.parse, json, uuid, sys, os
 
 # ── Config (override via CLI) ───────────────────────────────────────────────
-_flags = {a for a in sys.argv[1:] if a.startswith('--') and a in ('--dry-run', '--no-create')}
-_argv  = [a for a in sys.argv[1:] if a not in _flags]
-_args  = dict(zip(_argv[0::2], _argv[1::2]))
+import sys as _sys, pathlib as _pathlib
+_sys.path.insert(0, str(_pathlib.Path(__file__).parent))
+from _config import shopware_config as _shopware_config
 
-_base_raw   = _args.get('--base', 'http://localhost:8080').rstrip('/')
-BASE        = _base_raw + '/api' if not _base_raw.endswith('/api') else _base_raw
-ADMIN_USER  = _args.get('--user', 'admin')
-ADMIN_PASS  = _args.get('--pass', 'shopware')
+_cfg       = _shopware_config()
+_args      = _cfg.args
+BASE       = _cfg.api_base
+ADMIN_USER = _cfg.user
+ADMIN_PASS = _cfg.password
+_flags = {a for a in sys.argv[1:] if a.startswith('--') and a in ('--dry-run', '--no-create')}
 DRY_RUN     = '--dry-run' in _flags
 NO_CREATE   = '--no-create' in _flags
 PLACEHOLDER_PRICE = float(_args.get('--price', '9.90'))

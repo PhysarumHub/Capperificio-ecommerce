@@ -76,15 +76,17 @@ services:
         - VITE_SHOPWARE_ACCESS_KEY=${VITE_SHOPWARE_ACCESS_KEY}
         - VITE_SHOPWARE_STOREFRONT_URL=${VITE_SHOPWARE_STOREFRONT_URL:-default.headless0}
         - VITE_STRIPE_PUBLIC_KEY=${VITE_STRIPE_PUBLIC_KEY}
-        - VITE_PAYPAL_CLIENT_ID=${VITE_PAYPAL_CLIENT_ID}
         - VITE_B2B_CATEGORY_ID=${VITE_B2B_CATEGORY_ID}
         - VITE_B2B_GROUP_NAME=${VITE_B2B_GROUP_NAME:-B2B}
         - VITE_STRAPI_URL=${VITE_STRAPI_URL}
-        - VITE_STRAPI_TOKEN=${VITE_STRAPI_TOKEN}
         - VITE_GTM_ID=${VITE_GTM_ID}
     container_name: capperificio-frontend
     ports:
-      - "3001:80"    # Accesso diretto per test; il traffico pubblico passa da Traefik (80/443)
+      # Solo 127.0.0.1: il traffico pubblico deve passare da Traefik (che forza
+      # HTTPS). Esposta su 0.0.0.0 questa porta serviva l'intero sito in HTTP
+      # in chiaro, aggirando il redirect e gli header HSTS.
+      # Per un test diretto dal tuo PC: ssh -N -L 3001:localhost:3001 root@SERVER
+      - "127.0.0.1:3001:80"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=sunrise-coffee_capperificio_net"

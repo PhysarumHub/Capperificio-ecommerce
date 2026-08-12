@@ -13,8 +13,8 @@ Il padre riceve: descrizione generale, proprietà condivise (Origine, Ingredient
 Ogni variante riceve: calibro, bullets e accordion specifici per quel calibro.
 
 Uso:
-  python scripts/seed-calibri.py --base http://HOST:8090 --pass shopware
-  python scripts/seed-calibri.py --base http://HOST:8090 --pass shopware --dry-run
+  python scripts/seed-calibri.py --base http://HOST:8090 --pass LA_TUA_PASSWORD
+  python scripts/seed-calibri.py --base http://HOST:8090 --pass LA_TUA_PASSWORD --dry-run
 """
 
 import urllib.request, urllib.error, urllib.parse, json, uuid, sys, os
@@ -23,10 +23,14 @@ _flags = {a for a in sys.argv[1:] if a.startswith('--') and a in ('--dry-run',)}
 _argv  = [a for a in sys.argv[1:] if a not in _flags]
 _args  = dict(zip(_argv[0::2], _argv[1::2]))
 
-_base_raw = _args.get('--base', 'http://localhost:8090').rstrip('/')
-BASE      = _base_raw + '/api' if not _base_raw.endswith('/api') else _base_raw
-ADMIN_PASS = _args.get('--pass', 'shopware')
-DRY_RUN   = '--dry-run' in _flags
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _config import shopware_config
+
+_cfg       = shopware_config()
+BASE       = _cfg.api_base
+ADMIN_USER = _cfg.user
+ADMIN_PASS = _cfg.password
+DRY_RUN    = '--dry-run' in _flags
 
 # ── Dati catalogo inline (da capperificioCatalog.json) ────────────────────────
 

@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 import urllib.request, urllib.error, json, sys
 
-_args      = dict(zip(sys.argv[1::2], sys.argv[2::2]))
-BASE       = _args.get('--base', 'http://157.90.241.97:8090').rstrip('/') + '/api'
-ADMIN_USER = _args.get('--user', 'admin')
-ADMIN_PASS = _args.get('--pass', 'shopware')
+import sys as _sys, pathlib as _pathlib
+_sys.path.insert(0, str(_pathlib.Path(__file__).parent))
+from _config import shopware_config as _shopware_config
+
+_cfg       = _shopware_config()
+_args      = _cfg.args
+BASE       = _cfg.api_base
+ADMIN_USER = _cfg.user
+ADMIN_PASS = _cfg.password
 
 _h_get  = {}
 _h_post = {}

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCartContext, useCustomerContext } from '../context/ShopwareContext';
 import { gtmBeginCheckout, gtmAddShippingInfo, gtmPurchase } from '../lib/utils/gtm';
 import {
-  getShippingMethods, createCheckoutIntent, confirmCheckout,
+  getShippingMethods, createCheckoutIntent, confirmCheckout, confirmFreeCheckout,
 } from '../lib/api/checkout';
 import { getCountries, getSalutations } from '../lib/api/customer';
 import { useSEO } from '../hooks/useSEO';
@@ -12,6 +12,10 @@ import { isShopwareConfigured, getContextToken, setContextToken } from '../lib/s
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import StripePaymentForm from '../components/checkout/StripePaymentForm';
+import CartStockNotices from '../components/CartStockNotices/CartStockNotices';
+import PromoCode from '../components/PromoCode/PromoCode';
+import { getPromotionDiscount, getShippingCosts } from '../lib/utils/promotion';
+import { isShippingFree } from '../lib/utils/shipping';
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
@@ -181,14 +185,21 @@ function MethodCard({ method, selected, onSelect, name, isMobile }) {
 }
 
 // ── Order summary collassabile su mobile ───────────────────────────
-function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, selectedCountryName, placing, isMobile }) {
+function OrderSummary({ cart, totalPrice, isB2B, address, step, selectedCountryName, placing, isMobile, onPromoChange }) {
   const [open, setOpen] = useState(!isMobile);
   useEffect(() => { setOpen(!isMobile); }, [isMobile]);
 
-  const FREE_SHIPPING_MIN = 50;
-  const shippingCost = cart?.deliveries?.[0]?.shippingCosts?.totalPrice ?? 0;
-  const hasFreeShipping = shippingCost <= 0 || (positionPrice != null && positionPrice >= FREE_SHIPPING_MIN);
   const productItems = (cart?.lineItems ?? []).filter((i) => i.type === 'product');
+  // Subtotale calcolato sui soli prodotti: `positionPrice` include già gli sconti
+  // promozionali, che qui vogliamo mostrare su una riga separata.
+  const subtotal = productItems.reduce((sum, i) => sum + (i.price?.totalPrice ?? 0), 0);
+  const promoDiscount = getPromotionDiscount(cart);     // ≤ 0
+  // Somma su tutte le deliveries: uno sconto sulla spedizione ne aggiunge una negativa
+  const shippingCost = getShippingCosts(cart);
+  // Solo il costo REALE calcolato da Shopware decide: la spedizione gratuita è
+  // configurata per la sola Italia, quindi dedurla dal subtotale mostrerebbe
+  // "Gratuita" su ordini esteri che invece la pagano (riepilogo ≠ addebito).
+  const hasFreeShipping = isShippingFree(shippingCost);
   const totalTax = productItems.reduce((sum, item) =>
     sum + (item.price?.calculatedTaxes ?? []).reduce((s, t) => s + (t.tax ?? 0), 0), 0);
 
@@ -235,6 +246,9 @@ function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, s
             </h2>
           )}
 
+          {/* Avvisi di stock: qui uno scostamento non gestito diventa un ordine fallito */}
+          <CartStockNotices cart={cart} />
+
           {/* Prodotti */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 16 }}>
             {Object.values(
@@ -261,13 +275,20 @@ function OrderSummary({ cart, totalPrice, positionPrice, isB2B, address, step, s
 
           {/* Breakdown costi */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
-            {row('Subtotale', formatPrice(positionPrice || 0))}
+            {row('Subtotale', formatPrice(subtotal))}
+            {promoDiscount !== 0 && row(
+              'Sconto',
+              <span style={{ color: 'var(--color-red)', fontWeight: 600 }}>{formatPrice(promoDiscount)}</span>
+            )}
             {isB2B && totalTax > 0 && row('IVA', formatPrice(totalTax))}
             {row(
               'Spedizione',
               hasFreeShipping ? <span style={{ color: 'var(--color-red)', fontWeight: 600 }}>Gratuita</span> : formatPrice(shippingCost)
             )}
           </div>
+
+          {/* Codice sconto */}
+          <PromoCode cart={cart} onChange={onPromoChange} isMobile={isMobile} disabled={placing} />
 
           <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '14px 0' }} />
 
@@ -305,7 +326,7 @@ export default function CheckoutPage() {
   useSEO({ title: 'Checkout', path: '/checkout', noindex: true });
 
   const isMobile = useIsMobile();
-  const { cart, itemCount, totalPrice, positionPrice, fetchCart } = useCartContext();
+  const { cart, itemCount, totalPrice, fetchCart } = useCartContext();
   const { isLoggedIn, customer, isB2B } = useCustomerContext();
 
   const [step, setStep] = useState(isLoggedIn ? 1 : 0);
@@ -322,10 +343,12 @@ export default function CheckoutPage() {
   const [addrSuggestions, setAddrSuggestions] = useState([]);
   const [addrLoading, setAddrLoading] = useState(false);
   const [stripeClientSecret, setStripeClientSecret] = useState(null);
+  // Totale 0,00 € (es. codice sconto 100%): niente Stripe, si conferma e basta.
+  const [freeOrder, setFreeOrder] = useState(false);
   const [serverContextToken, setServerContextToken] = useState(null);
   const [stripeLoading, setStripeLoading] = useState(false);
   const [stripeLoadError, setStripeLoadError] = useState(null);
-  // Rientro da un metodo di pagamento con redirect (PayPal/iDEAL/Bancontact via
+  // Rientro da un metodo di pagamento con redirect (iDEAL/Bancontact/3DS via
   // Stripe): true già al primo render se l'URL contiene il client secret, per
   // evitare che lampeggi la schermata "carrello vuoto" prima della verifica.
   const [verifyingRedirect, setVerifyingRedirect] = useState(
@@ -407,14 +430,14 @@ export default function CheckoutPage() {
   // PaymentIntent: verrà ricreato dal server con il totale aggiornato.
   useEffect(() => { setStripeClientSecret(null); }, [selectedShipping]);
 
-  // ── Prepara il checkout e crea il PaymentIntent unico (carta/wallet/PayPal) ──
+  // ── Prepara il checkout e crea il PaymentIntent unico (carta/wallet) ────────
   // Tutto lato server in un'unica chiamata atomica: registra il guest, imposta la
   // spedizione, calcola il totale reale dal carrello e crea il PaymentIntent.
   // Restituisce il context token autoritativo → niente più race condition sul token.
   const preparingRef = useRef(false);
   useEffect(() => {
     if (step !== 2 || !selectedShipping || !stripePromise) return;
-    if (stripeClientSecret || stripeLoadError || preparingRef.current) return;
+    if (stripeClientSecret || freeOrder || stripeLoadError || preparingRef.current) return;
     if (verifyingRedirect || paymentProcessing || orderNumber) return;
     let cancelled = false;
     preparingRef.current = true;
@@ -444,7 +467,9 @@ export default function CheckoutPage() {
         if (cancelled) return;
         // Adotta il token autoritativo del server (il carrello è migrato lì)
         if (data.contextToken) { setContextToken(data.contextToken); setServerContextToken(data.contextToken); }
-        if (data.clientSecret) setStripeClientSecret(data.clientSecret);
+        // Totale 0 (sconto 100%): il server non crea nessun PaymentIntent
+        if (data.free) setFreeOrder(true);
+        else if (data.clientSecret) setStripeClientSecret(data.clientSecret);
         fetchCart(); // aggiorna il riepilogo (spedizione/totale) sul token corretto
       } catch (e) {
         if (!cancelled) setStripeLoadError(e.message || 'Impossibile inizializzare il pagamento.');
@@ -454,7 +479,17 @@ export default function CheckoutPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [step, selectedShipping, stripeClientSecret, stripeLoadError, verifyingRedirect, paymentProcessing, orderNumber]);
+  }, [step, selectedShipping, stripeClientSecret, freeOrder, stripeLoadError, verifyingRedirect, paymentProcessing, orderNumber]);
+
+  // Un codice sconto cambia il totale: il PaymentIntent già creato non è più
+  // valido → si azzera e l'effetto qui sopra lo ricrea con l'importo aggiornato.
+  const handlePromoChange = () => {
+    setStripeClientSecret(null);
+    setFreeOrder(false);
+    setStripeLoadError(null);
+    setOrderError(null);
+    fetchCart();
+  };
 
   // Ricerca indirizzo con Nominatim (OpenStreetMap, gratuito)
   useEffect(() => {
@@ -617,7 +652,35 @@ export default function CheckoutPage() {
     }
   };
 
-  // ── Rientro da un metodo di pagamento con redirect (PayPal/iDEAL/Bancontact) ──
+  // ── Ordine gratuito (totale 0,00 €): nessun pagamento, solo conferma ─────────
+  // Il totale viene ri-verificato lato server prima di creare l'ordine.
+  const handleFreeOrder = async () => {
+    setOrderError(null);
+    setPlacing(true);
+    try {
+      const token = serverContextToken || getContextToken();
+      const { orderNumber: num } = await confirmFreeCheckout({ contextToken: token });
+      setOrderNumber(num || '—');
+      gtmPurchase({
+        orderNumber: num || 'free',
+        total: totalPrice,
+        shipping: 0,
+        lineItems: cart?.lineItems ?? [],
+      });
+      await fetchCart();
+    } catch (e) {
+      if (/già elaborato|already/i.test(e?.message || '')) {
+        setOrderNumber('—');
+        await fetchCart();
+        return;
+      }
+      setOrderError(e.message || 'Errore durante il completamento ordine. Riprova.');
+    } finally {
+      setPlacing(false);
+    }
+  };
+
+  // ── Rientro da un metodo di pagamento con redirect (iDEAL/Bancontact/3DS) ──
   // Stripe reindirizza il browser fuori e poi torna su return_url (/checkout) con
   // il client secret in query string: il componente rimonta da zero, quindi qui
   // recuperiamo lo stato del PaymentIntent e riprendiamo il flusso da lì.
@@ -722,11 +785,12 @@ export default function CheckoutPage() {
       {isMobile && (
         <div style={{ marginBottom: 28 }}>
           <OrderSummary
-            cart={cart} totalPrice={totalPrice} positionPrice={positionPrice}
+            cart={cart} totalPrice={totalPrice}
             isB2B={isB2B}
             address={address} step={step}
             selectedCountryName={selectedCountryName}
             placing={placing} isMobile={isMobile}
+            onPromoChange={handlePromoChange}
           />
         </div>
       )}
@@ -969,10 +1033,12 @@ export default function CheckoutPage() {
                       Pagamento
                     </h2>
                     <p style={{ fontSize: 13, color: 'var(--color-mid)', marginBottom: 20, marginTop: 0 }}>
-                      Carta, Apple Pay, Google Pay e altri metodi disponibili. 🔒 Pagamento sicuro.
+                      {freeOrder
+                        ? 'Il totale del tuo ordine è 0,00 €: non serve nessun pagamento.'
+                        : 'Carta, Apple Pay, Google Pay e altri metodi disponibili. 🔒 Pagamento sicuro.'}
                     </p>
 
-                    {/* Payment Element unico (carta + wallet + PayPal via Stripe) */}
+                    {/* Payment Element unico: carta + wallet, secondo i metodi attivi su Stripe */}
                     {!stripePromise ? (
                       <p style={{ color: 'var(--color-mid)', fontSize: 13 }}>
                         Configura <code>VITE_STRIPE_PUBLIC_KEY</code> nel file <code>.env</code> per abilitare il pagamento.
@@ -992,6 +1058,43 @@ export default function CheckoutPage() {
                               </button>
                             </div>
                           )
+                        : freeOrder
+                        ? (
+                          // Totale 0,00 € → nessun pagamento: si conferma e basta
+                          <div>
+                            <div style={{
+                              display: 'flex', alignItems: 'center', gap: 12,
+                              padding: '14px 0', borderBottom: '1.5px solid var(--color-dark)',
+                            }}>
+                              <span style={{ fontSize: 18, color: 'var(--color-red)' }}>🏷</span>
+                              <div>
+                                <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-dark)' }}>
+                                  Ordine gratuito
+                                </div>
+                                <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 2 }}>
+                                  Il codice sconto copre l'intero importo.
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleFreeOrder}
+                              disabled={placing}
+                              style={{
+                                width: '100%', marginTop: 20,
+                                padding: isMobile ? '16px 0' : '14px 0',
+                                background: placing ? '#ccc' : 'var(--color-red)',
+                                color: '#fff', border: 'none',
+                                borderRadius: 'var(--radius-pill)',
+                                fontSize: isMobile ? 16 : 15, fontWeight: 600,
+                                cursor: placing ? 'not-allowed' : 'pointer',
+                                fontFamily: 'var(--font-sans)', minHeight: 52,
+                              }}
+                            >
+                              {placing ? 'Elaborazione...' : 'Completa l’ordine · 0,00 €'}
+                            </button>
+                          </div>
+                        )
                         : stripeClientSecret && (
                           <Elements stripe={stripePromise} options={{
                             clientSecret: stripeClientSecret,
@@ -1070,11 +1173,12 @@ export default function CheckoutPage() {
         {/* ── Order summary desktop ────────────────────────────── */}
         {!isMobile && (
           <OrderSummary
-            cart={cart} totalPrice={totalPrice} positionPrice={positionPrice}
+            cart={cart} totalPrice={totalPrice}
             isB2B={isB2B}
             address={address} step={step}
             selectedCountryName={selectedCountryName} orderError={orderError}
             placing={placing} isMobile={false}
+            onPromoChange={handlePromoChange}
           />
         )}
       </div>

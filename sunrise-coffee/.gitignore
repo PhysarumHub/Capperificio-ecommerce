@@ -19,3 +19,6 @@ scripts/.env
 .poller-state.json
 strapi/.strapi
 strapi/.strapi-updater.json
+
+# Credenziali OAuth Google Tag Manager (client_secret.json, token.json)
+.gtm-auth/

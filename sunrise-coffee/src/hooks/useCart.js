@@ -34,11 +34,12 @@ export function useCart() {
       const updated = await apiFn();
       if (updated?.lineItems !== undefined) {
         setCart(updated);
-      } else {
-        // Fallback: only fetch if the response isn't a cart object
-        const fresh = await cartApi.getCart();
-        setCart(fresh);
+        return updated;
       }
+      // Fallback: only fetch if the response isn't a cart object
+      const fresh = await cartApi.getCart();
+      setCart(fresh);
+      return fresh;
     } catch (err) {
       setError(err.message || 'Cart operation failed');
       try {
@@ -61,6 +62,12 @@ export function useCart() {
 
   const removeItem = useCallback((lineItemId) =>
     mutateCart(() => cartApi.removeCartItem(lineItemId)),
+  [mutateCart]);
+
+  // Codice promozionale: ritorna il carrello aggiornato — l'esito va letto lì
+  // (Shopware risponde 200 anche per un codice inesistente).
+  const applyPromotionCode = useCallback((code) =>
+    mutateCart(() => cartApi.addPromotionCode(code)),
   [mutateCart]);
 
   // Optimistic-only update: instant UI, no API call (used before debounced sync)
@@ -135,7 +142,9 @@ export function useCart() {
     }
   }, [configured]);
 
-  const itemCount = cart?.lineItems?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  // Solo i prodotti: i line item di tipo `promotion` non sono articoli da contare
+  const itemCount = cart?.lineItems?.reduce(
+    (sum, item) => (item.type === 'product' ? sum + item.quantity : sum), 0) ?? 0;
   const totalPrice = cart?.price?.totalPrice ?? 0;
   const positionPrice = cart?.price?.positionPrice ?? 0;
 
@@ -150,6 +159,7 @@ export function useCart() {
     addItem,
     updateQuantity,
     removeItem,
+    applyPromotionCode,
     optimisticMerge,
     mergeUpdate,
     removeItems,

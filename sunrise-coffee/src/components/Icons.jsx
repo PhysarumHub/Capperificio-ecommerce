@@ -35,13 +35,17 @@ export function SunLogo({ className = '', size = 'nav' }) {
 
 export function FacebookIcon() {
   return (
-    <svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+    <svg viewBox="0 0 24 24" style={{ fill: 'currentColor' }}><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
   );
 }
 
 export function InstagramIcon() {
   return (
-    <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5"/></svg>
+    <svg viewBox="0 0 24 24" style={{ fill: 'none', stroke: 'currentColor' }} strokeWidth="1.8">
+      <rect x="2" y="2" width="20" height="20" rx="5"/>
+      <circle cx="12" cy="12" r="5"/>
+      <circle cx="17.5" cy="6.5" r="1.3" style={{ fill: 'currentColor', stroke: 'none' }}/>
+    </svg>
   );
 }
 

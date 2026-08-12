@@ -10,7 +10,7 @@
  * dominio del sito e nginx le inoltra al container Shopware.
  *
  * Nota: richiede un reverse-proxy che inoltri /media e /thumbnail a Shopware.
- * Su un hosting statico senza questo proxy (es. Vercel) va invece configurato
+ * Su un hosting statico senza questo proxy va invece configurato
  * Shopware con il dominio pubblico e gli URL vanno lasciati assoluti.
  */
 

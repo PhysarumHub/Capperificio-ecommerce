@@ -198,12 +198,6 @@ const SECTIONS = [
             </a>{' '}
             (cookie tecnici e antifrode attivi nella fase di pagamento)
           </li>
-          <li>
-            <strong>PayPal (Europe) S.à r.l. et Cie, S.C.A.</strong> —{' '}
-            <a href="https://www.paypal.com/it/webapps/mpp/ua/privacy-full" target="_blank" rel="noopener noreferrer">
-              Informativa privacy
-            </a>
-          </li>
         </ul>
         <p>
           Le pagine del sito possono inoltre includere contenuti incorporati (ad esempio video o

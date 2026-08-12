@@ -12,7 +12,7 @@ Sold-out: stock=0, isCloseout=True su ogni prodotto e variante.
 
 Uso:
   python scripts/update-prices-soldout.py
-  python scripts/update-prices-soldout.py --base http://localhost:8090 --pass shopware
+  python scripts/update-prices-soldout.py --base http://localhost:8090 --pass LA_TUA_PASSWORD
 """
 
 import urllib.request, urllib.error, json, sys, os, pathlib
@@ -30,11 +30,15 @@ def _load_env():
 _load_env()
 
 # CLI args hanno la precedenza sulle env vars (utile per override rapido)
-_args      = dict(zip(sys.argv[1::2], sys.argv[2::2]))
-_base_raw  = _args.get('--base', os.environ.get('SHOPWARE_URL', '')).rstrip('/')
-BASE       = _base_raw + '/api' if _base_raw and not _base_raw.endswith('/api') else _base_raw
-ADMIN_USER = _args.get('--user', os.environ.get('SHOPWARE_ADMIN_USER', 'admin'))
-ADMIN_PASS = _args.get('--pass', os.environ.get('SHOPWARE_ADMIN_PASS', ''))
+import sys as _sys, pathlib as _pathlib
+_sys.path.insert(0, str(_pathlib.Path(__file__).parent))
+from _config import shopware_config as _shopware_config
+
+_cfg       = _shopware_config()
+_args      = _cfg.args
+BASE       = _cfg.api_base
+ADMIN_USER = _cfg.user
+ADMIN_PASS = _cfg.password
 
 if not BASE:
     sys.exit("❌  SHOPWARE_URL non impostata. Crea scripts/.env (vedi scripts/.env.example)")

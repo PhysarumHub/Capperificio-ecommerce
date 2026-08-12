@@ -245,6 +245,16 @@
 }
 .optionChipSelected:hover { background: var(--color-red); }
 
+/* Opzione esaurita — stesso linguaggio visivo dei chip nelle card
+   (ProductCard.module.css .variantChipSoldOut) */
+.optionChipSoldOut {
+  opacity: 0.35;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.optionChipSoldOut:hover { background: none; }
+.optionChipSoldOut.optionChipSelected:hover { background: var(--color-red); }
+
 /* Quantity */
 .qtyRow {
   display: flex;
@@ -302,6 +312,34 @@
 .btnAddCart:hover { background: var(--color-red-hover); border-color: var(--color-red-hover); }
 .btnAddCart:active { transform: scale(0.97); }
 
+/* Non acquistabile ma non esaurito: varianti in caricamento, nessuna variante
+   risolta o tetto di disponibilità raggiunto. */
+.btnAddCartDisabled,
+.btnAddCartDisabled:hover {
+  opacity: .45;
+  cursor: not-allowed;
+  transform: none;
+  background: var(--color-red);
+  border-color: var(--color-red);
+}
+
+.stockNote {
+  margin: 10px 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-mid);
+  text-align: center;
+}
+
+.cartError {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(178, 34, 34, 0.28);
+  border-radius: 4px;
+  background: rgba(178, 34, 34, 0.06);
+  color: #8a1f1f;
+  font-size: var(--text-sm);
+}
+
 .btnSoldOut {
   width: 100%;
   padding: 16px 24px;
@@ -347,6 +385,8 @@
   flex-shrink: 0;
 }
 .pdpQtyBtn:hover { background: rgba(0,0,0,.15); }
+.pdpQtyBtn:disabled { opacity: .4; cursor: not-allowed; }
+.pdpQtyBtn:disabled:hover { background: none; }
 
 .pdpQtyNum {
   flex: 1;

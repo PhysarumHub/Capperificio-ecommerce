@@ -8,7 +8,15 @@ import { formatPrice } from '../../lib/utils/price';
 import { getProductImage, getProductSlug, proxyUrl } from '../../lib/utils/image';
 import { getProductVariants } from '../../lib/api/products';
 import { getCatalogEntry } from '../../data/capperificioCatalog';
-import { resolveProductSoldOut } from '../../lib/utils/availability';
+import {
+  resolveProductSoldOut,
+  resolveListingSoldOut,
+  isProductAvailable,
+  buildOptionAvailabilityMap,
+  getMaxPurchasable,
+  getCartQuantity,
+} from '../../lib/utils/availability';
+import { groupVariants, resolveCardCartId, resolveVariantOptions } from '../../lib/utils/variants';
 import { gtmViewItem, gtmAddToCart } from '../../lib/utils/gtm';
 import useInView from '../../hooks/useInView';
 import styles from './ProductDetail.module.css';
@@ -34,41 +42,6 @@ const BREW_CUSTOM_FIELDS = [
 
 const B2B_CATEGORY_ID = import.meta.env.VITE_B2B_CATEGORY_ID || null;
 
-function groupVariants(rawList) {
-  const standalone = rawList.filter(p => !p.parentId);
-  const children   = rawList.filter(p => !!p.parentId);
-  const groups = {};
-  children.forEach(child => {
-    if (!groups[child.parentId]) groups[child.parentId] = [];
-    groups[child.parentId].push(child);
-  });
-  const parentIds = new Set(Object.keys(groups));
-  const buildVariantMap = (cList) => {
-    const map = {};
-    cList.forEach(child => {
-      const name = child.options?.[0]?.translated?.name || child.options?.[0]?.name;
-      if (name) map[name] = child.id;
-    });
-    return map;
-  };
-  const result = standalone.map(p => {
-    const flatSiblings = groups[p.id] || [];
-    if (!flatSiblings.length) return p;
-    const allOptions = [...new Set(
-      flatSiblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
-    )];
-    return { ...p, _allVariantOptions: allOptions, _firstVariantId: flatSiblings[0]?.id, _variantMap: buildVariantMap(flatSiblings) };
-  });
-  Object.entries(groups).forEach(([parentId, siblings]) => {
-    if (standalone.some(p => p.id === parentId)) return;
-    const allOptions = [...new Set(
-      siblings.flatMap(c => c.options?.map(o => o.translated?.name || o.name).filter(Boolean) || [])
-    )];
-    result.push({ ...siblings[0], _allVariantOptions: allOptions, _variantMap: buildVariantMap(siblings) });
-  });
-  return result;
-}
-
 function mapRelatedProduct(product) {
   const price = product.calculatedPrice || product.price?.[0];
   const listPrice = price?.listPrice;
@@ -78,35 +51,19 @@ function mapRelatedProduct(product) {
   // Se il prodotto è un padre senza figli nella risposta → nascondiamo i chip
   // e non esponiamo l'id (ProductCard esce subito da handleAdd).
   const hasKnownVariants = Object.keys(product._variantMap || {}).length > 0;
-  const variantMap = hasKnownVariants ? product._variantMap : {};
-
-  const fromConfigurator = product.configuratorSettings
-    ?.map((s) => s.option?.translated?.name || s.option?.name)
-    .filter(Boolean);
-  // Usa configuratorSettings (sempre completo dal padre) per i chip;
-  // fallback a _allVariantOptions se il configurator non è presente
-  const options = fromConfigurator?.length
-    ? [...new Set(fromConfigurator)]
-    : (hasKnownVariants ? product._allVariantOptions : undefined);
-
-  // Se è un padre senza figli noti non possiamo risolvere l'ID variante per il carrello
-  const isUnresolvableParent = !product.parentId && !hasKnownVariants
-    && (product.configuratorSettings?.length > 0);
-  const id = isUnresolvableParent
-    ? undefined
-    : (product._firstVariantId || product.id);
 
   return {
-    id,
+    id: resolveCardCartId(product),
     name: product.translated?.name || product.name,
     slug: getProductSlug(product),
     image: getProductImage(product),
     price: formatPrice(price?.unitPrice),
     oldPrice: listPrice?.price ? formatPrice(listPrice.price) : undefined,
     badge: listPrice?.price ? 'In saldo' : undefined,
-    soldOut: (product.availableStock ?? 1) <= 0,
-    options,
-    variantMap,
+    soldOut: resolveListingSoldOut(product),
+    options: resolveVariantOptions(product),
+    variantMap: hasKnownVariants ? product._variantMap : {},
+    availabilityMap: product._availabilityMap || {},
   };
 }
 
@@ -130,7 +87,6 @@ const FALLBACK_PRODUCT = {
   type: 'Blend',
   bestFor: 'Filter',
   process: 'Washed & Natural',
-  images: ['/images/PRODUCTSTILL.jpg', '/images/PRODUCTSTILL.jpg', '/images/PRODUCTSTILL.jpg', '/images/PRODUCTSTILL.jpg'],
 };
 
 export default function ProductDetail({ product: shopwareProduct, loading, error, slug }) {
@@ -146,12 +102,13 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const [showTag, setShowTag] = useState(false);
   const [imgIndex, setImgIndex] = useState(0);
   const [stickyVisible, setStickyVisible] = useState(true);
+  const [cartError, setCartError] = useState(null);
   const debounceRef = useRef(null);
   const cancelAddRef = useRef(false);
   const touchStartX = useRef(null);
   const alsoLikeSectionRef = useRef(null);
   const [alsoLikeGridRef, alsoLikeGridInView] = useInView({ threshold: 0.01, rootMargin: '120px' });
-  const { addItem } = useCartContext();
+  const { addItem, updateQuantity, removeItem, cart } = useCartContext();
 
 
   const scheduleCollapse = (currentQty) => {
@@ -164,22 +121,29 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   };
 
   const handleAdd = async () => {
-    if (isSoldOut) return;
+    // Il bottone non deve mai poter aggiungere ciò che non è acquistabile,
+    // né il prodotto padre al posto della variante selezionata.
+    if (!canAddToCart) return;
     cancelAddRef.current = false;
+    setCartError(null);
     const next = cartQty + 1;
     setCartQty(next);
     setShowControl(true);
     setShowTag(false);
     const price = shopwareProduct?.calculatedPrice?.unitPrice ?? shopwareProduct?.price?.[0]?.gross ?? 0;
-    gtmAddToCart({ id: shopwareProduct?.id || '', name: shopwareProduct?.translated?.name || shopwareProduct?.name || '', price }, 1);
-    if (hasApiProduct && shopwareProduct?.id) {
-      const itemId = activeVariant?.id || shopwareProduct.id;
-      try { await addItem(itemId, 1); } catch {}
+    gtmAddToCart({ id: cartItemId, name: shopwareProduct?.translated?.name || shopwareProduct?.name || '', price }, 1);
+    try {
+      await addItem(cartItemId, 1);
+    } catch (err) {
+      // Rollback: l'effetto di riconciliazione allineerà comunque al carrello reale
+      setCartQty(cartQty);
+      setCartError(err?.message || 'Non è stato possibile aggiungere il prodotto al carrello.');
+      return;
     }
     if (!cancelAddRef.current) scheduleCollapse(next);
   };
 
-  const handleDecrease = () => {
+  const handleDecrease = async () => {
     const next = cartQty - 1;
     setCartQty(next);
     if (next === 0) {
@@ -188,6 +152,15 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
       if (debounceRef.current) clearTimeout(debounceRef.current);
     } else {
       scheduleCollapse(next);
+    }
+    // Il "−" deve toccare il carrello davvero, altrimenti il contatore della PDP
+    // e il carrello divergono al primo click.
+    if (!cartLineItem) return;
+    try {
+      if (next === 0) await removeItem(cartLineItem.id);
+      else await updateQuantity(cartLineItem.id, next);
+    } catch (err) {
+      setCartError(err?.message || 'Non è stato possibile aggiornare il carrello.');
     }
   };
 
@@ -254,6 +227,23 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     ) || null;
   }, [variants, selectedOptions]);
 
+  // Se l'utente non ha chiesto una variante specifica (?variant=…) e quella di
+  // default risulta esaurita, spostiamo la selezione sulla prima acquistabile:
+  // atterrare su "Esaurito" quando altri formati sono disponibili è fuorviante.
+  useEffect(() => {
+    if (!variantsLoaded || !hasConfigurator || searchParams.get('variant')) return;
+    if (!activeVariant || isProductAvailable(activeVariant)) return;
+    const fallback = variants.find(isProductAvailable);
+    if (!fallback) return;
+    const next = {};
+    for (const [groupName, opts] of Object.entries(configuratorGroups)) {
+      const match = opts.find((o) => fallback.options?.some((vo) => vo.id === o.id));
+      if (match) next[groupName] = match.id;
+    }
+    if (Object.keys(next).length) setSelectedOptions((prev) => ({ ...prev, ...next }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variantsLoaded, activeVariant, variants]);
+
   const hasApiProduct = Boolean(shopwareProduct);
   const isSoldOut = hasApiProduct && resolveProductSoldOut({
     product: shopwareProduct,
@@ -262,6 +252,47 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     variants,
     variantsLoaded,
   });
+
+  // Disponibilità per singola opzione del configuratore: un'opzione è
+  // selezionabile se almeno una variante acquistabile la contiene.
+  const optionAvailability = useMemo(() => buildOptionAvailabilityMap(variants), [variants]);
+
+  // ID che finisce nel carrello. Per un prodotto a varianti è SEMPRE il figlio:
+  // aggiungere il padre produce un articolo sbagliato o un errore silenzioso.
+  const cartItemId = hasConfigurator ? activeVariant?.id : shopwareProduct?.id;
+
+  // Prodotto di riferimento per i limiti di quantità (variante se selezionata).
+  const stockSource = hasConfigurator ? activeVariant : shopwareProduct;
+  const maxQty = hasApiProduct ? getMaxPurchasable(stockSource) : Infinity;
+
+  const cartLineItem = useMemo(
+    () => cart?.lineItems?.find((li) => li.referencedId === cartItemId) || null,
+    [cart, cartItemId],
+  );
+
+  // `isSoldOut` è volutamente ottimista mentre le varianti caricano (niente
+  // flash di "Esaurito"): il gate all'azione è questo, non quello.
+  const canAddToCart = hasApiProduct
+    && !isSoldOut
+    && Boolean(cartItemId)
+    && (!hasConfigurator || variantsLoaded)
+    && cartQty < maxQty;
+
+  // Riconcilia il contatore con il carrello reale: Shopware può rifiutare o
+  // ridurre la riga rispondendo comunque 200, quindi la verità è il carrello.
+  const showControlRef = useRef(false);
+  showControlRef.current = showControl;
+  useEffect(() => {
+    if (!cart || !cartItemId) return;
+    const realQty = getCartQuantity(cart, cartItemId);
+    setCartQty(realQty);
+    if (realQty === 0) {
+      setShowControl(false);
+      setShowTag(false);
+    } else if (!showControlRef.current) {
+      setShowTag(true);
+    }
+  }, [cart, cartItemId]);
 
   // Scheda catalogo Capperificio: fallback locale quando Shopware non ha ancora
   // description / properties / customFields popolati per questo prodotto.
@@ -282,16 +313,14 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         || 0)
     : FALLBACK_PRICES[size];
 
-  const rawMediaImages = (shopwareProduct?.media || [])
+  // Foto: solo i media presenti su Shopware, ordinati per `position` così la
+  // prima immagine mostrata è la prima caricata su Shopware (nessun fallback
+  // a catalogo locale o placeholder).
+  const productImages = (shopwareProduct?.media || [])
+    .slice()
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
     .map((m) => proxyUrl(m.media?.url || m.url))
     .filter(Boolean);
-  // Foto: 1) media Shopware  2) foto dal catalogo JSON  3) placeholder generico
-  const catalogImages = catalogEntry?.images || [];
-  const productImages = hasApiProduct
-    ? (rawMediaImages.length
-        ? rawMediaImages
-        : (catalogImages.length ? catalogImages : [getProductImage(shopwareProduct)]))
-    : (catalogImages.length ? catalogImages : FALLBACK_PRODUCT.images);
 
   const PROPERTY_ORDER = ['Origine', 'Ingredienti', 'Calibro', 'Tipo', 'Formato', 'Peso netto', 'Note di gusto', 'Ideale per'];
   const properties = hasApiProduct ? (shopwareProduct.properties || []) : [];
@@ -364,22 +393,33 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
           {Object.entries(configuratorGroups).map(([groupName, options]) => (
             <div key={groupName} className={styles.optionGroup}>
               <div className={styles.optionChips}>
-                {options.map((opt) => (
-                  <button
-                    key={opt.id}
-                    className={`${styles.optionChip} ${selectedOptions[groupName] === opt.id ? styles.optionChipSelected : ''}`}
-                    onClick={() => {
-                      setSelectedOptions((prev) => ({ ...prev, [groupName]: opt.id }));
-                      cancelAddRef.current = true;
-                      setCartQty(0);
-                      setShowControl(false);
-                      setShowTag(false);
-                      if (debounceRef.current) clearTimeout(debounceRef.current);
-                    }}
-                  >
-                    {opt.name}
-                  </button>
-                ))}
+                {options.map((opt) => {
+                  // Marcata esaurita solo quando le varianti sono caricate,
+                  // così non lampeggia durante il fetch.
+                  const optSoldOut = variantsLoaded && optionAvailability[opt.id] === false;
+                  return (
+                    <button
+                      key={opt.id}
+                      className={[
+                        styles.optionChip,
+                        selectedOptions[groupName] === opt.id ? styles.optionChipSelected : '',
+                        optSoldOut ? styles.optionChipSoldOut : '',
+                      ].filter(Boolean).join(' ')}
+                      aria-disabled={optSoldOut}
+                      title={optSoldOut ? 'Esaurito' : undefined}
+                      onClick={() => {
+                        setSelectedOptions((prev) => ({ ...prev, [groupName]: opt.id }));
+                        cancelAddRef.current = true;
+                        setCartError(null);
+                        setShowControl(false);
+                        setShowTag(false);
+                        if (debounceRef.current) clearTimeout(debounceRef.current);
+                      }}
+                    >
+                      {opt.name}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -392,7 +432,12 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         <div className={styles.pdpQtyControl}>
           <button className={styles.pdpQtyBtn} onClick={handleDecrease} aria-label="Decrease">−</button>
           <span className={styles.pdpQtyNum}>{cartQty}</span>
-          <button className={styles.pdpQtyBtn} onClick={handleAdd} aria-label="Increase">+</button>
+          <button
+            className={styles.pdpQtyBtn}
+            onClick={handleAdd}
+            disabled={!canAddToCart}
+            aria-label="Increase"
+          >+</button>
         </div>
       ) : showTag ? (
         <button
@@ -402,10 +447,19 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
           Nel carrello · {cartQty}
         </button>
       ) : (
-        <button className={styles.btnAddCart} onClick={handleAdd}>
+        <button
+          className={`${styles.btnAddCart} ${!canAddToCart ? styles.btnAddCartDisabled : ''}`}
+          onClick={handleAdd}
+          disabled={!canAddToCart}
+        >
           Aggiungi al carrello <span>→</span> {hasApiProduct ? formatPrice(unitPrice) : `$${unitPrice.toFixed(2)}`}
         </button>
       )}
+
+      {maxQty !== Infinity && maxQty > 0 && cartQty >= maxQty && !isSoldOut && (
+        <p className={styles.stockNote}>Disponibilità massima raggiunta: {maxQty} pezzi.</p>
+      )}
+      {cartError && <p className={styles.cartError}>{cartError}</p>}
 
       <ul className={styles.trustList}>
         <li>Lavorato Artigianalmente</li>
@@ -595,7 +649,12 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
             <div className={styles.pdpQtyControl}>
               <button className={styles.pdpQtyBtn} onClick={handleDecrease} aria-label="Decrease">−</button>
               <span className={styles.pdpQtyNum}>{cartQty}</span>
-              <button className={styles.pdpQtyBtn} onClick={handleAdd} aria-label="Increase">+</button>
+              <button
+                className={styles.pdpQtyBtn}
+                onClick={handleAdd}
+                disabled={!canAddToCart}
+                aria-label="Increase"
+              >+</button>
             </div>
           ) : showTag ? (
             <button
@@ -605,7 +664,11 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
               Nel carrello · {cartQty}
             </button>
           ) : (
-            <button className={styles.mobileStickyBtn} onClick={handleAdd}>
+            <button
+              className={`${styles.mobileStickyBtn} ${!canAddToCart ? styles.btnAddCartDisabled : ''}`}
+              onClick={handleAdd}
+              disabled={!canAddToCart}
+            >
               Aggiungi al carrello →
             </button>
           )}

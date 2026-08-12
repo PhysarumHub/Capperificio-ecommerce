@@ -131,13 +131,18 @@ export async function setShippingMethod(contextToken, shippingMethodId) {
 /**
  * Legge il totale REALE del carrello dal server.
  * Questo è l'unico importo di cui fidarsi per creare un pagamento.
+ *
+ * Un totale di 0 è legittimo (promozione al 100%): il carrello è "vuoto" solo
+ * se non contiene prodotti. Chi crea il pagamento deve quindi gestire il caso
+ * `amountInCents === 0` (ordine gratuito, nessun PaymentIntent).
  */
 export async function getCartTotal(contextToken) {
   if (!contextToken) throw new Error('contextToken mancante');
   const { data: cart } = await swFetch('/checkout/cart', { method: 'GET', contextToken });
 
+  const hasProducts = (cart?.lineItems ?? []).some((i) => i.type === 'product');
   const total = cart?.price?.totalPrice;
-  if (typeof total !== 'number' || total <= 0) {
+  if (!hasProducts || typeof total !== 'number' || total < 0) {
     const err = new Error('Carrello vuoto o totale non valido');
     err.status = 400;
     throw err;

@@ -55,11 +55,11 @@ VITE_SHOPWARE_STOREFRONT_URL=default.headless0
 VITE_STRIPE_PUBLIC_KEY=pk_test_...
 STRIPE_SECRET_KEY=sk_test_...
 
-# PayPal — inserisci il Client ID sandbox (o lascia vuoto se non lo usi)
-VITE_PAYPAL_CLIENT_ID=INSERISCI_QUI
+# Google Tag Manager — lascia vuoto per non caricare GTM affatto
+VITE_GTM_ID=GTM-XXXXXXX
 ```
 
-> Se non hai PayPal, puoi lasciare `VITE_PAYPAL_CLIENT_ID=` vuoto — il frontend lo gestisce.
+> L'elenco completo e commentato delle variabili è in [.env.example](.env.example).
 
 ---
 
@@ -155,12 +155,15 @@ docker compose up -d --build frontend
 
 ## Checklist prima di andare in produzione
 
+La checklist completa di go-live è in [DEPLOY.md](DEPLOY.md). In sintesi:
+
 - [ ] Sostituisci le chiavi Stripe test (`pk_test_...`) con quelle live
-- [ ] Inserisci il `VITE_PAYPAL_CLIENT_ID` reale
-- [ ] Cambia `SHOP_DOMAIN` con il tuo dominio (es. `cappellificio.it`)
-- [ ] Cambia `FRONTEND_URL` con il tuo dominio
+- [ ] Cambia `SHOP_DOMAIN` con il tuo dominio
+- [ ] Valorizza `SITE_URL` con l'host canonico (`https://www.capperificiocaro.com`)
 - [ ] Cambia la password admin di Shopware (non lasciare `shopware`)
-- [ ] Configura HTTPS (SSL) sul server
+- [ ] Imposta `APP_ENV=prod` per il container Shopware
+- [ ] Configura il webhook Stripe e `STRIPE_WEBHOOK_SECRET`
+- [ ] Verifica che HTTPS sia attivo (Traefik + Let's Encrypt)
 
 ---
 

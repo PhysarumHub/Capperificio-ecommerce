@@ -22,6 +22,9 @@ const AboutPage              = lazy(() => import('./pages/AboutPage'));
 const PrivacyPolicyPage      = lazy(() => import('./pages/PrivacyPolicyPage'));
 const CookiePolicyPage       = lazy(() => import('./pages/CookiePolicyPage'));
 const TerminiCondizioniPage  = lazy(() => import('./pages/TerminiCondizioniPage'));
+const NewsletterConfirmPage  = lazy(() => import('./pages/NewsletterConfirmPage'));
+const ContattiPage           = lazy(() => import('./pages/ContattiPage'));
+const FAQPage                = lazy(() => import('./pages/FAQPage'));
 const TestPageA              = lazy(() => import('./pages/TestPageA'));
 const TestPageB              = lazy(() => import('./pages/TestPageB'));
 const CylinderCarousel       = lazy(() => import('./components/CylinderCarousel'));
@@ -49,6 +52,10 @@ export default function App() {
             <Route path="/account/register" element={<AccountPage />} />
             <Route path="/b2b" element={<B2BPage />} />
             <Route path="/storia" element={<AboutPage />} />
+            <Route path="/newsletter-subscribe" element={<NewsletterConfirmPage />} />
+
+            <Route path="/contatti" element={<ContattiPage />} />
+            <Route path="/faq" element={<FAQPage />} />
 
             {/* ── Pagine legali ── */}
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />

@@ -381,7 +381,7 @@ Il progetto è già a un livello solido per un MVP, ma mancano le fondamenta per
   - Richiedi CVC su tutti i pagamenti
 - [ ] 🟠 **Test checkout end-to-end** con carta `4242 4242 4242 4242` (Stripe test) prima del go-live.
 - [x] **Redirect fallback (3DS / PayPal / iDEAL / Bancontact)** — `CheckoutPage.jsx` rileva il rientro da un redirect Stripe (`payment_intent_client_secret` in query string dopo il remount), recupera lo stato del PaymentIntent e riprende il flusso invece di lasciare il cliente su una pagina senza conferma.
-- [ ] 🟡 **Pulire le variabili PayPal deprecate** — `VITE_PAYPAL_CLIENT_ID` e tutto il codice PayPal diretto sono deprecati (ora passa da Stripe). Rimuovere dalla `docker-compose.yml` e dal `.env.example` per evitare confusione.
+- [x] **Rimosso PayPal** — dipendenza `@paypal/react-paypal-js`, `api/paypal/`, `VITE_PAYPAL_CLIENT_ID` (Dockerfile + docker-compose), voci CSP e dichiarazioni nelle pagine legali/FAQ. Verrà reintrodotto come metodo del Payment Element di Stripe.
 
 ---
 

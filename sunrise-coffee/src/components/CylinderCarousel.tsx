@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ScrollSmoother } from 'gsap/ScrollSmoother';
@@ -290,6 +291,24 @@ export default function CylinderCarousel() {
 
   return (
     <div className="bg-black text-neutral-200 min-h-screen">
+      <Link
+        to="/"
+        aria-label="Torna alla home"
+        className="fixed top-6 left-6 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/65"
+      >
+        <svg
+          className="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+      </Link>
+
       <div ref={wrapperRef} id="smooth-wrapper" className="fixed inset-0 overflow-hidden">
         <div ref={contentRef} id="smooth-content" className="w-full">
           <div ref={containerRef} style={{ height: '500svh' }} />

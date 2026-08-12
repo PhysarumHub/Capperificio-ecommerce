@@ -168,6 +168,19 @@
 }
 .qtyBtn:hover { border-color: var(--color-red); color: var(--color-red); }
 
+.qtyBtn:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+.qtyBtn:disabled:hover { border-color: var(--color-border); color: var(--color-dark); }
+
+.itemStockNote {
+  font-size: var(--text-sm);
+  color: var(--color-red);
+  opacity: .85;
+  margin-top: 2px;
+}
+
 .qtyNum {
   font-size: var(--text-md);
   font-weight: 600;

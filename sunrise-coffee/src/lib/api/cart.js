@@ -23,6 +23,22 @@ export async function addToCart(productId, quantity = 1) {
 }
 
 /**
+ * Apply a promotion code to the cart.
+ * Shopware risponde 200 anche per un codice inesistente: l'esito va letto dagli
+ * `errors` del carrello restituito (vedi `promotionResult` in utils/promotion.js).
+ */
+export async function addPromotionCode(code) {
+  return storeApiPost('/checkout/cart/line-item', {
+    items: [
+      {
+        type: 'promotion',
+        referencedId: code,
+      },
+    ],
+  });
+}
+
+/**
  * Update a cart line item quantity.
  */
 export async function updateCartItem(lineItemId, quantity) {

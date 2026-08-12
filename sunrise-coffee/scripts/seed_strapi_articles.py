@@ -7,9 +7,19 @@ Uso: python seed_strapi_articles.py
 import urllib.request
 import urllib.error
 import json
+import os
+import sys
 
-STRAPI_URL = "http://SHOPWARE_HOST_REDACTED:1337"
-STRAPI_TOKEN = "INCOLLA_QUI_IL_TOKEN_FULL_ACCESS"
+# Credenziali da scripts/.env (STRAPI_URL / STRAPI_TOKEN), mai in chiaro qui.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _config  # noqa: F401 — l'import carica scripts/.env nell'ambiente
+
+STRAPI_URL = os.environ.get('STRAPI_URL', 'http://127.0.0.1:1337').rstrip('/')
+STRAPI_TOKEN = os.environ.get('STRAPI_TOKEN', '')
+
+if not STRAPI_TOKEN:
+    sys.exit("❌  STRAPI_TOKEN non impostato in scripts/.env "
+             "(Strapi admin → Settings → API Tokens → Full access)")
 
 ARTICLES = [
     {
@@ -254,10 +264,7 @@ def create_article(article: dict) -> dict:
 
 
 def main():
-    if STRAPI_TOKEN == "INCOLLA_QUI_IL_TOKEN_FULL_ACCESS":
-        print("❌ Sostituisci STRAPI_TOKEN con il tuo token Full Access di Strapi.")
-        return
-
+    # La presenza del token è già verificata all'import (vedi in testa al file).
     print(f"Connessione a {STRAPI_URL}...\n")
     for article in ARTICLES:
         try:

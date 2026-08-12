@@ -1,8 +1,4 @@
 // Immagini di scena per il carosello 3D.
-// I file /img/imgN.svg sono placeholder generati: sostituirli con le foto
-// definitive non richiede modifiche al componente.
-
-const placeholders = Array.from({ length: 12 }, (_, i) => `/img/img${i + 1}.svg`);
 
 const photos = [
   '/images/CAPPERI.jpg',
@@ -11,9 +7,21 @@ const photos = [
   '/images/PRODUCTSTILL.jpg',
   '/images/dalcampoallatavola2.webp',
   '/images/giannelli.webp',
+  '/images/territorio/capperificio-caro-raccolta.webp',
+  '/images/territorio/capperificio-caro-lavorazione-jul-23.webp',
+  '/images/territorio/capperificio-caro-capperi.webp',
+  '/images/territorio/raccolta-capperificio-caro-lug-12-2024.webp',
+  '/images/territorio/capperificio-caro-lavorazione-jul-23-1.webp',
+  '/images/territorio/capperificio-caro-raccolta-2024.webp',
+  '/images/territorio/lavorazione-capperificio-caro-23-lug-2024.webp',
+  '/images/territorio/raccolta-capperificio-caro-lug-12-2024-1.webp',
+  '/images/territorio/capperificio-caro-raccolta-2024-1.webp',
+  '/images/territorio/capperificio-caro-raccolta-jul-12-2024.webp',
+  '/images/territorio/capperi-condivisione-pubblica-giugno-11-2025.webp',
+  '/images/territorio/foto-lug-29-2024-da-aruba-drive.webp',
 ];
 
-const pool = [...photos, ...placeholders];
+const pool = [...photos];
 
 /** Sei immagini a partire da `offset`, ciclando sul pool. */
 const pick = (offset, count = 6) =>
