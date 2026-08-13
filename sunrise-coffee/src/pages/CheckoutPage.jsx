@@ -1,628 +1,320 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
+
 import { useCartContext, useCustomerContext } from '../context/ShopwareContext';
+import { useCheckoutForm, CONTACT_FIELDS, ADDRESS_FIELDS } from '../hooks/useCheckoutForm';
+import { useSEO } from '../hooks/useSEO';
 import { gtmBeginCheckout, gtmAddShippingInfo, gtmPurchase } from '../lib/utils/gtm';
 import {
   getShippingMethods, createCheckoutIntent, confirmCheckout, confirmFreeCheckout,
 } from '../lib/api/checkout';
 import { getCountries, getSalutations } from '../lib/api/customer';
-import { useSEO } from '../hooks/useSEO';
-import { formatPrice } from '../lib/utils/price';
 import { isShopwareConfigured, getContextToken, setContextToken } from '../lib/shopware-client';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
-import StripePaymentForm from '../components/checkout/StripePaymentForm';
-import CartStockNotices from '../components/CartStockNotices/CartStockNotices';
-import PromoCode from '../components/PromoCode/PromoCode';
-import { getPromotionDiscount, getShippingCosts } from '../lib/utils/promotion';
-import { isShippingFree } from '../lib/utils/shipping';
+import { joinStreetHouseNumber, postcodeExample } from '../lib/utils/address';
+
+import Field from '../components/checkout/Field';
+import AddressAutocomplete from '../components/checkout/AddressAutocomplete';
+import OrderSummary from '../components/checkout/OrderSummary';
+import PaymentSection from '../components/checkout/PaymentSection';
+import {
+  CheckIcon, AlertIcon, PencilIcon, ArrowRightIcon, SpinnerIcon, ChevronIcon, TruckIcon,
+} from '../components/checkout/CheckoutIcons';
+import styles from '../components/checkout/Checkout.module.css';
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
   : null;
 
-const B2B_GROUP_NAME = import.meta.env.VITE_B2B_GROUP_NAME || 'B2B';
-
-// ── Responsive hook ────────────────────────────────────────────────
-function useIsMobile() {
-  const [mobile, setMobile] = useState(() => window.innerWidth < 768);
-  useEffect(() => {
-    const fn = () => setMobile(window.innerWidth < 768);
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
-  }, []);
-  return mobile;
-}
-
-// ── Lista paesi completa ───────────────────────────────────────────
-const ALL_COUNTRIES = [
-  { iso: 'IT', name: 'Italia' },
-  { iso: 'DE', name: 'Germania' },
-  { iso: 'FR', name: 'Francia' },
-  { iso: 'ES', name: 'Spagna' },
-  { iso: 'GB', name: 'Regno Unito' },
-  { iso: 'AT', name: 'Austria' },
-  { iso: 'BE', name: 'Belgio' },
-  { iso: 'CH', name: 'Svizzera' },
-  { iso: 'NL', name: 'Paesi Bassi' },
-  { iso: 'PT', name: 'Portogallo' },
-  { iso: 'SE', name: 'Svezia' },
-  { iso: 'DK', name: 'Danimarca' },
-  { iso: 'NO', name: 'Norvegia' },
-  { iso: 'FI', name: 'Finlandia' },
-  { iso: 'PL', name: 'Polonia' },
-  { iso: 'CZ', name: 'Repubblica Ceca' },
-  { iso: 'RO', name: 'Romania' },
-  { iso: 'HU', name: 'Ungheria' },
-  { iso: 'GR', name: 'Grecia' },
-  { iso: 'US', name: 'Stati Uniti' },
-  { iso: 'CA', name: 'Canada' },
-  { iso: 'AU', name: 'Australia' },
-  { iso: 'JP', name: 'Giappone' },
+/** Paesi di ripiego, usati finché Shopware non risponde con i suoi. */
+const FALLBACK_COUNTRIES = [
+  { iso: 'IT', name: 'Italia' }, { iso: 'DE', name: 'Germania' }, { iso: 'FR', name: 'Francia' },
+  { iso: 'ES', name: 'Spagna' }, { iso: 'GB', name: 'Regno Unito' }, { iso: 'AT', name: 'Austria' },
+  { iso: 'BE', name: 'Belgio' }, { iso: 'CH', name: 'Svizzera' }, { iso: 'NL', name: 'Paesi Bassi' },
+  { iso: 'PT', name: 'Portogallo' }, { iso: 'SE', name: 'Svezia' }, { iso: 'DK', name: 'Danimarca' },
+  { iso: 'NO', name: 'Norvegia' }, { iso: 'FI', name: 'Finlandia' }, { iso: 'PL', name: 'Polonia' },
+  { iso: 'CZ', name: 'Repubblica Ceca' }, { iso: 'RO', name: 'Romania' }, { iso: 'HU', name: 'Ungheria' },
+  { iso: 'GR', name: 'Grecia' }, { iso: 'US', name: 'Stati Uniti' }, { iso: 'CA', name: 'Canada' },
+  { iso: 'AU', name: 'Australia' }, { iso: 'JP', name: 'Giappone' },
 ];
 
-function detectCountryIso() {
-  const lang = navigator.language || navigator.languages?.[0] || 'it-IT';
-  const parts = lang.split('-');
-  return parts.length > 1 ? parts[1].toUpperCase() : 'IT';
-}
+const EU_EAST = new Set(['PL', 'CZ', 'SK', 'HU', 'RO', 'BG', 'HR', 'SI', 'EE', 'LV', 'LT', 'GR', 'CY', 'MT']);
 
-// Shopware salva via e civico in un unico campo "street" (es. "Via Roma 12/A"):
-// lo spezziamo per popolare i due campi separati del form.
-function splitStreetHouseNumber(street) {
-  const match = /^(.*?)[,\s]+(\d+[a-zA-Z/\-]*)\s*$/.exec((street || '').trim());
-  return match ? { street: match[1].trim(), houseNumber: match[2] } : { street: (street || '').trim(), houseNumber: '' };
-}
-
-// ── Step bar ───────────────────────────────────────────────────────
-function StepBar({ step, isMobile }) {
-  const steps = ['Contatti', 'Indirizzo', 'Pagamento'];
+/** Schermata a tutta pagina per gli stati terminali (esito, attesa, carrello vuoto). */
+function ResultScreen({ icon, title, children, action }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: isMobile ? 32 : 48 }}>
-      {steps.map((label, i) => {
-        const done = i < step;
-        const active = i === step;
-        return (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 'none' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, minWidth: isMobile ? 44 : 60 }}>
-              <div style={{
-                width: isMobile ? 28 : 36, height: isMobile ? 28 : 36, borderRadius: '50%',
-                background: done ? 'var(--color-dark)' : active ? 'var(--color-red)' : 'var(--color-light)',
-                border: done || active ? 'none' : '1.5px solid var(--color-red)',
-                color: done || active ? '#fff' : 'var(--color-red)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: done ? 13 : 12, fontWeight: 700, transition: 'all .3s',
-              }}>
-                {done ? '✓' : i + 1}
-              </div>
-              {!isMobile && (
-                <span style={{
-                  fontSize: 10, fontWeight: active ? 700 : 400,
-                  color: active ? 'var(--color-red)' : done ? 'var(--color-dark)' : 'var(--color-mid)',
-                  letterSpacing: '.04em', textTransform: 'uppercase',
-                }}>
-                  {label}
-                </span>
-              )}
-            </div>
-            {i < steps.length - 1 && (
-              <div style={{
-                flex: 1, height: 2,
-                background: done ? 'var(--color-dark)' : 'var(--color-border)',
-                margin: isMobile ? '0 6px' : '0 8px',
-                marginBottom: isMobile ? 0 : 20,
-                transition: 'background .3s',
-              }} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ── Campo con validazione ──────────────────────────────────────────
-function Field({ label, error, children, full, required }) {
-  return (
-    <div data-error={error ? 'true' : undefined} style={{ gridColumn: full ? '1 / -1' : undefined }}>
-      <label style={{
-        display: 'block', fontSize: 11, fontWeight: 600,
-        color: error ? 'var(--color-red)' : 'var(--color-mid)',
-        marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em',
-      }}>
-        {label}{required && <span style={{ color: 'var(--color-red)', marginLeft: 2 }}>*</span>}
-      </label>
+    <div className={styles.result}>
+      <span className={styles.resultMark}>{icon}</span>
+      <h1 className={styles.resultTitle}>{title}</h1>
       {children}
-      {error && (
-        <p style={{ fontSize: 12, color: 'var(--color-red)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-          ⚠ {error}
-        </p>
-      )}
+      {action}
     </div>
   );
 }
 
-const inputStyle = (hasError, _isMobile) => ({
-  width: '100%',
-  padding: '11px 0',
-  border: 'none',
-  borderBottom: `1.5px solid ${hasError ? 'var(--color-red)' : 'var(--color-dark)'}`,
-  borderRadius: 0,
-  background: 'transparent',
-  fontSize: _isMobile ? 16 : 15,
-  boxSizing: 'border-box',
-  fontFamily: 'var(--font-sans)',
-  color: 'var(--color-dark)',
-  outline: 'none',
-  transition: 'border-bottom-color .2s',
-  WebkitAppearance: 'none',
-});
-
-// ── Metodo radio card ──────────────────────────────────────────────
-function MethodCard({ method, selected, onSelect, name, isMobile }) {
-  return (
-    <label style={{
-      display: 'flex', alignItems: 'center', gap: 14,
-      padding: '14px 0',
-      borderBottom: `1.5px solid ${selected ? 'var(--color-dark)' : 'var(--color-border)'}`,
-      cursor: 'pointer',
-      background: 'transparent',
-      transition: 'border-color .2s',
-    }}>
-      <input
-        type="radio" name={name} value={method.id}
-        checked={selected} onChange={() => onSelect(method.id)}
-        style={{ accentColor: 'var(--color-red)', width: 18, height: 18, flexShrink: 0 }}
-      />
-      <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-dark)' }}>{method.translated?.name || method.name}</div>
-        {method.translated?.description && (
-          <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 2 }}>{method.translated.description}</div>
-        )}
-      </div>
-    </label>
-  );
-}
-
-// ── Order summary collassabile su mobile ───────────────────────────
-function OrderSummary({ cart, totalPrice, isB2B, address, step, selectedCountryName, placing, isMobile, onPromoChange }) {
-  const [open, setOpen] = useState(!isMobile);
-  useEffect(() => { setOpen(!isMobile); }, [isMobile]);
-
-  const productItems = (cart?.lineItems ?? []).filter((i) => i.type === 'product');
-  // Subtotale calcolato sui soli prodotti: `positionPrice` include già gli sconti
-  // promozionali, che qui vogliamo mostrare su una riga separata.
-  const subtotal = productItems.reduce((sum, i) => sum + (i.price?.totalPrice ?? 0), 0);
-  const promoDiscount = getPromotionDiscount(cart);     // ≤ 0
-  // Somma su tutte le deliveries: uno sconto sulla spedizione ne aggiunge una negativa
-  const shippingCost = getShippingCosts(cart);
-  // Solo il costo REALE calcolato da Shopware decide: la spedizione gratuita è
-  // configurata per la sola Italia, quindi dedurla dal subtotale mostrerebbe
-  // "Gratuita" su ordini esteri che invece la pagano (riepilogo ≠ addebito).
-  const hasFreeShipping = isShippingFree(shippingCost);
-  const totalTax = productItems.reduce((sum, item) =>
-    sum + (item.price?.calculatedTaxes ?? []).reduce((s, t) => s + (t.tax ?? 0), 0), 0);
-
-  const row = (label, value, opts = {}) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: opts.large ? 16 : 14, fontWeight: opts.bold ? 700 : 400, color: opts.accent ? 'var(--color-red)' : 'var(--color-dark)' }}>
-      <span>{label}</span>
-      <span style={{ fontWeight: opts.bold ? 700 : 500 }}>{value}</span>
-    </div>
-  );
-
-  return (
-    <div style={{
-      background: 'var(--color-light)',
-      borderTop: '1px solid var(--color-border)',
-      overflow: 'hidden',
-      position: isMobile ? 'static' : 'sticky',
-      top: 80,
-    }}>
-      {isMobile && (
-        <button
-          onClick={() => setOpen((o) => !o)}
-          style={{
-            width: '100%', padding: '16px 20px',
-            background: 'none', border: 'none', cursor: 'pointer',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            fontFamily: 'var(--font-sans)',
-            borderBottom: open ? '1px solid var(--color-border)' : 'none',
-          }}
-        >
-          <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-dark)' }}>
-            {open ? 'Nascondi riepilogo' : 'Mostra riepilogo ordine'}
-          </span>
-          <span style={{ fontWeight: 700, color: 'var(--color-red)', fontSize: 15 }}>
-            {open ? '▲' : '▾'} {formatPrice(totalPrice)}
-          </span>
-        </button>
-      )}
-
-      {open && (
-        <div style={{ padding: isMobile ? '16px 20px 20px' : 28 }}>
-          {!isMobile && (
-            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', color: 'var(--color-dark)', marginBottom: 20, marginTop: 0 }}>
-              Il tuo ordine
-            </h2>
-          )}
-
-          {/* Avvisi di stock: qui uno scostamento non gestito diventa un ordine fallito */}
-          <CartStockNotices cart={cart} />
-
-          {/* Prodotti */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 16 }}>
-            {Object.values(
-              (cart?.lineItems?.filter(i => i.type === 'product') ?? []).reduce((acc, item) => {
-                const key = item.referencedId || item.id;
-                if (!acc[key]) acc[key] = { ...item, _total: item.price?.totalPrice ?? 0 };
-                else { acc[key].quantity += item.quantity; acc[key]._total += item.price?.totalPrice ?? 0; }
-                return acc;
-              }, {})
-            ).map((item) => (
-              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>
-                    {item.label}
-                  </div>
-                  <div style={{ fontSize: 12, color: 'var(--color-mid)' }}>Qtà: {item.quantity}</div>
-                </div>
-                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-dark)', flexShrink: 0 }}>{formatPrice(item._total)}</span>
-              </div>
-            ))}
-          </div>
-
-          <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '14px 0' }} />
-
-          {/* Breakdown costi */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
-            {row('Subtotale', formatPrice(subtotal))}
-            {promoDiscount !== 0 && row(
-              'Sconto',
-              <span style={{ color: 'var(--color-red)', fontWeight: 600 }}>{formatPrice(promoDiscount)}</span>
-            )}
-            {isB2B && totalTax > 0 && row('IVA', formatPrice(totalTax))}
-            {row(
-              'Spedizione',
-              hasFreeShipping ? <span style={{ color: 'var(--color-red)', fontWeight: 600 }}>Gratuita</span> : formatPrice(shippingCost)
-            )}
-          </div>
-
-          {/* Codice sconto */}
-          <PromoCode cart={cart} onChange={onPromoChange} isMobile={isMobile} disabled={placing} />
-
-          <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '14px 0' }} />
-
-          {row('Totale', formatPrice(totalPrice), { bold: true, large: true, accent: true })}
-
-          {/* Info indirizzo */}
-          {step >= 1 && address.email && (
-            <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 16, lineHeight: 1.8, borderTop: '1px solid var(--color-border)', paddingTop: 14 }}>
-              <div>📧 {address.email}</div>
-            </div>
-          )}
-          {step >= 2 && address.firstName && (
-            <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 8, lineHeight: 1.8 }}>
-              <div>📦 {address.firstName} {address.lastName}</div>
-              <div>{[address.street, address.houseNumber].filter(Boolean).join(', ')}, {address.zipcode} {address.city}</div>
-              <div>{selectedCountryName}</div>
-            </div>
-          )}
-
-          {step === 2 && placing && (
-            <p style={{ color: 'var(--color-mid)', fontSize: 13, marginTop: 12 }}>⏳ Completamento ordine...</p>
-          )}
-
-          <p style={{ fontSize: 11, color: 'var(--color-mid)', textAlign: 'center', marginTop: 16, opacity: .7 }}>
-            🔒 Ordine sicuro · Dati protetti
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Checkout principale ────────────────────────────────────────────
 export default function CheckoutPage() {
   useSEO({ title: 'Checkout', path: '/checkout', noindex: true });
 
-  const isMobile = useIsMobile();
   const { cart, itemCount, totalPrice, fetchCart } = useCartContext();
   const { isLoggedIn, customer, isB2B } = useCustomerContext();
 
-  const [step, setStep] = useState(isLoggedIn ? 1 : 0);
+  const form = useCheckoutForm({ customer, isLoggedIn });
+  const { values, setField, setFields, markTouched, errorFor, validateSection } = form;
+
+  // ── Dati di contorno (spedizione, paesi, saluti) ────────────────────
   const [shippingMethods, setShippingMethods] = useState([]);
+  const [selectedShipping, setSelectedShipping] = useState('');
+  const [loadingMethods, setLoadingMethods] = useState(true);
   const [swCountries, setSwCountries] = useState([]);
   const [salutationId, setSalutationId] = useState('');
-  const [loadingMethods, setLoadingMethods] = useState(true);
-  const [selectedShipping, setSelectedShipping] = useState('');
+
+  // ── Fase della pagina ───────────────────────────────────────────────
+  // Un solo passaggio esplicito, al posto dei tre step di prima: il pagamento
+  // si apre in fondo alla stessa pagina, senza mai perdere di vista il resto.
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [formError, setFormError] = useState('');
+
+  // ── Stato del pagamento ─────────────────────────────────────────────
+  const [clientSecret, setClientSecret] = useState(null);
+  const [freeOrder, setFreeOrder] = useState(false);
+  const [serverContextToken, setServerContextToken] = useState(null);
+  const [intentLoading, setIntentLoading] = useState(false);
+  const [intentError, setIntentError] = useState(null);
   const [placing, setPlacing] = useState(false);
   const [orderError, setOrderError] = useState(null);
   const [orderNumber, setOrderNumber] = useState(null);
-  const [countrySearch, setCountrySearch] = useState('');
-  const [addrQuery, setAddrQuery] = useState('');
-  const [addrSuggestions, setAddrSuggestions] = useState([]);
-  const [addrLoading, setAddrLoading] = useState(false);
-  const [stripeClientSecret, setStripeClientSecret] = useState(null);
-  // Totale 0,00 € (es. codice sconto 100%): niente Stripe, si conferma e basta.
-  const [freeOrder, setFreeOrder] = useState(false);
-  const [serverContextToken, setServerContextToken] = useState(null);
-  const [stripeLoading, setStripeLoading] = useState(false);
-  const [stripeLoadError, setStripeLoadError] = useState(null);
-  // Rientro da un metodo di pagamento con redirect (iDEAL/Bancontact/3DS via
-  // Stripe): true già al primo render se l'URL contiene il client secret, per
-  // evitare che lampeggi la schermata "carrello vuoto" prima della verifica.
+
+  // Rientro da un metodo con redirect (iDEAL/Bancontact/3DS): true già al primo
+  // render se l'URL porta il client secret, così non lampeggia "carrello vuoto".
   const [verifyingRedirect, setVerifyingRedirect] = useState(
     () => new URLSearchParams(window.location.search).has('payment_intent_client_secret')
   );
   const [paymentProcessing, setPaymentProcessing] = useState(false);
 
-  const detectedIso = useMemo(() => detectCountryIso(), []);
+  const paymentRef = useRef(null);
 
-  const [address, setAddress] = useState({
-    email: '', firstName: '', lastName: '',
-    street: '', houseNumber: '', zipcode: '', city: '',
-    countryIso: detectedIso,
-  });
-  const [touched, setTouched] = useState({});
-
-  // ── Paesi EU Est (per distinguere Europa Est da Ovest) ─────────────
-  const EU_EAST = new Set(['PL', 'CZ', 'SK', 'HU', 'RO', 'BG', 'HR', 'SI', 'EE', 'LV', 'LT', 'GR', 'CY', 'MT']);
-
-  // ── Filtra i metodi di spedizione in base al paese selezionato ─────
-  const filteredShippingMethods = useMemo(() => {
-    if (!shippingMethods.length) return [];
-    const iso = address.countryIso;
-    const isItaly = iso === 'IT';
-    const isEastEU = EU_EAST.has(iso);
-
-    // cerca un metodo che corrisponde al paese
-    const matchItaly = shippingMethods.filter((m) => /italia/i.test(m.name || '') || /italia/i.test(m.translated?.name || ''));
-    const matchEastEU = shippingMethods.filter((m) => /europa\s*(est|orientale)/i.test(m.name || '') || /europa\s*(est|orientale)/i.test(m.translated?.name || ''));
-    const matchWestEU = shippingMethods.filter((m) => /europa\s*(ovest|occidentale)/i.test(m.name || '') || /europa\s*(ovest|occidentale)/i.test(m.translated?.name || ''));
-    // fallback generico "europa" (senza est/ovest)
-    const matchEuropaGeneric = shippingMethods.filter((m) => /europa/i.test(m.name || '') || /europa/i.test(m.translated?.name || ''));
-
-    if (isItaly && matchItaly.length) return matchItaly;
-    if (!isItaly && isEastEU && matchEastEU.length) return matchEastEU;
-    if (!isItaly && !isEastEU && matchWestEU.length) return matchWestEU;
-    if (!isItaly && matchEuropaGeneric.length) return matchEuropaGeneric;
-    // nessun match specifico: mostra tutti
-    return shippingMethods;
-  }, [shippingMethods, address.countryIso]);
-
-  // ── Auto-seleziona quando cambia il filtro ─────────────────────────
-  useEffect(() => {
-    if (!filteredShippingMethods.length) return;
-    const stillValid = filteredShippingMethods.some((m) => m.id === selectedShipping);
-    if (!stillValid) setSelectedShipping(filteredShippingMethods[0].id);
-  }, [filteredShippingMethods]);
-
-  useEffect(() => {
-    if (isLoggedIn && customer) {
-      const saved = customer.defaultShippingAddress;
-      setAddress((p) => {
-        const next = { ...p, email: customer.email || '', firstName: customer.firstName || '', lastName: customer.lastName || '' };
-        if (saved) {
-          const { street, houseNumber } = splitStreetHouseNumber(saved.street);
-          Object.assign(next, {
-            street, houseNumber,
-            zipcode: saved.zipcode || '',
-            city: saved.city || '',
-            countryIso: saved.country?.iso || p.countryIso,
-          });
-        }
-        return next;
-      });
-      if (saved) setTouched((p) => ({ ...p, street: true, houseNumber: true, zipcode: true, city: true }));
-      if (saved) setShowManual(true);
-      setStep(1);
-    }
-  }, [isLoggedIn, customer]);
-
+  // ── Caricamenti iniziali ────────────────────────────────────────────
   useEffect(() => {
     if (!isShopwareConfigured()) { setLoadingMethods(false); return; }
-    getShippingMethods().then((sm) => { setShippingMethods(sm); if (sm.length) setSelectedShipping(sm[0].id); }).catch(() => {}).finally(() => setLoadingMethods(false));
-    getCountries().then((co) => setSwCountries(co)).catch(() => {});
-    getSalutations().then((sa) => { if (sa.length) setSalutationId(sa[0].id); }).catch(() => {});
+    getShippingMethods()
+      .then((methods) => setShippingMethods(methods))
+      .catch(() => {})
+      .finally(() => setLoadingMethods(false));
+    getCountries().then(setSwCountries).catch(() => {});
+    getSalutations().then((list) => { if (list.length) setSalutationId(list[0].id); }).catch(() => {});
   }, []);
 
-  // Se cambia il metodo di spedizione (l'importo può variare), invalida il
-  // PaymentIntent: verrà ricreato dal server con il totale aggiornato.
-  useEffect(() => { setStripeClientSecret(null); }, [selectedShipping]);
+  // ── Metodi di spedizione validi per il paese scelto ─────────────────
+  const availableMethods = useMemo(() => {
+    if (!shippingMethods.length) return [];
+    const iso = values.countryIso;
+    const nameOf = (m) => `${m.name || ''} ${m.translated?.name || ''}`;
+    const pick = (re) => shippingMethods.filter((m) => re.test(nameOf(m)));
 
-  // ── Prepara il checkout e crea il PaymentIntent unico (carta/wallet) ────────
-  // Tutto lato server in un'unica chiamata atomica: registra il guest, imposta la
-  // spedizione, calcola il totale reale dal carrello e crea il PaymentIntent.
-  // Restituisce il context token autoritativo → niente più race condition sul token.
-  const preparingRef = useRef(false);
+    if (iso === 'IT') {
+      const italy = pick(/italia/i);
+      if (italy.length) return italy;
+    } else {
+      const regional = EU_EAST.has(iso)
+        ? pick(/europa\s*(est|orientale)/i)
+        : pick(/europa\s*(ovest|occidentale)/i);
+      if (regional.length) return regional;
+      const generic = pick(/europa/i);
+      if (generic.length) return generic;
+    }
+    return shippingMethods;
+  }, [shippingMethods, values.countryIso]);
+
   useEffect(() => {
-    if (step !== 2 || !selectedShipping || !stripePromise) return;
-    if (stripeClientSecret || freeOrder || stripeLoadError || preparingRef.current) return;
-    if (verifyingRedirect || paymentProcessing || orderNumber) return;
+    if (!availableMethods.length) return;
+    const stillValid = availableMethods.some((m) => m.id === selectedShipping);
+    if (!stillValid) setSelectedShipping(availableMethods[0].id);
+  }, [availableMethods, selectedShipping]);
+
+  // ── Paesi ───────────────────────────────────────────────────────────
+  // I nomi arrivano da Intl e non da Shopware, che li restituisce in inglese
+  // ("Italy") in mezzo a un checkout tutto in italiano. Da Shopware teniamo solo
+  // ciò che ci serve davvero: quali paesi esistono e con quale id.
+  const countryNames = useMemo(() => {
+    try { return new Intl.DisplayNames(['it'], { type: 'region' }); }
+    catch { return null; }
+  }, []);
+
+  const countryList = useMemo(() => {
+    const localName = (iso, fallback) => {
+      try { return countryNames?.of(iso) || fallback; }
+      catch { return fallback; }
+    };
+    const base = swCountries.length
+      ? swCountries.map((c) => ({
+          iso: c.iso,
+          name: localName(c.iso, c.translated?.name || c.name),
+          id: c.id,
+        }))
+      : FALLBACK_COUNTRIES.map((c) => ({ ...c, name: localName(c.iso, c.name) }));
+    return [...base].sort((a, b) => a.name.localeCompare(b.name, 'it'));
+  }, [swCountries, countryNames]);
+
+  const resolvedCountryId = useMemo(
+    () => swCountries.find((c) => c.iso === values.countryIso)?.id || null,
+    [swCountries, values.countryIso]
+  );
+
+  const selectedCountryName = useMemo(
+    () => countryList.find((c) => c.iso === values.countryIso)?.name || values.countryIso,
+    [countryList, values.countryIso]
+  );
+
+  /**
+   * Ogni dato che finisce nel PaymentIntent. Quando cambia, il PaymentIntent
+   * creato non descrive più questo ordine e va rifatto: prima l'invalidazione
+   * scattava solo sul metodo di spedizione, così correggere la via dopo aver
+   * aperto il pagamento lasciava l'indirizzo vecchio sull'ordine.
+   */
+  const intentSignature = useMemo(() => JSON.stringify([
+    values.email, values.firstName, values.lastName, values.phone,
+    values.street, values.houseNumber, values.zipcode, values.city, values.countryIso,
+    values.company, values.vatId, selectedShipping,
+  ]), [values, selectedShipping]);
+
+  /** Dati di fatturazione già raccolti dal form, passati a Stripe alla conferma. */
+  const billingDetails = useMemo(() => ({
+    name: `${values.firstName} ${values.lastName}`.trim(),
+    email: values.email,
+    ...(values.phone ? { phone: values.phone } : {}),
+    address: {
+      line1: joinStreetHouseNumber(values.street, values.houseNumber),
+      postal_code: values.zipcode,
+      city: values.city,
+      country: values.countryIso,
+    },
+  }), [values]);
+
+  const lastSignature = useRef(intentSignature);
+  useEffect(() => {
+    if (lastSignature.current === intentSignature) return;
+    lastSignature.current = intentSignature;
+    setClientSecret(null);
+    setFreeOrder(false);
+    setIntentError(null);
+  }, [intentSignature]);
+
+  // ── Creazione del PaymentIntent ─────────────────────────────────────
+  const preparing = useRef(false);
+  useEffect(() => {
+    if (!paymentOpen || !selectedShipping || !stripePromise) return;
+    if (clientSecret || freeOrder || intentError || preparing.current) return;
+    if (verifyingRedirect || paymentProcessing || orderNumber || placing) return;
+
     let cancelled = false;
-    preparingRef.current = true;
-    setStripeLoading(true);
+    preparing.current = true;
+    setIntentLoading(true);
+
     (async () => {
       try {
         const data = await createCheckoutIntent({
           contextToken: getContextToken(),
           shippingMethodId: selectedShipping,
           customer: {
-            email: address.email,
-            firstName: address.firstName,
-            lastName: address.lastName,
+            email: values.email,
+            firstName: values.firstName,
+            lastName: values.lastName,
             salutationId,
             storefrontUrl: import.meta.env.VITE_SHOPWARE_STOREFRONT_URL || window.location.origin,
           },
           billingAddress: {
-            firstName: address.firstName,
-            lastName: address.lastName,
-            street: [address.street, address.houseNumber].filter(Boolean).join(', '),
-            zipcode: address.zipcode,
-            city: address.city,
+            firstName: values.firstName,
+            lastName: values.lastName,
+            street: joinStreetHouseNumber(values.street, values.houseNumber),
+            zipcode: values.zipcode,
+            city: values.city,
             salutationId,
+            ...(values.phone ? { phoneNumber: values.phone } : {}),
+            ...(values.company ? { company: values.company } : {}),
+            ...(values.vatId ? { vatId: values.vatId } : {}),
             ...(resolvedCountryId ? { countryId: resolvedCountryId } : {}),
           },
         });
         if (cancelled) return;
-        // Adotta il token autoritativo del server (il carrello è migrato lì)
-        if (data.contextToken) { setContextToken(data.contextToken); setServerContextToken(data.contextToken); }
-        // Totale 0 (sconto 100%): il server non crea nessun PaymentIntent
+
+        // Adotta il token autoritativo del server: il carrello è migrato lì.
+        if (data.contextToken) {
+          setContextToken(data.contextToken);
+          setServerContextToken(data.contextToken);
+        }
         if (data.free) setFreeOrder(true);
-        else if (data.clientSecret) setStripeClientSecret(data.clientSecret);
-        fetchCart(); // aggiorna il riepilogo (spedizione/totale) sul token corretto
+        else if (data.clientSecret) setClientSecret(data.clientSecret);
+        fetchCart();
       } catch (e) {
-        if (!cancelled) setStripeLoadError(e.message || 'Impossibile inizializzare il pagamento.');
+        if (!cancelled) setIntentError(e.message || 'Impossibile inizializzare il pagamento.');
       } finally {
-        preparingRef.current = false;
-        if (!cancelled) setStripeLoading(false);
+        preparing.current = false;
+        if (!cancelled) setIntentLoading(false);
       }
     })();
-    return () => { cancelled = true; };
-  }, [step, selectedShipping, stripeClientSecret, freeOrder, stripeLoadError, verifyingRedirect, paymentProcessing, orderNumber]);
 
-  // Un codice sconto cambia il totale: il PaymentIntent già creato non è più
-  // valido → si azzera e l'effetto qui sopra lo ricrea con l'importo aggiornato.
+    return () => { cancelled = true; };
+  }, [
+    paymentOpen, selectedShipping, clientSecret, freeOrder, intentError,
+    verifyingRedirect, paymentProcessing, orderNumber, placing,
+  ]);
+
+  // ── Apertura del pagamento ──────────────────────────────────────────
+  const openPayment = (e) => {
+    e?.preventDefault();
+    setFormError('');
+
+    const fields = [...CONTACT_FIELDS, ...ADDRESS_FIELDS, 'phone'];
+    if (!validateSection(fields)) {
+      setFormError('Controlla i campi segnalati per continuare.');
+      // Porta l'utente sul primo errore invece di lasciarlo cercare.
+      requestAnimationFrame(() => {
+        const firstError = document.querySelector('[aria-invalid="true"]');
+        firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstError?.focus({ preventScroll: true });
+      });
+      return;
+    }
+
+    setPaymentOpen(true);
+    gtmBeginCheckout(cart?.lineItems ?? [], totalPrice);
+    const method = availableMethods.find((m) => m.id === selectedShipping);
+    if (method) gtmAddShippingInfo(method.translated?.name || method.name, totalPrice);
+
+    requestAnimationFrame(() => {
+      paymentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
+  /** "Modifica": riapre il form. Il PaymentIntent si invalida da sé se cambia qualcosa. */
+  const reopenForm = () => {
+    setPaymentOpen(false);
+    setOrderError(null);
+    setIntentError(null);
+  };
+
+  // Un codice sconto cambia il totale: il PaymentIntent va rifatto sull'importo nuovo.
   const handlePromoChange = () => {
-    setStripeClientSecret(null);
+    setClientSecret(null);
     setFreeOrder(false);
-    setStripeLoadError(null);
+    setIntentError(null);
     setOrderError(null);
     fetchCart();
   };
 
-  // Ricerca indirizzo con Nominatim (OpenStreetMap, gratuito)
-  useEffect(() => {
-    if (addrQuery.length < 4) { setAddrSuggestions([]); return; }
-    const timer = setTimeout(async () => {
-      setAddrLoading(true);
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addrQuery)}&format=json&addressdetails=1&limit=6`,
-          { headers: { 'Accept-Language': 'it' } }
-        );
-        const data = await res.json();
-        setAddrSuggestions(data);
-      } catch {
-        setAddrSuggestions([]);
-      } finally {
-        setAddrLoading(false);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [addrQuery]);
-
-  const applyAddrSuggestion = (result) => {
-    const a = result.address || {};
-    const street = a.road || a.pedestrian || a.footway || '';
-    const houseNumber = a.house_number || '';
-    const city = a.city || a.town || a.village || a.municipality || a.county || '';
-    const zipcode = a.postcode || '';
-    const countryIso = (a.country_code || '').toUpperCase();
-    setAddress((p) => ({
-      ...p,
-      ...(street && { street }),
-      houseNumber,
-      ...(city && { city }),
-      ...(zipcode && { zipcode }),
-      ...(countryIso && { countryIso }),
-    }));
-    setTouched((p) => ({ ...p, street: true, houseNumber: true, city: true, zipcode: true }));
-    setAddrQuery('');
-    setAddrSuggestions([]);
-    setShowManual(true);
-  };
-
-  const setField = (key) => (e) => {
-    setAddress((p) => ({ ...p, [key]: e.target.value }));
-    setTouched((p) => ({ ...p, [key]: true }));
-  };
-  const blur = (key) => () => setTouched((p) => ({ ...p, [key]: true }));
-
-  const err = (key, val = address[key]) => {
-    if (!touched[key]) return null;
-    if (!val?.trim()) return 'Campo obbligatorio';
-    if (key === 'email' && !/\S+@\S+\.\S+/.test(val)) return 'Email non valida';
-    if (key === 'zipcode' && !/^\d{4,10}$/.test(val.trim())) return 'CAP non valido';
-    return null;
-  };
-
-  const countryList = useMemo(() => {
-    const base = swCountries.length > 0
-      ? swCountries.map((c) => ({ iso: c.iso, name: c.translated?.name || c.name, id: c.id }))
-      : ALL_COUNTRIES;
-    const filtered = countrySearch
-      ? base.filter((c) => c.name.toLowerCase().includes(countrySearch.toLowerCase()))
-      : base;
-    return filtered.sort((a, b) => {
-      if (a.iso === detectedIso) return -1;
-      if (b.iso === detectedIso) return 1;
-      return a.name.localeCompare(b.name);
+  // ── Finalizzazione ──────────────────────────────────────────────────
+  const finalize = useCallback(async (num, fallbackId) => {
+    setOrderNumber(num || '—');
+    form.clearStorage();
+    gtmPurchase({
+      orderNumber: num || fallbackId,
+      total: totalPrice,
+      shipping: cart?.deliveries?.[0]?.shippingCosts?.totalPrice ?? 0,
+      lineItems: cart?.lineItems ?? [],
     });
-  }, [swCountries, countrySearch, detectedIso]);
+    await fetchCart();
+  }, [form, totalPrice, cart, fetchCart]);
 
-  const resolvedCountryId = useMemo(() =>
-    swCountries.find((c) => c.iso === address.countryIso)?.id || null,
-    [swCountries, address.countryIso]
-  );
-
-  const selectedCountryName = useMemo(() =>
-    countryList.find((c) => c.iso === address.countryIso)?.name || address.countryIso,
-    [countryList, address.countryIso]
-  );
-
-  const [formError, setFormError] = useState('');
-  const [shake, setShake] = useState(false);
-  const [showManual, setShowManual] = useState(false);
-
-  const validateStep = (fields) => {
-    const t = {};
-    fields.forEach((f) => { t[f] = true; });
-    setTouched((p) => ({ ...p, ...t }));
-    return fields.every((f) => !err(f, address[f]));
-  };
-
-  const triggerShake = () => {
-    setShake(true);
-    setTimeout(() => setShake(false), 500);
-  };
-
-  const goNext = () => {
-    setFormError('');
-    if (step === 0) {
-      if (!validateStep(['firstName', 'lastName', 'email'])) {
-        setFormError('Compila tutti i campi obbligatori per continuare.');
-        triggerShake();
-        return;
-      }
-    }
-    if (step === 1) {
-      if (!validateStep(['street', 'houseNumber', 'zipcode', 'city'])) {
-        setShowManual(true);
-        setFormError('Compila tutti i campi obbligatori prima di continuare.');
-        triggerShake();
-        setTimeout(() => {
-          const firstError = document.querySelector('[data-error="true"]');
-          firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          firstError?.querySelector('input')?.focus();
-        }, 50);
-        return;
-      }
-    }
-    setFormError('');
-    const nextStep = step + 1;
-    if (nextStep === 2) {
-      gtmBeginCheckout(cart?.lineItems ?? [], totalPrice);
-    }
-    if (nextStep === 2 && step === 1) {
-      const method = shippingMethods.find(m => m.id === selectedShipping);
-      gtmAddShippingInfo(method?.translated?.name || method?.name, totalPrice);
-    }
-    setStep(nextStep);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // ── Finalizzazione: il server verifica il pagamento, crea l'ordine e lo segna pagato.
   const handleStripeSuccess = async (paymentIntentId) => {
     setOrderError(null);
     setPlacing(true);
@@ -630,19 +322,11 @@ export default function CheckoutPage() {
       if (!paymentIntentId) throw new Error('Pagamento non identificato. Riprova.');
       const token = serverContextToken || getContextToken();
       const { orderNumber: num } = await confirmCheckout({ paymentIntentId, contextToken: token });
-      setOrderNumber(num || '—');
-      gtmPurchase({
-        orderNumber: num || paymentIntentId,
-        total: totalPrice,
-        shipping: cart?.deliveries?.[0]?.shippingCosts?.totalPrice ?? 0,
-        lineItems: cart?.lineItems ?? [],
-      });
-      await fetchCart();
+      await finalize(num, paymentIntentId);
     } catch (e) {
-      // 409 = ordine già elaborato (es. dal webhook Stripe): è un successo, non un errore.
+      // 409 = ordine già creato (es. dal webhook Stripe): è un successo, non un errore.
       if (/già elaborato|already/i.test(e?.message || '')) {
-        setOrderNumber('—');
-        await fetchCart();
+        await finalize(null, paymentIntentId);
         return;
       }
       setOrderError(e.message || 'Errore durante il completamento ordine. Riprova.');
@@ -652,26 +336,16 @@ export default function CheckoutPage() {
     }
   };
 
-  // ── Ordine gratuito (totale 0,00 €): nessun pagamento, solo conferma ─────────
-  // Il totale viene ri-verificato lato server prima di creare l'ordine.
   const handleFreeOrder = async () => {
     setOrderError(null);
     setPlacing(true);
     try {
       const token = serverContextToken || getContextToken();
       const { orderNumber: num } = await confirmFreeCheckout({ contextToken: token });
-      setOrderNumber(num || '—');
-      gtmPurchase({
-        orderNumber: num || 'free',
-        total: totalPrice,
-        shipping: 0,
-        lineItems: cart?.lineItems ?? [],
-      });
-      await fetchCart();
+      await finalize(num, 'free');
     } catch (e) {
       if (/già elaborato|already/i.test(e?.message || '')) {
-        setOrderNumber('—');
-        await fetchCart();
+        await finalize(null, 'free');
         return;
       }
       setOrderError(e.message || 'Errore durante il completamento ordine. Riprova.');
@@ -680,31 +354,31 @@ export default function CheckoutPage() {
     }
   };
 
-  // ── Rientro da un metodo di pagamento con redirect (iDEAL/Bancontact/3DS) ──
-  // Stripe reindirizza il browser fuori e poi torna su return_url (/checkout) con
-  // il client secret in query string: il componente rimonta da zero, quindi qui
-  // recuperiamo lo stato del PaymentIntent e riprendiamo il flusso da lì.
-  const redirectHandledRef = useRef(false);
+  // ── Rientro da un pagamento con redirect ────────────────────────────
+  // Stripe riporta il browser su /checkout con il client secret in query string:
+  // il componente rimonta da zero, quindi lo stato del PaymentIntent va riletto.
+  const redirectHandled = useRef(false);
   useEffect(() => {
-    const clientSecret = new URLSearchParams(window.location.search).get('payment_intent_client_secret');
-    if (!clientSecret || !stripePromise || redirectHandledRef.current) {
-      if (!clientSecret) setVerifyingRedirect(false);
+    const secret = new URLSearchParams(window.location.search).get('payment_intent_client_secret');
+    if (!secret || !stripePromise || redirectHandled.current) {
+      if (!secret) setVerifyingRedirect(false);
       return;
     }
-    redirectHandledRef.current = true;
-    // Pulisce subito la query string: un refresh a metà verifica o una seconda
-    // invocazione dell'effetto diventano no-op.
+    redirectHandled.current = true;
+    // Pulisce subito la query string: un refresh a metà verifica diventa un no-op.
     window.history.replaceState(null, '', window.location.pathname);
+
     (async () => {
       try {
         const stripe = await stripePromise;
-        const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+        const { paymentIntent } = await stripe.retrievePaymentIntent(secret);
         if (paymentIntent?.status === 'succeeded') {
           try { await handleStripeSuccess(paymentIntent.id); } catch { /* orderError già impostato */ }
         } else if (paymentIntent?.status === 'processing') {
           setPaymentProcessing(true);
         } else {
-          setStripeClientSecret(null);
+          setClientSecret(null);
+          setPaymentOpen(true);
           setOrderError('Pagamento non completato. Riprova.');
         }
       } catch (e) {
@@ -715,492 +389,296 @@ export default function CheckoutPage() {
     })();
   }, []);
 
-  // ── Verifica pagamento in corso (rientro da redirect) ───────────
+  // ── Stati terminali ─────────────────────────────────────────────────
   if (verifyingRedirect) return (
-    <div style={{ padding: '80px 24px', textAlign: 'center' }}>
-      <div style={{ fontSize: 28, marginBottom: 12 }}>⏳</div>
-      <p style={{ color: 'var(--color-mid)' }}>Verifica del pagamento in corso…</p>
+    <div className={styles.loadingBlock} style={{ padding: 'var(--space-15) var(--space-9)' }}>
+      <SpinnerIcon size={20} className={styles.spinner} />
+      Verifica del pagamento in corso…
     </div>
   );
 
-  // ── Pagamento in elaborazione (metodi asincroni: es. bonifici istantanei) ──
   if (paymentProcessing) return (
-    <div style={{ padding: isMobile ? '60px 24px' : '80px 40px', textAlign: 'center', maxWidth: 520, margin: '0 auto' }}>
-      <div style={{ fontSize: 56, color: 'var(--color-red)', marginBottom: 16 }}>⏳</div>
-      <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: isMobile ? 'var(--text-3xl)' : 'var(--text-4xl)', marginBottom: 12 }}>
-        Pagamento in elaborazione
-      </h1>
-      <p style={{ color: 'var(--color-mid)', fontSize: 14, marginBottom: 36, lineHeight: 1.6 }}>
-        Stiamo confermando il tuo pagamento. Riceverai una email di conferma ordine a breve.
+    <ResultScreen
+      icon={<SpinnerIcon size={26} className={styles.spinner} />}
+      title="Pagamento in elaborazione"
+      action={<Link to="/" className={styles.resultLink}>Torna allo shop</Link>}
+    >
+      <p className={styles.resultText}>
+        Stiamo confermando il tuo pagamento. Riceverai l’email di conferma appena è tutto a posto.
       </p>
-      <Link to="/" style={{
-        display: 'inline-block', background: 'var(--color-red)', color: '#fff',
-        padding: '14px 36px', borderRadius: 'var(--radius-pill)',
-        textDecoration: 'none', fontWeight: 600, fontSize: 16,
-      }}>
-        Torna allo shop
-      </Link>
-    </div>
+    </ResultScreen>
   );
 
-  // ── Ordine confermato ──────────────────────────────────────────
   if (orderNumber) return (
-    <div style={{ padding: isMobile ? '60px 24px' : '80px 40px', textAlign: 'center', maxWidth: 520, margin: '0 auto' }}>
-      <div style={{ fontSize: 56, color: 'var(--color-red)', marginBottom: 16 }}>✓</div>
-      <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: isMobile ? 'var(--text-3xl)' : 'var(--text-4xl)', marginBottom: 12 }}>
-        Ordine confermato!
-      </h1>
-      <p style={{ color: 'var(--color-mid)', fontSize: 15, marginBottom: 6 }}>Ordine #{orderNumber}</p>
-      <p style={{ color: 'var(--color-mid)', fontSize: 14, marginBottom: 36, lineHeight: 1.6 }}>
-        Grazie per il tuo acquisto. Riceverai una email di conferma a breve.
+    <ResultScreen
+      icon={<CheckIcon size={26} />}
+      title="Ordine confermato"
+      action={<Link to="/" className={styles.resultLink}>Torna allo shop</Link>}
+    >
+      {orderNumber !== '—' && (
+        <p className={styles.resultOrder}>Ordine <strong>#{orderNumber}</strong></p>
+      )}
+      <p className={styles.resultText}>
+        Grazie per il tuo acquisto. Ti abbiamo mandato un’email di conferma con tutti i dettagli.
       </p>
-      <Link to="/" style={{
-        display: 'inline-block', background: 'var(--color-red)', color: '#fff',
-        padding: '14px 36px', borderRadius: 'var(--radius-pill)',
-        textDecoration: 'none', fontWeight: 600, fontSize: 16,
-      }}>
-        Torna allo shop
-      </Link>
-    </div>
+    </ResultScreen>
   );
 
   if (!itemCount) return (
-    <div style={{ padding: '80px 24px', textAlign: 'center' }}>
-      <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-4xl)', marginBottom: 16 }}>Checkout</h1>
-      <p style={{ color: 'var(--color-mid)', marginBottom: 24 }}>Il carrello è vuoto.</p>
-      <Link to="/collections/all" style={{ color: 'var(--color-red)', textDecoration: 'underline' }}>Vai allo shop</Link>
-    </div>
+    <ResultScreen
+      icon={<TruckIcon size={26} />}
+      title="Il carrello è vuoto"
+      action={<Link to="/collections/all" className={styles.resultLink}>Vai allo shop<ArrowRightIcon size={17} /></Link>}
+    >
+      <p className={styles.resultText}>Aggiungi qualcosa al carrello per completare un ordine.</p>
+    </ResultScreen>
   );
 
-  const is = (key) => inputStyle(!!err(key), isMobile);
+  // ── Checkout ────────────────────────────────────────────────────────
+  const fieldProps = (key) => ({
+    value: values[key],
+    onChange: (e) => setField(key, e.target.value),
+    onBlur: () => markTouched(key),
+    error: errorFor(key),
+  });
 
   return (
-    <div style={{ maxWidth: 1080, margin: '0 auto', padding: isMobile ? '28px 16px 80px' : '48px 24px 100px' }}>
+    <div className={styles.page}>
+      <h1 className={styles.headline}>Completa l’ordine</h1>
+      <p className={styles.subhead}>
+        {isLoggedIn
+          ? `Bentornato${customer?.firstName ? `, ${customer.firstName}` : ''}.`
+          : <>Hai già un account? <Link to="/account/login" className={styles.btnLink}>Accedi</Link> per compilare più in fretta.</>}
+      </p>
 
-      <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: isMobile ? 'var(--text-3xl)' : 'var(--text-4xl)', marginBottom: isMobile ? 24 : 36 }}>
-        Checkout
-      </h1>
+      <div className={styles.grid}>
+        {/* Il form copre solo le sezioni compilabili: il blocco pagamento ha il
+            proprio <form> (Stripe), e i form annidati sono HTML non valido. */}
+        <div className={styles.formColumn}>
+        <form onSubmit={openPayment} noValidate>
 
-      {/* Su mobile: order summary prima del form */}
-      {isMobile && (
-        <div style={{ marginBottom: 28 }}>
-          <OrderSummary
-            cart={cart} totalPrice={totalPrice}
-            isB2B={isB2B}
-            address={address} step={step}
-            selectedCountryName={selectedCountryName}
-            placing={placing} isMobile={isMobile}
-            onPromoChange={handlePromoChange}
-          />
-        </div>
-      )}
-
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : '1fr 340px',
-        gap: isMobile ? 0 : 52,
-        alignItems: 'start',
-      }}>
-
-        {/* ── Form ────────────────────────────────────────────── */}
-        <div>
-
-          {/* STEP 0: Contatti */}
-          {step === 0 && (
-            <div style={{ paddingBottom: 40 }}>
-              <StepBar step={step} isMobile={isMobile} />
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 6, marginTop: 0, color: 'var(--color-dark)' }}>
-                Informazioni di contatto
+          {/* ── 1. Contatti ─────────────────────────────────── */}
+          <section className={`${styles.section} ${styles.sectionFirst}`}>
+            <div className={styles.sectionHead}>
+              <h2 className={styles.sectionTitle}>
+                <span className={styles.sectionNumber}>01</span>
+                Contatti
               </h2>
-              <p style={{ fontSize: 13, color: 'var(--color-mid)', marginBottom: 24, marginTop: 0 }}>
-                Hai già un account?{' '}
-                <Link to="/account/login" style={{ color: 'var(--color-red)', fontWeight: 600 }}>Accedi</Link>
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                  <Field label="Nome" error={err('firstName')} required>
-                    <input autoComplete="given-name" value={address.firstName} onChange={setField('firstName')} onBlur={blur('firstName')} placeholder="Mario" style={is('firstName')} />
-                  </Field>
-                  <Field label="Cognome" error={err('lastName')} required>
-                    <input autoComplete="family-name" value={address.lastName} onChange={setField('lastName')} onBlur={blur('lastName')} placeholder="Rossi" style={is('lastName')} />
-                  </Field>
-                </div>
-                <Field label="Email" error={err('email')} required>
-                  <input
-                    type="email" inputMode="email" autoComplete="email"
-                    value={address.email} onChange={setField('email')} onBlur={blur('email')}
-                    placeholder="mario@esempio.it" style={is('email')}
-                  />
-                </Field>
-              </div>
-              <style>{`@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}`}</style>
-              <button onClick={goNext} style={{ ...primaryBtn(isMobile), animation: shake ? 'shake 0.5s ease' : 'none' }}>Continua →</button>
-              {formError && <p style={{ color: 'var(--color-red)', fontSize: 13, marginTop: 10, textAlign: 'center' }}>⚠ {formError}</p>}
-            </div>
-          )}
-
-          {/* STEP 1: Indirizzo */}
-          {step === 1 && (
-            <div style={{ paddingBottom: 40 }}>
-              <StepBar step={step} isMobile={isMobile} />
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 6, marginTop: 0, color: 'var(--color-dark)' }}>
-                Indirizzo di spedizione
-              </h2>
-              <p style={{ fontSize: 13, color: 'var(--color-mid)', marginBottom: 20, marginTop: 0 }}>
-                Cerca il tuo indirizzo o compilalo manualmente
-              </p>
-
-              {/* Ricerca indirizzo automatica */}
-              <div style={{ position: 'relative', marginBottom: 8 }}>
-                <input
-                  type="text"
-                  value={addrQuery}
-                  onChange={(e) => setAddrQuery(e.target.value)}
-                  placeholder="🔍  Es. Via Roma 1, 00100 Milano…"
-                  style={{ ...inputStyle(false, isMobile), borderBottomColor: 'var(--color-red)' }}
-                />
-                {addrLoading && (
-                  <span style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--color-mid)' }}>⏳</span>
-                )}
-                {addrSuggestions.length > 0 && (
-                  <div style={{
-                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 300,
-                    background: 'var(--color-light)', border: '1px solid var(--color-border)',
-                    maxHeight: 240, overflowY: 'auto',
-                    boxShadow: '0 8px 28px rgba(0,0,0,.10)',
-                    marginTop: 2,
-                  }}>
-                    {addrSuggestions.map((s, i) => (
-                      <div
-                        key={i}
-                        onMouseDown={() => applyAddrSuggestion(s)}
-                        style={{
-                          padding: '12px 16px', cursor: 'pointer', fontSize: 14,
-                          borderBottom: '1px solid var(--color-border)',
-                          color: 'var(--color-dark)', lineHeight: 1.4,
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-cream)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-light)'}
-                      >
-                        <div style={{ fontWeight: 500 }}>
-                          {[s.address?.road, s.address?.house_number].filter(Boolean).join(', ') || s.display_name.split(',')[0]}
-                        </div>
-                        <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 2 }}>
-                          {[s.address?.postcode, s.address?.city || s.address?.town || s.address?.village, s.address?.country].filter(Boolean).join(' · ')}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Toggle manuale */}
-              {!showManual && (
-                <button
-                  type="button"
-                  onClick={() => setShowManual(true)}
-                  style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-red)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline', textAlign: 'left', marginBottom: 8 }}
-                >
-                  Inserisci manualmente
+              {paymentOpen && (
+                <button type="button" className={styles.editBtn} onClick={reopenForm}>
+                  <PencilIcon size={14} />Modifica
                 </button>
               )}
-
-              {showManual && (
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, marginTop: 4 }}>
-                  <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 110px', gap: 14 }}>
-                    <Field label="Via" error={err('street')} required>
-                      <input autoComplete="address-line1" value={address.street} onChange={setField('street')} onBlur={blur('street')} placeholder="Via Roma" style={is('street')} />
-                    </Field>
-                    <Field label="Civico" error={err('houseNumber')} required>
-                      <input autoComplete="address-line2" value={address.houseNumber} onChange={setField('houseNumber')} onBlur={blur('houseNumber')} placeholder="1" style={is('houseNumber')} />
-                    </Field>
-                  </div>
-                  <Field label="Città" error={err('city')} required>
-                    <input autoComplete="address-level2" value={address.city} onChange={setField('city')} onBlur={blur('city')} placeholder="Roma" style={is('city')} />
-                  </Field>
-
-                  {/* Country smart search */}
-                  <Field label="Paese" full>
-                    <div style={{ position: 'relative' }}>
-                      <input
-                        type="text"
-                        autoComplete="country-name"
-                        value={countrySearch !== '' ? countrySearch : selectedCountryName}
-                        onChange={(e) => setCountrySearch(e.target.value)}
-                        onFocus={() => setCountrySearch('')}
-                        onBlur={() => setTimeout(() => setCountrySearch(''), 200)}
-                        style={{ ...inputStyle(false, isMobile), paddingRight: 24 }}
-                      />
-                      <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--color-mid)', fontSize: 14 }}>▾</span>
-                      {countrySearch !== '' && (
-                        <div style={{
-                          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200,
-                          background: '#fff', border: '1.5px solid var(--color-border)', borderRadius: 8,
-                          maxHeight: 200, overflowY: 'auto',
-                          boxShadow: '0 8px 24px rgba(0,0,0,.12)',
-                        }}>
-                          {countryList.length === 0
-                            ? <div style={{ padding: '12px 14px', color: 'var(--color-mid)', fontSize: 14 }}>Nessun paese trovato</div>
-                            : countryList.map((c) => (
-                              <div
-                                key={c.iso}
-                                onMouseDown={() => { setAddress((p) => ({ ...p, countryIso: c.iso })); setCountrySearch(''); }}
-                                style={{
-                                  padding: '12px 14px', cursor: 'pointer', fontSize: 15,
-                                  background: c.iso === address.countryIso ? 'var(--color-cream)' : '#fff',
-                                  fontWeight: c.iso === address.countryIso ? 600 : 400,
-                                  borderBottom: '1px solid var(--color-border)',
-                                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                }}
-                              >
-                                {c.name}
-                                {!c.id && swCountries.length > 0 && (
-                                  <span style={{ fontSize: 11, color: '#f0a000' }}>non disp.</span>
-                                )}
-                              </div>
-                            ))
-                          }
-                        </div>
-                      )}
-                    </div>
-                    {!resolvedCountryId && swCountries.length > 0 && (
-                      <p style={{ fontSize: 12, color: '#f0a000', marginTop: 6 }}>
-                        ⚠ Paese non trovato nel sistema. Continua comunque o scegli un altro paese.
-                      </p>
-                    )}
-                  </Field>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: 10, marginTop: 28, flexWrap: 'wrap' }}>
-                {!isLoggedIn && (
-                  <button onClick={() => setStep(0)} style={secondaryBtn(isMobile)}>← Indietro</button>
-                )}
-                <button onClick={goNext} style={{ ...primaryBtn(isMobile), flex: 1, animation: shake ? 'shake 0.5s ease' : 'none' }}>Continua →</button>
-              </div>
-              {formError && <p style={{ color: 'var(--color-red)', fontSize: 13, marginTop: 10, textAlign: 'center' }}>⚠ {formError}</p>}
             </div>
-          )}
 
-          {/* STEP 2: Spedizione & Pagamento */}
-          {step === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-              <StepBar step={step} isMobile={isMobile} />
-              {loadingMethods ? (
-                <div style={{ color: 'var(--color-mid)', padding: '40px 0', textAlign: 'center' }}>
-                  <div style={{ fontSize: 28, marginBottom: 12 }}>⏳</div>
-                  Caricamento metodi...
+            {paymentOpen ? (
+              <div className={styles.recap}>
+                <div className={styles.recapLine}>
+                  <strong>{values.firstName} {values.lastName}</strong><br />
+                  {values.email}
                 </div>
-              ) : (
-                <>
-                  {filteredShippingMethods.length > 0 && (
-                    <div style={{ paddingBottom: 40 }}>
-                      <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 14, marginTop: 0, color: 'var(--color-dark)' }}>
-                        Spedizione
-                      </h2>
-                      {filteredShippingMethods.length === 1 ? (
-                        // Un solo metodo → mostra info, nessuna scelta da fare
-                        <div style={{
-                          padding: '14px 0',
-                          borderBottom: '1.5px solid var(--color-dark)',
-                          display: 'flex', alignItems: 'center', gap: 12,
-                        }}>
-                          <span style={{ fontSize: 18, color: 'var(--color-dark)' }}>✓</span>
-                          <div>
-                            <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-dark)' }}>
-                              {filteredShippingMethods[0].translated?.name || filteredShippingMethods[0].name}
-                            </div>
-                            {filteredShippingMethods[0].translated?.description && (
-                              <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 2 }}>
-                                {filteredShippingMethods[0].translated.description}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        // Più metodi → mostra selezione radio
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          {filteredShippingMethods.map((m) => (
-                            <MethodCard key={m.id} method={m} selected={selectedShipping === m.id} onSelect={setSelectedShipping} name="shipping" isMobile={isMobile} />
+              </div>
+            ) : (
+              <div className={styles.sectionBody}>
+                <p className={styles.sectionHint}>Ti serviranno per la conferma d’ordine e il tracking.</p>
+                <div className={styles.fieldGrid}>
+                  <Field label="Nome" autoComplete="given-name" placeholder="Mario" {...fieldProps('firstName')} />
+                  <Field label="Cognome" autoComplete="family-name" placeholder="Rossi" {...fieldProps('lastName')} />
+                  <Field
+                    label="Email" type="email" inputMode="email" autoComplete="email"
+                    placeholder="mario@esempio.it" full {...fieldProps('email')}
+                  />
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* ── 2. Spedizione ───────────────────────────────── */}
+          <section className={styles.section}>
+            <div className={styles.sectionHead}>
+              <h2 className={styles.sectionTitle}>
+                <span className={styles.sectionNumber}>02</span>
+                Spedizione
+              </h2>
+              {paymentOpen && (
+                <button type="button" className={styles.editBtn} onClick={reopenForm}>
+                  <PencilIcon size={14} />Modifica
+                </button>
+              )}
+            </div>
+
+            {paymentOpen ? (
+              <div className={styles.recap}>
+                <div className={styles.recapLine}>
+                  <strong>{joinStreetHouseNumber(values.street, values.houseNumber)}</strong><br />
+                  {values.zipcode} {values.city} · {selectedCountryName}
+                  {values.phone && <><br />{values.phone}</>}
+                </div>
+              </div>
+            ) : (
+              <div className={styles.sectionBody}>
+                <p className={styles.sectionHint}>Cerca l’indirizzo o compila i campi a mano.</p>
+
+                <AddressAutocomplete
+                  countryIso={values.countryIso}
+                  onSelect={(patch) => setFields(patch)}
+                />
+
+                <div className={styles.fieldGrid}>
+                  <div className={styles.streetRow}>
+                    <Field label="Via" autoComplete="address-line1" placeholder="Via Roma" {...fieldProps('street')} />
+                    <Field label="Civico" autoComplete="address-line2" placeholder="12" {...fieldProps('houseNumber')} />
+                  </div>
+
+                  <Field
+                    label="CAP" autoComplete="postal-code" inputMode="text"
+                    placeholder={postcodeExample(values.countryIso)} {...fieldProps('zipcode')}
+                  />
+                  <Field label="Città" autoComplete="address-level2" placeholder="Racale" {...fieldProps('city')} />
+
+                  <Field label="Paese" as="custom" error={null} full>
+                    {({ id }) => (
+                      <div className={styles.selectWrap}>
+                        <select
+                          id={id}
+                          className={styles.select}
+                          value={values.countryIso}
+                          onChange={(e) => setField('countryIso', e.target.value)}
+                          autoComplete="country"
+                        >
+                          {countryList.map((c) => (
+                            <option key={c.iso} value={c.iso}>{c.name}</option>
                           ))}
-                        </div>
+                        </select>
+                        <ChevronIcon size={16} className={styles.selectChevron} />
+                      </div>
+                    )}
+                  </Field>
+
+                  <Field
+                    label="Telefono" type="tel" inputMode="tel" autoComplete="tel"
+                    placeholder="+39 333 1234567" optional full
+                    {...fieldProps('phone')}
+                  />
+                </div>
+
+                {!resolvedCountryId && swCountries.length > 0 && (
+                  <p className={styles.errorBanner}>
+                    <AlertIcon size={16} />
+                    <span>Non spediamo ancora in {selectedCountryName}. Scegli un altro paese per continuare.</span>
+                  </p>
+                )}
+
+                {/* Metodo di spedizione */}
+                {loadingMethods ? (
+                  <div className={styles.loadingBlock}>
+                    <SpinnerIcon size={18} className={styles.spinner} />
+                    Caricamento delle opzioni di spedizione…
+                  </div>
+                ) : availableMethods.length > 1 ? (
+                  <div className={styles.methodList} style={{ marginTop: 'var(--space-11)' }} role="radiogroup" aria-label="Metodo di spedizione">
+                    {availableMethods.map((m) => (
+                      <label
+                        key={m.id}
+                        className={`${styles.method} ${selectedShipping === m.id ? styles.methodSelected : ''}`}
+                      >
+                        <input
+                          type="radio" name="shipping" value={m.id}
+                          checked={selectedShipping === m.id}
+                          onChange={() => setSelectedShipping(m.id)}
+                        />
+                        <span>
+                          <span className={styles.methodName}>{m.translated?.name || m.name}</span>
+                          {m.translated?.description && (
+                            <span className={styles.methodDesc}>{m.translated.description}</span>
+                          )}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                ) : availableMethods.length === 1 ? (
+                  <div className={styles.methodStatic} style={{ marginTop: 'var(--space-11)' }}>
+                    <TruckIcon size={19} className={styles.methodIcon} />
+                    <div>
+                      <p className={styles.methodName}>
+                        {availableMethods[0].translated?.name || availableMethods[0].name}
+                      </p>
+                      {availableMethods[0].translated?.description && (
+                        <p className={styles.methodDesc}>{availableMethods[0].translated.description}</p>
                       )}
                     </div>
-                  )}
-                  {/* ── Pagamento ──────────────────────────── */}
-                  <div style={{ paddingBottom: 40 }}>
-                    <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-xl)', marginBottom: 6, marginTop: 0, color: 'var(--color-dark)' }}>
-                      Pagamento
-                    </h2>
-                    <p style={{ fontSize: 13, color: 'var(--color-mid)', marginBottom: 20, marginTop: 0 }}>
-                      {freeOrder
-                        ? 'Il totale del tuo ordine è 0,00 €: non serve nessun pagamento.'
-                        : 'Carta, Apple Pay, Google Pay e altri metodi disponibili. 🔒 Pagamento sicuro.'}
-                    </p>
-
-                    {/* Payment Element unico: carta + wallet, secondo i metodi attivi su Stripe */}
-                    {!stripePromise ? (
-                      <p style={{ color: 'var(--color-mid)', fontSize: 13 }}>
-                        Configura <code>VITE_STRIPE_PUBLIC_KEY</code> nel file <code>.env</code> per abilitare il pagamento.
-                      </p>
-                    ) : (
-                      stripeLoading
-                        ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--color-mid)' }}>⏳ Caricamento pagamento...</div>
-                        : stripeLoadError
-                          ? (
-                            <div style={{ padding: '24px 0' }}>
-                              <p style={{ color: 'var(--color-red)', fontSize: 13, marginBottom: 12 }}>⚠ {stripeLoadError}</p>
-                              <button
-                                onClick={() => setStripeLoadError(null)}
-                                style={{ background: 'none', border: '1.5px solid var(--color-dark)', borderRadius: 'var(--radius-pill)', padding: '10px 24px', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600 }}
-                              >
-                                Riprova
-                              </button>
-                            </div>
-                          )
-                        : freeOrder
-                        ? (
-                          // Totale 0,00 € → nessun pagamento: si conferma e basta
-                          <div>
-                            <div style={{
-                              display: 'flex', alignItems: 'center', gap: 12,
-                              padding: '14px 0', borderBottom: '1.5px solid var(--color-dark)',
-                            }}>
-                              <span style={{ fontSize: 18, color: 'var(--color-red)' }}>🏷</span>
-                              <div>
-                                <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-dark)' }}>
-                                  Ordine gratuito
-                                </div>
-                                <div style={{ fontSize: 12, color: 'var(--color-mid)', marginTop: 2 }}>
-                                  Il codice sconto copre l'intero importo.
-                                </div>
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={handleFreeOrder}
-                              disabled={placing}
-                              style={{
-                                width: '100%', marginTop: 20,
-                                padding: isMobile ? '16px 0' : '14px 0',
-                                background: placing ? '#ccc' : 'var(--color-red)',
-                                color: '#fff', border: 'none',
-                                borderRadius: 'var(--radius-pill)',
-                                fontSize: isMobile ? 16 : 15, fontWeight: 600,
-                                cursor: placing ? 'not-allowed' : 'pointer',
-                                fontFamily: 'var(--font-sans)', minHeight: 52,
-                              }}
-                            >
-                              {placing ? 'Elaborazione...' : 'Completa l’ordine · 0,00 €'}
-                            </button>
-                          </div>
-                        )
-                        : stripeClientSecret && (
-                          <Elements stripe={stripePromise} options={{
-                            clientSecret: stripeClientSecret,
-                            locale: 'it',
-                            appearance: {
-                              theme: 'none',
-                              variables: {
-                                colorPrimary: '#2C4A2C',
-                                colorBackground: '#FCF3DF',
-                                colorText: '#2C4A2C',
-                                colorDanger: '#547054',
-                                fontFamily: 'system-ui, -apple-system, sans-serif',
-                                borderRadius: '0px',
-                                spacingUnit: '4px',
-                              },
-                              rules: {
-                                '.Input': {
-                                  border: 'none',
-                                  borderBottom: '1.5px solid #2C4A2C',
-                                  boxShadow: 'none',
-                                  padding: '11px 0',
-                                  background: 'transparent',
-                                },
-                                '.Input:focus': {
-                                  border: 'none',
-                                  borderBottom: '1.5px solid #547054',
-                                  boxShadow: 'none',
-                                  outline: 'none',
-                                },
-                                '.Label': {
-                                  fontSize: '11px',
-                                  fontWeight: '600',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.06em',
-                                  color: '#6B8A6B',
-                                  marginBottom: '6px',
-                                },
-                                '.Tab': {
-                                  border: 'none',
-                                  borderBottom: '1.5px solid rgba(84,112,84,0.22)',
-                                  borderRadius: '0',
-                                  boxShadow: 'none',
-                                  background: 'transparent',
-                                },
-                                '.Tab--selected': {
-                                  borderBottom: '2px solid #2C4A2C',
-                                  boxShadow: 'none',
-                                },
-                              },
-                            },
-                          }}>
-                            <StripePaymentForm
-                              onSuccess={handleStripeSuccess}
-                              totalPrice={totalPrice}
-                              isMobile={isMobile}
-                            />
-                          </Elements>
-                        )
-                    )}
-
-                    {orderError && (
-                      <p style={{ color: 'var(--color-red)', fontSize: 13, marginTop: 14 }}>{orderError}</p>
-                    )}
                   </div>
-                </>
-              )}
+                ) : null}
 
+                <button type="submit" className={styles.btnPrimary} style={{ marginTop: 'var(--space-12)' }}>
+                  Vai al pagamento<ArrowRightIcon size={17} />
+                </button>
 
-              <div style={{ marginTop: 16 }}>
-                <button onClick={() => setStep(1)} style={secondaryBtn(isMobile)}>← Indietro</button>
+                {formError && (
+                  <p className={styles.formError} role="alert">
+                    <AlertIcon size={15} />{formError}
+                  </p>
+                )}
               </div>
+            )}
+          </section>
+        </form>
+
+          {/* ── 3. Pagamento ────────────────────────────────── */}
+          <section className={styles.section} ref={paymentRef}>
+            <div className={styles.sectionHead}>
+              <h2 className={styles.sectionTitle}>
+                <span className={styles.sectionNumber}>03</span>
+                Pagamento
+              </h2>
             </div>
-          )}
+
+            {paymentOpen ? (
+              <div className={styles.sectionBody}>
+                <p className={styles.sectionHint}>
+                  {freeOrder
+                    ? 'Il totale è 0,00 €: non serve nessun pagamento.'
+                    : 'Tutti i pagamenti sono cifrati e gestiti da Stripe.'}
+                </p>
+
+                <PaymentSection
+                  stripePromise={stripePromise}
+                  clientSecret={clientSecret}
+                  loading={intentLoading}
+                  error={intentError}
+                  onRetry={() => setIntentError(null)}
+                  freeOrder={freeOrder}
+                  onFreeOrder={handleFreeOrder}
+                  placing={placing}
+                  totalPrice={totalPrice}
+                  onSuccess={handleStripeSuccess}
+                  onProcessingChange={setPlacing}
+                  billingDetails={billingDetails}
+                />
+
+                {orderError && (
+                  <p className={styles.errorBanner} role="alert">
+                    <AlertIcon size={16} />
+                    <span>{orderError}</span>
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className={styles.sectionHint}>
+                Carta, Apple&nbsp;Pay, Google&nbsp;Pay e Link. Compila i dati qui sopra per proseguire.
+              </p>
+            )}
+          </section>
         </div>
 
-        {/* ── Order summary desktop ────────────────────────────── */}
-        {!isMobile && (
-          <OrderSummary
-            cart={cart} totalPrice={totalPrice}
-            isB2B={isB2B}
-            address={address} step={step}
-            selectedCountryName={selectedCountryName} orderError={orderError}
-            placing={placing} isMobile={false}
-            onPromoChange={handlePromoChange}
-          />
-        )}
+        <OrderSummary
+          cart={cart}
+          totalPrice={totalPrice}
+          isB2B={isB2B}
+          placing={placing}
+          onPromoChange={handlePromoChange}
+        />
       </div>
     </div>
   );
-}
-
-function primaryBtn(isMobile) {
-  return {
-    width: '100%', padding: isMobile ? '16px 0' : '15px 0',
-    marginTop: 24, background: 'var(--color-red)', color: '#fff', border: 'none',
-    borderRadius: 'var(--radius-pill)', fontSize: isMobile ? 16 : 15,
-    fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)',
-    letterSpacing: '.04em', minHeight: 52,
-  };
-}
-
-function secondaryBtn(isMobile) {
-  return {
-    padding: isMobile ? '14px 20px' : '12px 22px',
-    background: '#fff', color: 'var(--color-dark)', border: '1.5px solid var(--color-border)',
-    borderRadius: 'var(--radius-pill)', fontSize: 14, fontWeight: 600,
-    cursor: 'pointer', fontFamily: 'var(--font-sans)',
-  };
 }

@@ -36,7 +36,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import Stripe from 'stripe';
 import {
-  getCartTotal, placeOrder, registerGuestIfNeeded,
+  getCartTotal, placeOrder, registerGuestIfNeeded, syncCheckoutAddress,
   setShippingMethod, markTransactionPaid, adminConfigured,
   fetchOrderDetails, savePacklinkReference,
   fetchOrdersInDeliveryState, fetchOrdersInOrderState,
@@ -208,6 +208,13 @@ app.post('/api/checkout/create-intent', paymentLimiter, async (req, res) => {
       customer,
       billingAddress,
     });
+
+    // 1b. Allinea l'indirizzo se l'utente l'ha corretto dopo la registrazione:
+    //     `registerGuestIfNeeded` esce subito quando il contesto ha già un
+    //     cliente, quindi senza questo passaggio la modifica non arriverebbe mai
+    //     a Shopware e l'ordine partirebbe con l'indirizzo vecchio.
+    //     No-op (nessuna chiamata di scrittura) se l'indirizzo non è cambiato.
+    ({ contextToken: token } = await syncCheckoutAddress(token, { billingAddress }));
 
     // 2. Imposta la spedizione scelta (Shopware ricalcola eventuale costo/gratuità)
     token = await setShippingMethod(token, shippingMethodId);

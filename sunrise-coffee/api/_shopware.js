@@ -117,6 +117,64 @@ export async function registerGuestIfNeeded(contextToken, { email, customer, bil
   }
 }
 
+/** Campi che identificano un indirizzo: se cambia uno di questi, cambia la consegna. */
+const ADDRESS_FIELDS = ['firstName', 'lastName', 'street', 'zipcode', 'city', 'countryId', 'phoneNumber', 'company'];
+
+/** True se l'indirizzo inviato dal client differisce da quello attivo sul contesto. */
+function addressDiffers(current, next) {
+  if (!current) return true;
+  return ADDRESS_FIELDS.some((field) => {
+    // Un campo assente nella richiesta non è una modifica: non lo confrontiamo.
+    if (next[field] === undefined || next[field] === null) return false;
+    return String(next[field]).trim() !== String(current[field] ?? '').trim();
+  });
+}
+
+/**
+ * Allinea l'indirizzo del contesto a quello inserito nel checkout.
+ *
+ * Serve perché `registerGuestIfNeeded` esce subito quando il contesto ha già un
+ * cliente: dopo la prima registrazione l'indirizzo non veniva più aggiornato,
+ * quindi correggere via o città prima di pagare non cambiava nulla e il pacco
+ * partiva verso il vecchio indirizzo.
+ *
+ * Invece di riscrivere l'indirizzo esistente ne crea uno nuovo e ci punta il
+ * contesto: un cliente registrato non si vede così modificare l'indirizzo salvato
+ * in rubrica solo perché ha spedito una volta altrove.
+ *
+ * Se nulla è cambiato non fa alcuna chiamata, quindi il percorso normale (utente
+ * che non torna indietro a correggere) resta identico a prima.
+ *
+ * @returns {Promise<{ contextToken: string, changed: boolean }>}
+ */
+export async function syncCheckoutAddress(contextToken, { billingAddress }) {
+  if (!contextToken || !billingAddress) return { contextToken, changed: false };
+
+  const { data: ctx } = await swFetch('/context', { method: 'GET', contextToken });
+  const customer = ctx?.customer;
+  if (!customer?.id) return { contextToken, changed: false };
+
+  const active = customer.activeBillingAddress || customer.defaultBillingAddress;
+  if (!addressDiffers(active, billingAddress)) return { contextToken, changed: false };
+
+  const { data: created, contextToken: afterCreate } = await swFetch('/account/address', {
+    method: 'POST',
+    contextToken,
+    body: billingAddress,
+  });
+
+  const addressId = created?.id;
+  if (!addressId) return { contextToken: afterCreate || contextToken, changed: false };
+
+  const { contextToken: afterPatch } = await swFetch('/context', {
+    method: 'PATCH',
+    contextToken: afterCreate || contextToken,
+    body: { billingAddressId: addressId, shippingAddressId: addressId },
+  });
+
+  return { contextToken: afterPatch || afterCreate || contextToken, changed: true };
+}
+
 /** Imposta il metodo di spedizione sul contesto. Ritorna il token aggiornato. */
 export async function setShippingMethod(contextToken, shippingMethodId) {
   if (!shippingMethodId) return contextToken;

@@ -1,8 +1,14 @@
 import { useState } from 'react';
-import { formatPrice } from '../../lib/utils/price';
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { formatPrice } from '../../lib/utils/price';
+import { LockIcon, AlertIcon, SpinnerIcon } from './CheckoutIcons';
+import styles from './Checkout.module.css';
 
-export default function StripePaymentForm({ onSuccess, totalPrice, isMobile }) {
+/**
+ * Modulo carta/wallet: conferma il pagamento su Stripe, poi lascia al server la
+ * creazione dell'ordine (`onSuccess`).
+ */
+export default function StripePaymentForm({ onSuccess, totalPrice, disabled, billingDetails }) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -10,7 +16,7 @@ export default function StripePaymentForm({ onSuccess, totalPrice, isMobile }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe || !elements || loading) return;
 
     setLoading(true);
     setError(null);
@@ -22,11 +28,14 @@ export default function StripePaymentForm({ onSuccess, totalPrice, isMobile }) {
       return;
     }
 
-    // Confirm payment — Stripe verifica la carta
     const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: `${window.location.origin}/checkout`,
+        // I dati di fatturazione arrivano dal form: senza questo Stripe li
+        // richiederebbe di nuovo (nome, email, paese) subito dopo che l'utente
+        // li ha appena scritti.
+        payment_method_data: { billing_details: billingDetails },
       },
       redirect: 'if_required',
     });
@@ -46,35 +55,38 @@ export default function StripePaymentForm({ onSuccess, totalPrice, isMobile }) {
     setLoading(false);
   };
 
+  const busy = loading || disabled;
+
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} noValidate>
       <PaymentElement
         options={{
           layout: 'tabs',
-          fields: { billingDetails: { name: 'auto', email: 'auto' } },
+          // Nessun campo di fatturazione duplicato: li abbiamo già tutti dal
+          // form e li passiamo alla conferma. Restano solo i dati della carta.
+          fields: { billingDetails: 'never' },
         }}
       />
 
       {error && (
-        <p style={{ color: 'var(--color-red)', fontSize: 13, marginTop: 12 }}>{error}</p>
+        <p className={styles.errorBanner} role="alert">
+          <AlertIcon size={16} />
+          <span>{error}</span>
+        </p>
       )}
 
       <button
         type="submit"
-        disabled={loading || !stripe}
-        style={{
-          width: '100%',
-          marginTop: 20,
-          padding: isMobile ? '16px 0' : '14px 0',
-          background: loading ? '#ccc' : 'var(--color-red)',
-          color: '#fff', border: 'none',
-          borderRadius: 'var(--radius-pill)',
-          fontSize: isMobile ? 16 : 15, fontWeight: 600,
-          cursor: loading ? 'not-allowed' : 'pointer',
-          fontFamily: 'var(--font-sans)', minHeight: 52,
-        }}
+        className={styles.btnPrimary}
+        disabled={busy || !stripe}
+        style={{ marginTop: 'var(--space-9)' }}
       >
-        {loading ? 'Elaborazione...' : `Paga ${typeof totalPrice === 'number' ? formatPrice(totalPrice) : ''}`}
+        {busy ? (
+          <><SpinnerIcon size={17} className={styles.spinner} />Elaborazione…</>
+        ) : (
+          <><LockIcon size={17} />
+            Paga {typeof totalPrice === 'number' ? formatPrice(totalPrice) : ''}</>
+        )}
       </button>
     </form>
   );

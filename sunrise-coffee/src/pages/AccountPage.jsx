@@ -176,7 +176,15 @@ function OrderItem({ item, canReview }) {
           overflow: 'hidden', background: 'var(--color-light)',
           border: '1px solid var(--color-border)',
         }}>
-          {img && <img src={img} alt={item.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+          {/* Le righe d'ordine di Shopware non portano una cover propria, e alcuni
+              prodotti non ne hanno affatto: senza segnaposto restava un riquadro
+              vuoto, che sembra un'immagine rotta invece di un'immagine assente. */}
+          <img
+            src={img || '/images/PRODUCTSTILL.jpg'}
+            alt=""
+            loading="lazy"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--color-dark)' }}>
@@ -252,6 +260,14 @@ function OrderCard({ order }) {
 
   const grouped   = groupItems(order.lineItems);
   const delivery  = order.deliveries?.[0];
+
+  const sumOfType = (type) => (order.lineItems || [])
+    .filter((i) => i.type === type)
+    .reduce((sum, i) => sum + (i.totalPrice ?? i.price?.totalPrice ?? 0), 0);
+  const productTotal  = sumOfType('product');
+  const discountTotal = sumOfType('promotion');   // ≤ 0
+  const shippingTotal = order.shippingTotal ?? 0;
+
   const canReview = ['shipped', 'shipped_partially', 'completed'].includes(
     delivery?.stateMachineState?.technicalName || order.stateMachineState?.technicalName
   );
@@ -282,7 +298,7 @@ function OrderCard({ order }) {
               Ordine #{order.orderNumber}
             </div>
             <div style={{ fontSize: 12, color: 'var(--color-mid)', marginBottom: 8 }}>
-              {date} · {grouped.length} prodotto{grouped.length !== 1 ? 'i' : ''}
+              {date} · {grouped.length} {grouped.length === 1 ? 'prodotto' : 'prodotti'}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {orderState    && <Badge stateKey={orderState}    map={ORDER_STATES}    />}
@@ -308,8 +324,36 @@ function OrderCard({ order }) {
             <div style={{ marginBottom: 20 }}>
               <div style={sectionLabel}>Prodotti</div>
               {grouped.map(item => <OrderItem key={item.id} item={item} canReview={canReview} />)}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 10, fontWeight: 700, fontSize: 14, color: 'var(--color-dark)' }}>
-                Totale: {formatPrice(order.amountTotal)}
+
+              {/* Riepilogo completo, non il solo totale: `groupItems` tiene i soli
+                  prodotti, quindi con un codice sconto attivo si vedevano gli
+                  articoli a prezzo pieno sopra un totale più basso (fino a
+                  "0,00 €" con uno sconto del 100%) senza niente che lo spiegasse. */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 12, fontSize: 13 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-mid)' }}>
+                  <span>Subtotale</span>
+                  <span style={{ color: 'var(--color-dark)' }}>{formatPrice(productTotal)}</span>
+                </div>
+                {discountTotal !== 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-mid)' }}>
+                    <span>Sconto</span>
+                    <span style={{ color: 'var(--color-red)', fontWeight: 600 }}>{formatPrice(discountTotal)}</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-mid)' }}>
+                  <span>Spedizione</span>
+                  <span style={{ color: shippingTotal > 0 ? 'var(--color-dark)' : 'var(--color-red)', fontWeight: shippingTotal > 0 ? 400 : 600 }}>
+                    {shippingTotal > 0 ? formatPrice(shippingTotal) : 'Gratuita'}
+                  </span>
+                </div>
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between',
+                  paddingTop: 8, marginTop: 2, borderTop: '1px solid var(--color-border)',
+                  fontWeight: 700, fontSize: 14, color: 'var(--color-dark)',
+                }}>
+                  <span>Totale</span>
+                  <span>{formatPrice(order.amountTotal)}</span>
+                </div>
               </div>
             </div>
           )}
