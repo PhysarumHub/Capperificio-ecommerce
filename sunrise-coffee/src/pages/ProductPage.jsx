@@ -26,7 +26,8 @@ function priceValidUntil() {
 }
 
 export default function ProductPage() {
-  const { slug } = useParams();
+  const params = useParams();
+  const slug = params['*'] || params.slug || '';
   const { product, loading, error } = useProduct(slug);
 
   const productName = product?.translated?.name || product?.name || '';

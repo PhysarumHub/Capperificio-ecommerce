@@ -14,7 +14,7 @@ import useInView from '../hooks/useInView';
 import { useProducts } from '../hooks/useProducts';
 import { useSEO } from '../hooks/useSEO';
 import { formatPrice } from '../lib/utils/price';
-import { getProductImage, getProductSlug } from '../lib/utils/image';
+import { getProductImage, getProductHoverImage, getProductSlug } from '../lib/utils/image';
 import { resolveListingSoldOut } from '../lib/utils/availability';
 import { groupVariants, resolveCardCartId, resolveVariantOptions } from '../lib/utils/variants';
 import styles from './HomePage.module.css';
@@ -57,6 +57,7 @@ function mapShopwareProduct(product) {
     name: product.translated?.name || product.name,
     slug: getProductSlug(product),
     image: getProductImage(product),
+    hoverImage: getProductHoverImage(product),
     price: formatPrice(price?.unitPrice),
     oldPrice: listPrice?.price ? formatPrice(listPrice.price) : undefined,
     badge: listPrice?.price ? 'Sale' : undefined,

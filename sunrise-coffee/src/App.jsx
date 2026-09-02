@@ -43,7 +43,10 @@ export default function App() {
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
-            <Route path="/product/:slug" element={<ProductPage />} />
+            {/* Splat: gli seoPathInfo di Shopware sono multi-segmento
+                (es. "Capperi-al-Sale/CAPRACALE-SALE-01"), quindi ":slug"
+                non li intercettava e la PDP cadeva sulla 404. */}
+            <Route path="/product/*" element={<ProductPage />} />
             <Route path="/collections/:slug" element={<CollectionPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />

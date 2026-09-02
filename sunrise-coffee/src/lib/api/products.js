@@ -15,6 +15,13 @@ export async function getProducts({ page = 1, limit = 24, filters = [], sort = [
           },
         },
       },
+      media: {
+        associations: {
+          media: {
+            associations: { thumbnails: {} },
+          },
+        },
+      },
       seoUrls: {},
       categories: {},
       tags: {},

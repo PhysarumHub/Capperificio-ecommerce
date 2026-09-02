@@ -80,6 +80,38 @@ export function getProductImage(product, size = 'medium') {
 }
 
 /**
+ * Extract the second gallery image (shown on hover) from a Shopware product entity.
+ * Returns null when the product has no gallery image besides the cover.
+ *
+ * @param {object} product - Shopware product entity
+ * @param {'small'|'medium'|'large'} [size='medium'] - Desired thumbnail size
+ * @returns {string|null} Image URL, or null if unavailable
+ */
+export function getProductHoverImage(product, size = 'medium') {
+  const items = product?.media;
+  if (!Array.isArray(items) || items.length < 2) return null;
+
+  const sorted = [...items].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  const coverMediaId = product?.cover?.media?.id || product?.cover?.mediaId;
+  const second = sorted.find((m) => m.media?.id !== coverMediaId) || sorted[1];
+  const media = second?.media;
+  if (!media) return null;
+
+  if (media.thumbnails?.length) {
+    const sizeMap = { small: 280, medium: 600, large: 1920 };
+    const targetWidth = sizeMap[size] || 600;
+
+    const sortedThumbs = [...media.thumbnails].sort(
+      (a, b) => Math.abs(a.width - targetWidth) - Math.abs(b.width - targetWidth)
+    );
+
+    if (sortedThumbs[0]?.url) return proxyUrl(sortedThumbs[0].url);
+  }
+
+  return proxyUrl(media.url) || null;
+}
+
+/**
  * Get the product slug from SEO URLs or generate from name.
  */
 export function getProductSlug(product) {

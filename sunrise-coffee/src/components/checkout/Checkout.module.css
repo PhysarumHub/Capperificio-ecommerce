@@ -400,7 +400,7 @@
 
 /* ── Riepilogo ordine ───────────────────────────────────── */
 .summary {
-  background: var(--color-cream);
+  background: var(--color-white);
   position: sticky;
   top: calc(var(--header-height) + var(--space-8));
 }
