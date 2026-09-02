@@ -8,7 +8,7 @@ import ShopFilter from '../components/ShopFilter/ShopFilter';
 import { ProductsMarquee } from '../components/Marquee/Marquee';
 import { useProducts } from '../hooks/useProducts';
 import { formatPrice } from '../lib/utils/price';
-import { getProductImage, getProductSlug } from '../lib/utils/image';
+import { getProductImage, getProductHoverImage, getProductSlug } from '../lib/utils/image';
 import { isShopwareConfigured } from '../lib/shopware-client';
 import { resolveListingSoldOut } from '../lib/utils/availability';
 import { groupVariants, resolveCardCartId, resolveVariantOptions } from '../lib/utils/variants';
@@ -215,6 +215,7 @@ function mapShopwareProduct(product) {
     name:           product.translated?.name || product.name,
     slug:           getProductSlug(product),
     image:          getProductImage(product),
+    hoverImage:     getProductHoverImage(product),
     price:          formatPrice(price?.unitPrice),
     oldPrice:       listPrice?.price ? formatPrice(listPrice.price) : undefined,
     badge:          listPrice?.price ? 'Sale' : undefined,
@@ -363,6 +364,7 @@ export default function CollectionPage() {
                   name={p.name}
                   slug={p.slug}
                   image={p.image}
+                  hoverImage={p.hoverImage}
                   price={p.price}
                   oldPrice={p.oldPrice}
                   badge={p.badge}

@@ -1,115 +1,47 @@
-# Strapi v5 — Blog CMS
+# Strapi (blog CMS)
 
-## Architettura
+Strapi 5 (`sunrise-coffee/strapi/`), Postgres come DB. Gestisce solo il blog,
+niente a che fare con prodotti/ordini (quelli sono in Shopware).
 
-```
-Browser → React hooks (useBlogPosts, useBlogPost)
-        → Strapi REST API (http://localhost:1337/api)
-        → PostgreSQL 16 (capperificio-strapi-db)
-```
+## Non è esposto a internet
 
-Strapi gestisce solo il blog — tutto il resto (prodotti, ordini, utenti) è Shopware.
+Il container `strapi` bind-a la porta 1337 solo su `127.0.0.1` del VPS
+(vedi `docker-compose.yml`). L'admin è raggiungibile solo via tunnel SSH. Il
+frontend pubblico non parla mai direttamente con Strapi:
 
-## Avvio (Docker)
+- **Dati articoli**: il browser chiama `/api/strapi/articles*` su Express,
+  che fa da proxy whitelisted verso `http://strapi:1337/api/*` (hostname
+  interno Docker) allegando `Authorization: Bearer STRAPI_TOKEN` — token che
+  non lascia mai il server. Vedi [backend-api.md](./backend-api.md).
+- **Immagini cover**: servite via nginx, `location /uploads` → proxy verso
+  `strapi:1337` (non passano da Express).
 
-```bash
-docker compose up -d strapi strapi-db
-```
-**Admin Strapi:** http://localhost:1337/admin
+## Content type: `Article`
 
-## Env vars Strapi
+`strapi/src/api/article/content-types/article/schema.json`:
 
-```env
-# Lato server (docker-compose)
-STRAPI_DB_PASSWORD=
-STRAPI_APP_KEYS=key1,key2,key3,key4
-STRAPI_API_TOKEN_SALT=
-STRAPI_ADMIN_JWT_SECRET=
-STRAPI_JWT_SECRET=
-STRAPI_URL=http://localhost:1337
+| Campo | Tipo | Note |
+|---|---|---|
+| `title` | string, required | |
+| `slug` | uid (da `title`), required | usato nell'URL articolo lato frontend |
+| `excerpt` | text | riassunto per liste/anteprime |
+| `content` | blocks | rich text strutturato (Strapi Blocks editor) |
+| `cover` | media (singola immagine) | opzionale |
+| `category` | string | libera, non una relazione |
 
-# Lato client (Vite)
-VITE_STRAPI_URL=http://localhost:1337
-VITE_STRAPI_TOKEN=<api-token-readonly>
-```
+`draftAndPublish: true` → gli articoli hanno stato bozza/pubblicato; solo i
+pubblicati devono comparire lato frontend (query Strapi filtrata di
+conseguenza, controlla `src/lib/api/*` se aggiungi nuove chiamate).
 
-Genera i secret con:
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-```
+## Variabili d'ambiente rilevanti
 
-## API Token (Read-only)
+`VITE_STRAPI_URL` — se vuota, il blog è considerato disattivato lato
+frontend. `STRAPI_URL` (server, hostname interno `http://strapi:1337`),
+`STRAPI_TOKEN` (server-only), `STRAPI_PUBLIC_URL` (solo per raggiungere
+l'admin via tunnel SSH, non usato in runtime pubblico). Vedi
+`.env.example` sezione "Strapi CMS (blog)".
 
-1. Admin Strapi > Settings > API Tokens > Create
-2. Type: Read-only
-3. Copia il token → `VITE_STRAPI_TOKEN`
+## Seed/contenuto
 
-## REST API Endpoints
-
-```
-GET /api/articles?populate=*              # lista articoli
-GET /api/articles/:id?populate=*          # articolo per ID
-GET /api/articles?filters[slug][$eq]=...  # articolo per slug
-```
-
-Headers richiesti:
-```
-Authorization: Bearer <VITE_STRAPI_TOKEN>
-```
-
-## Hooks (`src/hooks/`)
-
-### `useBlogPosts(options)`
-```js
-const { posts, total, loading, error } = useBlogPosts({ page=1, limit=10 });
-```
-
-### `useBlogPost(slug)`
-```js
-const { post, loading, error } = useBlogPost('nome-articolo');
-```
-
-## Content Type — Article
-
-Campi tipici (configurati in Strapi Admin > Content-Types Builder):
-```
-title       String
-slug        String (unique)
-content     RichText / Blocks
-excerpt     Text
-cover       Media (immagine)
-publishedAt DateTime
-tags        Relation
-author      Relation
-```
-
-## Seed dati di test
-
-```bash
-python scripts/seed_strapi_articles.py
-```
-
-Popola Strapi con articoli di esempio sul tema capperi.
-
-## Strapi in locale (senza Docker)
-
-```bash
-cd strapi/
-npm install
-npm run develop    # dev con hot-reload → http://localhost:1337
-```
-
-## Struttura cartella `strapi/`
-
-```
-strapi/
-├── src/
-│   ├── api/
-│   │   └── article/         # Content type Article
-│   └── extensions/
-├── config/
-│   ├── database.js
-│   ├── server.js
-│   └── plugins.js
-└── package.json
-```
+`scripts/seed_strapi_articles.py` popola articoli via Admin API/REST Strapi —
+vedi [scripts.md](./scripts.md).

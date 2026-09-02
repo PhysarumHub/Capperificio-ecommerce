@@ -37,6 +37,23 @@
   }
 }
 
+.hoverImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 350ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .hoverImg {
+    opacity: 1;
+  }
+}
+
 .imgPlaceholder {
   width: 100%;
   height: 100%;
@@ -74,7 +91,6 @@
   background: var(--color-red);
   color: var(--color-white);
   border: none;
-  font-size: 22px;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -85,6 +101,13 @@
   transition:
     opacity 200ms cubic-bezier(0.23, 1, 0.32, 1),
     transform 120ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.addToCart svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
 }
 .addToCart:hover  { opacity: .85; }
 .addToCart:active { transform: scale(0.92); }
@@ -180,7 +203,7 @@
 .name {
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: var(--text-lg);
+  font-size: var(--text-xl);
   font-weight: 500;
   color: var(--color-dark);
   white-space: nowrap;
@@ -247,15 +270,15 @@
 .oldPrice {
   color: var(--color-red);
   text-decoration: line-through;
-  font-size: var(--text-sm);
+  font-size: var(--text-md);
   font-family: var(--font-mono, monospace);
 }
 
 .price {
   color: var(--color-red);
-  font-size: var(--text-sm);
+  font-size: var(--text-md);
   font-family: var(--font-mono, monospace);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* Sold-out badge — bottom right (replaces + button) */
@@ -310,15 +333,16 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: calc(var(--text-lg) * 1.4 * 2);
+    min-height: calc(var(--text-xl) * 1.4 * 2);
   }
   .pricing { text-align: left; }
   .badge { top: 8px; left: 8px; padding: 3px 8px; }
-  .addToCart { bottom: 8px; right: 8px; width: 34px; height: 34px; font-size: 20px; }
+  .addToCart { bottom: 8px; right: 8px; width: 34px; height: 34px; }
+  .addToCart svg { width: 16px; height: 16px; }
 }
 
 @media (max-width: 480px) {
   .card { padding: 4px; }
   .variantChip { font-size: 9px; padding: 2px 6px; }
-  .price, .oldPrice { font-size: var(--text-xs); }
+  .price, .oldPrice { font-size: var(--text-sm); }
 }

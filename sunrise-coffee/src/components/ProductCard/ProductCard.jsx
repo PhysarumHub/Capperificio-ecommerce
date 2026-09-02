@@ -5,6 +5,16 @@ import { getCartQuantity } from '../../lib/utils/availability';
 import { gtmAddToCart, gtmRemoveFromCart } from '../../lib/utils/gtm';
 import styles from './ProductCard.module.css';
 
+function CartIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 3h2l2.4 12.2a2 2 0 0 0 2 1.8h8.2a2 2 0 0 0 2-1.6L21 8H6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="9.5" cy="20.5" r="1.4" />
+      <circle cx="17.5" cy="20.5" r="1.4" />
+    </svg>
+  );
+}
+
 export default function ProductCard({
   id,
   name,
@@ -12,6 +22,7 @@ export default function ProductCard({
   price,
   oldPrice,
   image,
+  hoverImage,
   badge,
   badgeColor,
   options,
@@ -156,7 +167,9 @@ export default function ProductCard({
       Nel carrello · {qty}
     </button>
   ) : canDirectAdd ? (
-    <button className={styles.addToCart} onClick={handleAdd} aria-label="Aggiungi al carrello">+</button>
+    <button className={styles.addToCart} onClick={handleAdd} aria-label="Aggiungi al carrello">
+      <CartIcon />
+    </button>
   ) : null;
 
   const variantChips = variantList && (
@@ -210,6 +223,9 @@ export default function ProductCard({
         ) : (
           <div className={styles.imgPlaceholder} />
         )}
+        {hoverImage && (
+          <img src={hoverImage} alt="" aria-hidden="true" className={styles.hoverImg} loading="lazy" decoding="async" />
+        )}
         {control}
       </div>
       <div className={styles.info}>
@@ -218,7 +234,6 @@ export default function ProductCard({
           {variantChips}
         </div>
         <div className={styles.pricing}>
-          {oldPrice && <span className={styles.oldPrice}>{oldPrice}</span>}
           <span className={styles.price}>
             {oldPrice ? `In saldo · ${price}` : price}
           </span>
