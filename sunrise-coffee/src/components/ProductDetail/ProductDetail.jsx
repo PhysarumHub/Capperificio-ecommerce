@@ -587,7 +587,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
           <div className={styles.desktopImages}>
             {productImages.map((src, i) => (
               <div key={i} className={`${styles.productImage} ${anim.imgZoom}`}>
-                <img src={src} alt={`${productName} — ${i + 1}`} className={styles.pdpImg} />
+                <img src={src} alt={`${productName} — ${i + 1}`} className={styles.pdpImg} width="900" height="900" loading={i === 0 ? 'eager' : 'lazy'} fetchPriority={i === 0 ? 'high' : undefined} decoding="async" />
               </div>
             ))}
           </div>
@@ -604,7 +604,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
             >
               {productImages.map((src, i) => (
                 <div key={i} className={styles.mobileSlide}>
-                  <img src={src} alt={`${productName} — ${i + 1}`} className={styles.mobileSlideImg} />
+                  <img src={src} alt={`${productName} — ${i + 1}`} className={styles.mobileSlideImg} width="900" height="900" loading={i === 0 ? 'eager' : 'lazy'} decoding="async" />
                 </div>
               ))}
             </div>
