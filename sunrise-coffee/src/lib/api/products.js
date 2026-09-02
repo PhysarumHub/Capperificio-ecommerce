@@ -1,4 +1,5 @@
 import { storeApiPost } from '../shopware-client';
+import { slugify } from '../utils/slug.js';
 
 /**
  * Fetch a paginated list of products.
@@ -81,14 +82,14 @@ const PRODUCT_DETAIL_INCLUDES = {
 
 /**
  * Fetch a single product by its ID or SEO slug.
- * Priority: ID (UUID) → seoUrl → productNumber
+ * Priority: ID (UUID) → slug leggibile (nome) → seoUrl → productNumber
  */
 export async function getProductBySlug(slug) {
   if (!slug) return null;
 
   const isUuid = /^[0-9a-f]{32}$/.test(slug.replace(/-/g, ''));
 
-  // 1. Fetch by ID if slug looks like a UUID (most common case when no seoUrls)
+  // 1. Fetch by ID if slug looks like a UUID (link vecchi /product/:id, o interni)
   if (isUuid) {
     const byId = await storeApiPost('/product', {
       limit: 1,
@@ -99,7 +100,28 @@ export async function getProductBySlug(slug) {
     if (byId?.elements?.length) return byId.elements[0];
   }
 
-  // 2. Try by seoUrl path
+  // 2. Try matching the human-readable slug (getProductSlug) against i prodotti
+  // principali (parentId null): il catalogo è piccolo, non serve Shopware seoUrls
+  // (qui sempre vuoto — negozio headless, non usa il router Storefront).
+  const roots = await storeApiPost('/product', {
+    limit: 100, // MAX_LIMIT della Store API — il catalogo (root products) ci sta comodamente
+    filter: [{ type: 'equals', field: 'parentId', value: null }],
+    includes: { product: ['id', 'name', 'translated'] },
+  });
+  const nameMatch = (roots?.elements || []).find(
+    (p) => slugify(p.translated?.name || p.name) === slug
+  );
+  if (nameMatch) {
+    const byId = await storeApiPost('/product', {
+      limit: 1,
+      filter: [{ type: 'equals', field: 'id', value: nameMatch.id }],
+      associations: PRODUCT_DETAIL_ASSOCIATIONS,
+      includes: PRODUCT_DETAIL_INCLUDES,
+    });
+    if (byId?.elements?.length) return byId.elements[0];
+  }
+
+  // 3. Try by seoUrl path (in caso venga configurato in futuro lato Shopware admin)
   const bySeo = await storeApiPost('/product', {
     limit: 1,
     filter: [{ type: 'contains', field: 'seoUrls.seoPathInfo', value: slug }],
@@ -108,7 +130,7 @@ export async function getProductBySlug(slug) {
   });
   if (bySeo?.elements?.length) return bySeo.elements[0];
 
-  // 3. Try by productNumber
+  // 4. Try by productNumber
   const byNumber = await storeApiPost('/product', {
     limit: 1,
     filter: [{ type: 'equals', field: 'productNumber', value: slug }],

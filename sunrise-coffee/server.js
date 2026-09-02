@@ -2,17 +2,33 @@ import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { readFileSync, writeFileSync } from 'fs';
+import { slugify } from './src/lib/utils/slug.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: join(__dirname, '.env'), override: true });
 
 // ── Stato poller persistito su disco ─────────────────────────────────────────
-const POLLER_STATE_FILE = join(__dirname, '.poller-state.json');
+// Di default vive accanto al codice, ma in produzione punta a un volume Docker
+// (POLLER_STATE_FILE=/app/state/poller-state.json): senza volume ogni rebuild
+// azzerava lo stato e le email già inviate ripartivano da capo.
+const POLLER_STATE_FILE = process.env.POLLER_STATE_FILE || join(__dirname, '.poller-state.json');
+
+// `confirmed`  → id degli ordini per cui la conferma cliente è già partita.
+// `lowStockKey`→ firma dell'ultimo elenco di prodotti sotto soglia notificato.
+const pollerState = { confirmed: new Set(), lowStockKey: null, seeded: false };
 
 function loadPollerState() {
   try {
     const raw = readFileSync(POLLER_STATE_FILE, 'utf8');
-    const { shipped = [], cancelled = [] } = JSON.parse(raw);
-    return { shipped: new Set(shipped), cancelled: new Set(cancelled) };
+    const { shipped = [], cancelled = [], confirmed = [], lowStockKey = null, seeded = false } = JSON.parse(raw);
+    pollerState.confirmed = new Set(confirmed);
+    pollerState.lowStockKey = lowStockKey;
+    pollerState.seeded = seeded;
+    // Le vecchie chiavi orarie `lowstock_*` finivano nel set `cancelled` e lo
+    // facevano crescere all'infinito: si scartano al primo avvio.
+    return {
+      shipped: new Set(shipped),
+      cancelled: new Set(cancelled.filter(k => !String(k).startsWith('lowstock_'))),
+    };
   } catch {
     return { shipped: new Set(), cancelled: new Set() };
   }
@@ -23,12 +39,32 @@ function savePollerState(shipped, cancelled) {
     writeFileSync(POLLER_STATE_FILE, JSON.stringify({
       shipped: [...shipped],
       cancelled: [...cancelled],
+      confirmed: [...pollerState.confirmed],
+      lowStockKey: pollerState.lowStockKey,
+      seeded: pollerState.seeded,
       savedAt: new Date().toISOString(),
     }));
   } catch (e) {
     console.warn('Poller: impossibile salvare lo stato su disco:', e.message);
   }
 }
+
+/** Registra l'ordine come "conferma già inviata" (idempotente, persistito). */
+function markOrderConfirmed(orderId) {
+  if (!orderId || pollerState.confirmed.has(orderId)) return;
+  pollerState.confirmed.add(orderId);
+  // Tiene la lista limitata: bastano gli ordini recenti, la rete di sicurezza
+  // guarda solo le ultime 48h.
+  if (pollerState.confirmed.size > 500) {
+    pollerState.confirmed = new Set([...pollerState.confirmed].slice(-500));
+  }
+  savePollerState(lastShipped, lastCancelled);
+}
+
+// Riferimenti agli insiemi vivi del poller, per poter persistere lo stato anche
+// dai percorsi di checkout (che girano fuori dal ciclo di polling).
+let lastShipped = new Set();
+let lastCancelled = new Set();
 
 import express from 'express';
 import cors from 'cors';
@@ -39,7 +75,7 @@ import {
   getCartTotal, placeOrder, registerGuestIfNeeded, syncCheckoutAddress,
   setShippingMethod, markTransactionPaid, adminConfigured,
   fetchOrderDetails, savePacklinkReference,
-  fetchOrdersInDeliveryState, fetchOrdersInOrderState,
+  fetchOrdersInDeliveryState, fetchOrdersInOrderState, fetchRecentPaidOrders,
   fetchLowStockProducts, findOrderByPaymentIntentId, markTransactionRefunded,
   swFetch,
 } from './api/_shopware.js';
@@ -178,18 +214,27 @@ function withOrderLock(token, fn) {
 function fulfillOrderInBackground(orderId, { label = 'order' } = {}) {
   if (!orderId || (!packlinkConfigured() && !resendConfigured())) return;
   fetchOrderDetails(orderId).then(async (fullOrder) => {
-    if (!fullOrder) return;
+    if (!fullOrder) {
+      // Senza dati ordine non si può inviare nulla: NON si marca come confermato,
+      // così la rete di sicurezza del poller ci riprova entro 2 minuti.
+      console.warn(`${label}: dettagli ordine ${orderId} non recuperati — conferma rimandata al poller`);
+      return;
+    }
+
+    // L'email di conferma parte PRIMA della spedizione: un errore Packlink non
+    // deve più impedire al cliente di ricevere la conferma.
+    if (resendConfigured()) {
+      const ok = await sendOrderConfirmation(fullOrder);
+      if (ok) markOrderConfirmed(orderId);
+      else console.warn(`${label}: conferma ordine ${orderId} NON inviata — ritenta il poller`);
+    }
+
     let packlinkRef = null;
     if (packlinkConfigured()) {
       packlinkRef = await createShipmentForOrder(fullOrder);
       if (packlinkRef) await savePacklinkReference(orderId, packlinkRef);
     }
-    if (resendConfigured()) {
-      await Promise.all([
-        sendOrderConfirmation(fullOrder),
-        sendMerchantAlert(fullOrder, packlinkRef),
-      ]);
-    }
+    if (resendConfigured()) await sendMerchantAlert(fullOrder, packlinkRef);
   }).catch(e => console.warn(`${label} background:`, e.message));
 }
 
@@ -503,9 +548,13 @@ app.get('/sitemap.xml', async (_req, res) => {
           body: JSON.stringify({
             limit: SW_PAGE_SIZE,
             page,
-            filter: [{ type: 'equals', field: 'active', value: true }],
-            associations: { seoUrls: {} },
-            includes: { product: ['id', 'updatedAt', 'createdAt', 'seoUrls', 'productNumber'] },
+            // Solo prodotti principali: le varianti figlie condividono lo slug
+            // (derivato dal nome) del genitore e finirebbero duplicate in sitemap.
+            filter: [
+              { type: 'equals', field: 'active', value: true },
+              { type: 'equals', field: 'parentId', value: null },
+            ],
+            includes: { product: ['id', 'name', 'translated', 'updatedAt', 'createdAt'] },
           }),
           signal: AbortSignal.timeout(8_000),
         });
@@ -543,9 +592,8 @@ app.get('/sitemap.xml', async (_req, res) => {
     const products = await fetchShopwareProducts();
 
     const productUrls = products.map(p => {
-      // Usa la SEO URL se disponibile, altrimenti l'ID
-      const seo = p.seoUrls?.find(s => s.isCanonical)?.seoPathInfo || p.seoUrls?.[0]?.seoPathInfo;
-      const path = seo ? `/product/${seo.replace(/\/$/, '')}` : `/product/${p.id}`;
+      const slug = slugify(p.translated?.name || p.name) || p.id;
+      const path = `/prodotti/${slug}`;
       const lastmod = (p.updatedAt || p.createdAt || '').split('T')[0] || now;
       return xmlUrl({ loc: `${SITE}${path}`, lastmod, changefreq: 'monthly', priority: '0.7' });
     });
@@ -595,6 +643,11 @@ app.listen(PORT, '0.0.0.0', () => {
 //  Per evitare duplicati usa due Set in memoria, inizializzati al boot con gli
 //  ordini già in quello stato (così non si inviano email retroattive per ordini
 //  esistenti prima del deploy).
+//
+//  Nello stesso ciclo girano anche la rete di sicurezza sulla conferma ordine e
+//  l'alert scorte (una sola email, solo quando l'elenco cambia).
+
+const LOW_STOCK_THRESHOLD = Number(process.env.LOW_STOCK_THRESHOLD || 5);
 
 function extractTracking(order) {
   const delivery = order.deliveries?.[0];
@@ -607,6 +660,8 @@ function extractTracking(order) {
 async function startOrderPoller() {
   // Carica stato persistito da disco (sopravvive ai riavvii del processo).
   const { shipped: sentShipped, cancelled: sentCancelled } = loadPollerState();
+  lastShipped = sentShipped;
+  lastCancelled = sentCancelled;
 
   console.log('Order poller: inizializzazione...');
   try {
@@ -616,6 +671,17 @@ async function startOrderPoller() {
     ]);
     alreadyShipped.forEach(o => sentShipped.add(o.id));
     alreadyCancelled.forEach(o => sentCancelled.add(o.id));
+
+    // Primo avvio in assoluto: gli ordini già esistenti vengono considerati
+    // "conferma già gestita", altrimenti la rete di sicurezza spedirebbe
+    // conferme retroattive a clienti che hanno ordinato prima di questo deploy.
+    if (!pollerState.seeded) {
+      const paid = await fetchRecentPaidOrders(48);
+      paid.forEach(o => pollerState.confirmed.add(o.id));
+      pollerState.seeded = true;
+      console.log(`Order poller: seed conferme — ${paid.length} ordini pagati esistenti marcati come già gestiti.`);
+    }
+    savePollerState(sentShipped, sentCancelled);
     console.log(`Order poller: seed ${sentShipped.size} shipped, ${sentCancelled.size} cancelled — pronto.`);
   } catch (e) {
     console.warn('Order poller: seed fallito (continuo comunque):', e.message);
@@ -659,20 +725,34 @@ async function startOrderPoller() {
         savePollerState(sentShipped, sentCancelled);
       }
 
-      // ── Low stock alert — ogni ora (throttle via Set) ──────────
-      const LOW_STOCK_KEY = `lowstock_${new Date().toISOString().slice(0, 13)}`; // hourly bucket
-      if (!sentCancelled.has(LOW_STOCK_KEY)) {
-        sentCancelled.add(LOW_STOCK_KEY);
-        const lowStock = await fetchLowStockProducts(5);
-        for (const p of lowStock) {
-          await sendMerchantLowStock({
-            name: p.name,
-            sku: p.productNumber,
-            stock: p.availableStock,
-            threshold: 5,
-          });
+      // ── Rete di sicurezza conferma ordine ─────────────────────
+      // Se il checkout non è riuscito a inviare la conferma (crash, riavvio,
+      // Resend giù, dettagli ordine non leggibili), la si recupera qui.
+      // Solo ordini PAGATI delle ultime 48h e mai confermati: niente invii
+      // retroattivi e niente doppioni.
+      if (resendConfigured()) {
+        for (const order of await fetchRecentPaidOrders(48)) {
+          if (pollerState.confirmed.has(order.id)) continue;
+          console.warn(`Poller: conferma mancante per l'ordine ${order.orderNumber} — invio di recupero`);
+          if (await sendOrderConfirmation(order)) markOrderConfirmed(order.id);
         }
-        if (lowStock.length > 0) savePollerState(sentShipped, sentCancelled);
+      }
+
+      // ── Low stock alert ────────────────────────────────────────
+      // UNA sola email riepilogativa, inviata solo quando l'elenco dei prodotti
+      // sotto soglia cambia. (Prima: una email per prodotto, ripetuta ogni ora —
+      // 4 prodotti diventavano ~96 email al giorno.)
+      const lowStock = await fetchLowStockProducts(LOW_STOCK_THRESHOLD);
+      const lowStockKey = lowStock.map(p => p.productNumber || p.id).sort().join('|');
+      if (lowStockKey !== pollerState.lowStockKey) {
+        if (lowStock.length > 0) {
+          await sendMerchantLowStock(
+            lowStock.map(p => ({ name: p.name, sku: p.productNumber, stock: p.availableStock })),
+            LOW_STOCK_THRESHOLD,
+          );
+        }
+        pollerState.lowStockKey = lowStockKey;
+        savePollerState(sentShipped, sentCancelled);
       }
     } catch (e) {
       console.warn('Order poller: errore nel ciclo:', e.message);

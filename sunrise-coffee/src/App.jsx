@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -35,6 +35,12 @@ function RouteFallback() {
   return <div style={{ minHeight: '60vh' }} aria-busy="true" />;
 }
 
+function ProductLegacyRedirect() {
+  const { slug } = useParams();
+  const { search } = useLocation();
+  return <Navigate to={`/prodotti/${slug}${search}`} replace />;
+}
+
 export default function App() {
   return (
     <>
@@ -43,7 +49,11 @@ export default function App() {
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
-            <Route path="/product/:slug" element={<ProductPage />} />
+            <Route path="/prodotti/:slug" element={<ProductPage />} />
+            {/* Vecchio URL /product/:slug (spesso un UUID, poco SEO): redirect
+                lato client verso /prodotti/:slug così i link già in giro
+                continuano a funzionare invece di rompersi in un 404. */}
+            <Route path="/product/:slug" element={<ProductLegacyRedirect />} />
             <Route path="/collections/:slug" element={<CollectionPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />

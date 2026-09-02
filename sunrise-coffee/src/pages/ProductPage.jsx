@@ -25,20 +25,34 @@ function priceValidUntil() {
   return `${new Date().getFullYear()}-12-31`;
 }
 
+/* Google mostra ~155-160 caratteri di meta description: un taglio secco a
+   160 finiva spesso a metà parola. Qui si taglia sull'ultimo spazio utile
+   e si chiude con "…" così il risultato di ricerca resta leggibile. */
+function truncateDescription(text, maxLen = 155) {
+  if (!text || text.length <= maxLen) return text;
+  const cut = text.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trim()}…`;
+}
+
 export default function ProductPage() {
   const { slug } = useParams();
   const { product, loading, error } = useProduct(slug);
 
   const productName = product?.translated?.name || product?.name || '';
   const productDesc = product?.translated?.description || product?.description || '';
-  const plainDesc = productDesc.replace(/<[^>]*>/g, '').slice(0, 160);
-  const productImage = product ? getProductImage(product) : undefined;
+  const plainDesc = truncateDescription(
+    productDesc.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  );
+  // 'large' per OG/Twitter/JSON-LD: un'anteprima social nitida vuole un'immagine
+  // grande, non la thumbnail 600px usata nelle card di listing.
+  const productImage = product ? getProductImage(product, 'large') : undefined;
   const price = product?.calculatedPrice?.unitPrice || product?.price?.[0]?.gross;
 
   const jsonLd = useMemo(() => {
     if (!product) return null;
 
-    const productUrl = `${COMPANY.siteUrl}/product/${slug}`;
+    const productUrl = `${COMPANY.siteUrl}/prodotti/${slug}`;
     const inStock = isProductAvailable(product);
     const sku = product.productNumber || product.id;
     const gtin = product.ean || undefined;
@@ -113,14 +127,14 @@ export default function ProductPage() {
   useSEO({
     title: productName || 'Prodotto',
     description: plainDesc || (productName ? `Scopri ${productName} — capperi artigianali dal Salento.` : undefined),
-    path: `/product/${slug}`,
+    path: `/prodotti/${slug}`,
     image: productImage,
     type: 'product',
     jsonLd,
     breadcrumbs: [
       { name: 'Home', path: '/' },
       { name: 'Tutti i Prodotti', path: '/collections/all' },
-      { name: productName || 'Prodotto', path: `/product/${slug}` },
+      { name: productName || 'Prodotto', path: `/prodotti/${slug}` },
     ],
   });
 

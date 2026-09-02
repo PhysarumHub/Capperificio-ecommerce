@@ -103,7 +103,20 @@
       "Bash(iptables -t nat -L DOCKER -n)",
       "Bash(iptables -L DOCKER -n)",
       "Bash(iptables -L DOCKER-USER -n)",
-      "Bash(tee /tmp/claude-0/-root-sunrise-coffee-sunrise-coffee/fe79ab78-12bb-4057-b248-b12eaf9e104b/scratchpad/rollback-image.txt)"
+      "Bash(tee /tmp/claude-0/-root-sunrise-coffee-sunrise-coffee/fe79ab78-12bb-4057-b248-b12eaf9e104b/scratchpad/rollback-image.txt)",
+      "Bash(docker port *)",
+      "Bash(awk '{print \"  \"$4}')",
+      "Bash(awk '{print \" listener: \"$4}')",
+      "Bash(sh)",
+      "Bash(systemctl is-active *)",
+      "Bash(tailscale version *)",
+      "Bash(tailscale status *)",
+      "Bash(tailscale ip *)",
+      "Bash(tailscale serve *)",
+      "Bash(systemctl is-enabled *)",
+      "Bash(tailscale dns *)",
+      "Bash(pkill -f \"vite --port 5199\")",
+      "Bash(SHOPWARE_ADMIN_API_URL=\"http://127.0.0.1:8090/api\" node ./.inspect-order.mjs)"
     ]
   }
 }

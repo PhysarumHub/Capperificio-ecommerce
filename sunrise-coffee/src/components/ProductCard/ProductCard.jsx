@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCartContext } from '../../context/ShopwareContext';
 import { getCartQuantity } from '../../lib/utils/availability';
+import { gtmAddToCart, gtmRemoveFromCart } from '../../lib/utils/gtm';
 import styles from './ProductCard.module.css';
 
 export default function ProductCard({
@@ -72,7 +73,7 @@ export default function ProductCard({
     }
   }, [cart, directCartId]);
 
-  const base = `/product/${slug || name.toLowerCase().replace(/\s+/g, '-')}`;
+  const base = `/prodotti/${slug || name.toLowerCase().replace(/\s+/g, '-')}`;
   const href = selectedVariant ? `${base}?variant=${encodeURIComponent(selectedVariant)}` : base;
 
   const handleVariantClick = (e, v) => {
@@ -103,6 +104,7 @@ export default function ProductCard({
     setQty(next);
     setShowControl(true);
     setShowTag(false);
+    gtmAddToCart({ id: directCartId, name, price }, 1);
     try {
       await addItem(directCartId, 1);
       scheduleCollapse(next);
@@ -123,7 +125,10 @@ export default function ProductCard({
       if (debounceRef.current) clearTimeout(debounceRef.current);
       if (directCartId && cart) {
         const lineItem = cart.lineItems?.find((li) => li.referencedId === directCartId);
-        try { if (lineItem) await removeItem(lineItem.id); } catch {}
+        if (lineItem) {
+          gtmRemoveFromCart({ id: directCartId, name, price }, lineItem.quantity ?? 1);
+          try { await removeItem(lineItem.id); } catch {}
+        }
       }
     } else {
       scheduleCollapse(next);
@@ -181,7 +186,7 @@ export default function ProductCard({
     return (
       <div className={styles.card}>
         <div className={`${styles.imgWrap} ${styles.imgSquare}`}>
-          {image ? <img src={image} alt={name} className={styles.productImg} loading="lazy" decoding="async" /> : children}
+          {image ? <img src={image} alt={name} className={styles.productImg} width="600" height="600" loading="lazy" decoding="async" /> : children}
           {control}
         </div>
         <div className={styles.merchFooter}>
@@ -201,7 +206,7 @@ export default function ProductCard({
           </span>
         )}
         {image ? (
-          <img src={image} alt={name} className={styles.productImg} loading="lazy" decoding="async" />
+          <img src={image} alt={name} className={styles.productImg} width="300" height="360" loading="lazy" decoding="async" />
         ) : (
           <div className={styles.imgPlaceholder} />
         )}
