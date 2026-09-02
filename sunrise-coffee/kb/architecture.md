@@ -1,119 +1,76 @@
-# Architettura — Capperificio E-commerce
+# Architettura
 
-## Stack
-
-| Layer | Tecnologia | Note |
-|-------|-----------|------|
-| Frontend | React 19 + Vite 7 | SPA, CSS Modules, React Router 7 |
-| Shopware | Shopware 6 (dockware/dev) | Backend headless, Store API |
-| Blog CMS | Strapi v5 (node:20-alpine) | PostgreSQL 16 |
-| Pagamenti | Stripe (Payment Element) | Express proxy per Stripe secret |
-| Animazioni | GSAP 3 + ScrollTrigger | StorySlider, AboutPage |
-| Deploy | Docker Compose + nginx + Traefik | VPS self-hosted, no serverless |
-
-## Servizi Docker
-
-```yaml
-capperificio-shopware    → dockware/dev:latest
-capperificio-frontend    → nginx (build React)
-capperificio-strapi      → node:20-alpine
-capperificio-strapi-db   → postgres:16-alpine
-```
-
-## Porte
-
-| Porta | Servizio |
-|-------|---------|
-| 5173 | Vite dev server |
-| 3001 | Frontend prod (nginx) / Express Stripe backend dev |
-| 8090 | Shopware HTTP |
-| 8453 | Shopware HTTPS |
-| 8891 | Adminer (DB) |
-| 9998 | Mailcatcher |
-| 1337 | Strapi CMS |
-
-## Variabili d'ambiente (.env)
-
-```env
-# Shopware
-VITE_SHOPWARE_API_URL=http://localhost:8090/store-api
-VITE_SHOPWARE_ACCESS_KEY=SWSC...
-
-# B2B
-VITE_B2B_CATEGORY_ID=<uuid>
-VITE_B2B_GROUP_NAME=B2B
-
-# Strapi
-STRAPI_DB_PASSWORD=
-STRAPI_APP_KEYS=key1,key2,key3,key4
-STRAPI_API_TOKEN_SALT=
-STRAPI_ADMIN_JWT_SECRET=
-STRAPI_JWT_SECRET=
-STRAPI_URL=http://localhost:1337
-VITE_STRAPI_URL=http://localhost:1337
-VITE_STRAPI_TOKEN=
-
-# Stripe
-STRIPE_SECRET_KEY=sk_...
-VITE_STRIPE_PUBLIC_KEY=pk_...
-```
-
-> Le variabili `VITE_*` vengono embedded nel bundle Vite al build time.
-
-## Vite Proxy (sviluppo)
-
-```js
-// vite.config.js
-'/store-api' → http://localhost:8080   // Shopware
-'/api'       → http://localhost:3001   // Express backend
-'/media'     → http://localhost:8080
-'/thumbnail' → http://localhost:8080
-```
-
-## Struttura cartelle
+## Servizi (docker-compose.yml)
 
 ```
-sunrise-coffee/
-├── src/
-│   ├── lib/
-│   │   ├── shopware-client.js     # createAPIClient + helper storeApiPost/Get/Patch/Delete
-│   │   ├── api/
-│   │   │   ├── products.js        # getProducts, getProductBySlug, getProductsByCategory, searchProducts, getProductVariants
-│   │   │   ├── cart.js            # getCart, addToCart, updateCartItem, removeCartItem, deleteCart
-│   │   │   ├── checkout.js        # getPaymentMethods, getShippingMethods, updateContext, placeOrder
-│   │   │   ├── customer.js        # login, logout, register, getCustomer, getOrders, getCountries, getSalutations, submitReview
-│   │   │   └── categories.js      # getCategories, getNavigation, getCategoryBySlug
-│   │   └── utils/
-│   │       ├── image.js           # helper URL immagini Shopware
-│   │       └── price.js           # formattazione prezzi
-│   ├── context/
-│   │   └── ShopwareContext.jsx    # CartContext + CustomerContext (ShopwareProvider)
-│   ├── hooks/                     # vedi frontend-map.md
-│   ├── components/                # vedi frontend-map.md
-│   ├── pages/                     # vedi frontend-map.md
-│   └── styles/
-│       ├── global.css
-│       └── animations.module.css
-├── scripts/                       # vedi shopware-setup.md
-├── strapi/                        # vedi strapi.md
-├── server.js                      # Express — solo endpoint Stripe
-├── docker-compose.yml
-├── nginx.conf
-└── kb/                            # questa knowledge base
+                         Traefik (TLS, dominio pubblico)
+                                │
+                                ▼
+                    ┌────────────────────┐
+                    │   frontend (nginx)  │  127.0.0.1:3001 → Traefik
+                    │   + Express :3001    │
+                    └─────────┬───────────┘
+              ┌───────────────┼──────────────────┐
+              ▼                                   ▼
+    ┌──────────────────┐               ┌──────────────────┐
+    │ shopware (dockware)│               │  strapi (+ postgres)│
+    │ 127.0.0.1:8090      │               │ 127.0.0.1:1337       │
+    └──────────────────┘               └──────────────────┘
 ```
 
-## Comandi npm
+- **`frontend`** è l'unico container esposto pubblicamente (via Traefik). Al suo
+  interno gira **nginx** (porta 80) che fa da reverse proxy verso:
+  - i file statici del build Vite (`dist/`)
+  - `/store-api` → container `shopware` (proxy diretto, con rate limit)
+  - `/media`, `/thumbnail` → immagini prodotto Shopware
+  - `/api` e `/sitemap.xml` → **Express** in ascolto su `127.0.0.1:3001` nello
+    stesso container (vedi [backend-api.md](./backend-api.md))
+- **`shopware`** (immagine `dockware/dev`) è il commerce backend: prodotti,
+  carrello, ordini, clienti, spedizioni. Le sue porte (admin, DB, mailcatcher)
+  sono bindate solo su `127.0.0.1` del server — raggiungibili solo via tunnel
+  SSH, mai da internet.
+- **`strapi`** + **`strapi-db`** (Postgres) gestiscono il blog. Anche qui,
+  porta bindata su `127.0.0.1`: il frontend non ci parla direttamente, passa
+  dal proxy `/api/strapi` di Express (che allega il token server-side).
+- **Traefik** (esterno a questo repo, gira sul VPS) termina TLS per
+  `capperificiocaro.com` / `www.capperificiocaro.com` e instrada verso il
+  container `frontend`, unica porta 127.0.0.1:3001 esposta con label Traefik.
 
-```bash
-npm run dev      # Express (3001) + Vite (5173) in parallelo
-npm run build    # build produzione → dist/
-npm run preview  # anteprima build
-npm run backup   # backup Shopware (scripts/backup-shopware.sh)
-npm run restore  # restore Shopware
-```
+## Perché Express dentro al container `frontend` (e non un servizio a parte)
 
-## Context token (sw-context-token)
+`Dockerfile` fa un build multi-stage: stage 1 builda il bundle Vite, stage 2
+mette insieme nginx + Node nello stesso container runtime, avviati da
+`docker-entrypoint.sh`. Nginx serve i file statici e fa da reverse proxy verso
+Express in locale (`127.0.0.1:3001`, non esposto fuori dal container). Questo
+tiene un solo container pubblico invece di due, e nginx fa già da TLS/caching
+layer davanti a Express.
 
-Shopware usa un context token salvato in cookie `sw-context-token` (365 giorni, SameSite=Lax).
-Il client lo aggiorna automaticamente via hook `onContextChanged`.
-Gestisce sessione carrello e utente in un unico token.
+## Flusso dati principali
+
+- **Catalogo/carrello**: il browser parla direttamente con Shopware Store API
+  tramite `@shopware/api-client` (vedi [frontend.md](./frontend.md) e
+  [shopware.md](./shopware.md)), passando dal proxy nginx `/store-api`.
+- **Checkout/pagamento**: il browser non crea mai l'ordine da solo. Chiama
+  `/api/checkout/*` su Express, che ricalcola il totale dal carrello reale su
+  Shopware, crea il PaymentIntent Stripe, e solo dopo verifica del pagamento
+  crea l'ordine via Admin API. Dettagli in [backend-api.md](./backend-api.md).
+- **Blog**: il browser chiama `/api/strapi/articles*` (mai Strapi
+  direttamente); Express fa da proxy autenticato e whitelista solo le rotte
+  `articles`.
+- **Post-ordine**: un poller interno a Express controlla ogni 2 minuti lo
+  stato ordini su Shopware (spedito/cancellato) per inviare email via Resend,
+  e crea spedizioni Packlink in background dopo ogni ordine pagato.
+
+## Dove sono le "sorgenti di verità"
+
+- **Prodotti, prezzi, stock, spedizioni, clienti** → Shopware admin (non nel
+  codice). Il frontend legge sempre dati live dalla Store API.
+- **Rotte valide della SPA** → `src/App.jsx` **e** la `map $uri $is_spa_route`
+  in `nginx.conf` devono restare allineate: nginx usa quella mappa per decidere
+  se un path sconosciuto è una rotta client-side valida (200 → shell React) o
+  un vero 404. Se aggiungi una rotta in `App.jsx` senza aggiornare `nginx.conf`,
+  quella pagina risponde 404 anche se il componente esiste.
+- **Contenuto blog** → Strapi (content type `Article`, vedi
+  [strapi.md](./strapi.md)).
+- **Dati legali azienda** (ragione sociale, P.IVA, indirizzo) → `src/data/company.js`,
+  fonte unica per footer, pagine legali e JSON-LD.
