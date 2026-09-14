@@ -3,15 +3,30 @@ import { storeApiPost, storeApiPatch } from '../shopware-client';
 /** Legge il context token corrente della sessione Shopware. */
 export { getContextToken } from '../shopware-client';
 
-async function postJson(url, body) {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Errore di rete');
-  return data;
+async function postJson(url, body, { retries = 2 } = {}) {
+  let lastErr;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Errore di rete');
+      return data;
+    } catch (e) {
+      lastErr = e;
+      // Ritenta solo sugli errori di RETE (fetch che rifiuta con TypeError: la
+      // connessione keep-alive muore mentre l'utente è sul passaggio carta di
+      // Stripe). Gli errori applicativi del server — incluso il 409 "ordine già
+      // elaborato" — non sono TypeError e non vanno ritentati.
+      const isNetworkError = e instanceof TypeError;
+      if (!isNetworkError || attempt === retries) throw e;
+      await new Promise((resolve) => { setTimeout(resolve, 500 * (attempt + 1)); });
+    }
+  }
+  throw lastErr;
 }
 
 // ── Pagamento unificato (importo, registrazione e verifica lato server) ─────────

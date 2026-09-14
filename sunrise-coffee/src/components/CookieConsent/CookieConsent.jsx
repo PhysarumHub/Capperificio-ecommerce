@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import styles from './CookieConsent.module.css';
+import { gtmReplayPendingEvents } from '../../lib/utils/gtm';
 
 const STORAGE_KEY = 'capperificio_consent';
 
@@ -67,6 +68,10 @@ export default function CookieConsent() {
   const save = useCallback((prefs) => {
     setConsent(prefs);
     updateConsentSignals(prefs);
+    // Rispara gli eventi (page_view, view_item, ...) accumulati prima della
+    // scelta dell'utente: senza questo, GA4/Meta perdono la prima interazione
+    // finché la pagina non viene ricaricata.
+    if (prefs.analytics || prefs.marketing) gtmReplayPendingEvents();
     if (!prefs.analytics && !prefs.marketing) purgeTrackingCookies();
     document.dispatchEvent(new CustomEvent('capperificio:consent', { detail: prefs }));
     setVisible(false);

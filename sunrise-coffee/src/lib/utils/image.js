@@ -14,6 +14,8 @@
  * Shopware con il dominio pubblico e gli URL vanno lasciati assoluti.
  */
 
+import { slugify } from './slug.js';
+
 // Ricava l'hostname Shopware dalla env var per proxare solo i path di quel server
 const _shopwareApiUrl = import.meta.env.VITE_SHOPWARE_API_URL || '';
 const _shopwareHost   = _shopwareApiUrl
@@ -26,6 +28,10 @@ function _shouldProxy(url) {
     return (
       hostname === 'localhost'   ||
       hostname === '127.0.0.1'  ||
+      // Hostname a etichetta singola (senza punto) = nome di servizio Docker
+      // interno, es. "shopware": Shopware a volte genera gli URL media così
+      // (APP_URL interno) e il browser non li può raggiungere → mixed content.
+      !hostname.includes('.')   ||
       (_shopwareHost && hostname === _shopwareHost)
     );
   } catch {
@@ -112,13 +118,13 @@ export function getProductHoverImage(product, size = 'medium') {
 }
 
 /**
- * Get the product slug from SEO URLs or generate from name.
+ * Get the product slug for URLs (/prodotti/:slug): derivato dal nome
+ * prodotto, non da Shopware seoUrls (il negozio è headless e su questo
+ * catalogo seoUrls è sempre vuoto — vedi kb/shopware.md). Uno slug
+ * leggibile serve alla SEO; il fallback sull'ID copre solo il caso limite
+ * di un prodotto senza nome.
  */
 export function getProductSlug(product) {
-  if (product?.seoUrls?.length) {
-    const seo = product.seoUrls.find((u) => u.isCanonical) || product.seoUrls[0];
-    return seo.seoPathInfo?.replace(/^\/?(detail\/)?/, '') || product.id;
-  }
-  // Use the product ID as slug — always findable, no dependency on seoUrls
-  return product?.id || '';
+  const name = product?.translated?.name || product?.name;
+  return name ? slugify(name) : (product?.id || '');
 }

@@ -5,7 +5,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useCartContext, useCustomerContext } from '../context/ShopwareContext';
 import { useCheckoutForm, CONTACT_FIELDS, ADDRESS_FIELDS } from '../hooks/useCheckoutForm';
 import { useSEO } from '../hooks/useSEO';
-import { gtmBeginCheckout, gtmAddShippingInfo, gtmPurchase } from '../lib/utils/gtm';
+import { gtmAddShippingInfo, gtmAddPaymentInfo, gtmPurchase } from '../lib/utils/gtm';
 import {
   getShippingMethods, createCheckoutIntent, confirmCheckout, confirmFreeCheckout,
 } from '../lib/api/checkout';
@@ -177,15 +177,23 @@ export default function CheckoutPage() {
     values.company, values.vatId, selectedShipping,
   ]), [values, selectedShipping]);
 
-  /** Dati di fatturazione già raccolti dal form, passati a Stripe alla conferma. */
+  /**
+   * Dati di fatturazione già raccolti dal form, passati a Stripe alla conferma.
+   * Con `fields.billingDetails: 'never'` sul PaymentElement, Stripe pretende che
+   * a `confirmPayment` arrivino TUTTI i campi, anche quelli che non usiamo: se
+   * `phone` o `address.line2`/`address.state` mancano, `confirmPayment` lancia
+   * IntegrationError e il pagamento resta bloccato su "Elaborazione…".
+   */
   const billingDetails = useMemo(() => ({
     name: `${values.firstName} ${values.lastName}`.trim(),
     email: values.email,
-    ...(values.phone ? { phone: values.phone } : {}),
+    phone: values.phone || '',
     address: {
       line1: joinStreetHouseNumber(values.street, values.houseNumber),
+      line2: '',
       postal_code: values.zipcode,
       city: values.city,
+      state: '',
       country: values.countryIso,
     },
   }), [values]);
@@ -277,9 +285,9 @@ export default function CheckoutPage() {
     }
 
     setPaymentOpen(true);
-    gtmBeginCheckout(cart?.lineItems ?? [], totalPrice);
     const method = availableMethods.find((m) => m.id === selectedShipping);
     if (method) gtmAddShippingInfo(method.translated?.name || method.name, totalPrice);
+    gtmAddPaymentInfo(null, cart?.lineItems ?? [], totalPrice);
 
     requestAnimationFrame(() => {
       paymentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -327,6 +335,13 @@ export default function CheckoutPage() {
       // 409 = ordine già creato (es. dal webhook Stripe): è un successo, non un errore.
       if (/già elaborato|already/i.test(e?.message || '')) {
         await finalize(null, paymentIntentId);
+        return;
+      }
+      // Errore di rete DOPO che Stripe ha già incassato: l'ordine lo crea il
+      // webhook (rete di sicurezza). Niente schermata d'errore — mostriamo
+      // "pagamento in elaborazione", l'email di conferma parte comunque.
+      if (e instanceof TypeError) {
+        setPaymentProcessing(true);
         return;
       }
       setOrderError(e.message || 'Errore durante il completamento ordine. Riprova.');

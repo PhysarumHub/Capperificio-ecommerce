@@ -41,6 +41,10 @@ RUN npm ci --omit=dev
 COPY server.js ./
 COPY api/ ./api/
 
+# Utility condivisa frontend/backend per lo slug SEO dei prodotti
+# (server.js la importa per generare /prodotti/:slug nella sitemap.xml)
+COPY src/lib/utils/slug.js ./src/lib/utils/slug.js
+
 # Frontend buildato
 COPY --from=builder /app/dist ./dist
 

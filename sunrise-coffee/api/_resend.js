@@ -213,10 +213,15 @@ function divider() {
 // ─────────────────────────────────────────────────────────────────────────────
 //  1. CONFERMA ORDINE → cliente
 // ─────────────────────────────────────────────────────────────────────────────
+//  Ritorna true se l'email è stata accettata da Resend, false altrimenti:
+//  il chiamante deve poter ritentare (la conferma ordine non può andare persa).
 export async function sendOrderConfirmation(order) {
-  if (!client) return;
+  if (!client) return false;
   const to = order.orderCustomer?.email;
-  if (!to) return console.warn('Resend sendOrderConfirmation: email cliente mancante');
+  if (!to) {
+    console.warn('Resend sendOrderConfirmation: email cliente mancante');
+    return false;
+  }
   const num = order.orderNumber || order.id;
   const firstName = order.orderCustomer?.firstName || 'Cliente';
   const delivery = order.deliveries?.[0]?.shippingOrderAddress;
@@ -253,7 +258,7 @@ export async function sendOrderConfirmation(order) {
       Per qualsiasi domanda scrivi a <a href="mailto:ordini@capperificiocaro.com" style="color:${C.green};">ordini@capperificiocaro.com</a>
     </p>`;
 
-  await _send({
+  return _send({
     to,
     subject: `Ordine #${num} confermato — Capperificio di Racale`,
     html: layout('Il tuo ordine è confermato', 'Conferma ordine', content, { tag: `#${num}` }),
@@ -623,41 +628,86 @@ export async function sendMerchantAlert(order, packlinkRef = null) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  9. SCORTE IN ESAURIMENTO → merchant
-//  product = { name, sku, stock, threshold }
+//  products = [{ name, sku, stock }]  — UNA sola email riepilogativa per tutti
+//  i prodotti sotto soglia (mai una email per prodotto: vedi server.js, che la
+//  invia solo quando l'elenco dei prodotti sotto soglia cambia davvero).
 // ─────────────────────────────────────────────────────────────────────────────
-export async function sendMerchantLowStock(product) {
+export async function sendMerchantLowStock(products, threshold = null) {
   if (!client || !MERCHANT_TO) return;
+
+  const list = (Array.isArray(products) ? products : [products]).filter(Boolean);
+  if (!list.length) return;
+
+  const rows = list.map(p => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid ${C.mint};font-size:14px;color:${C.dark};line-height:1.4;">
+        ${p.name || 'Prodotto'}
+        ${p.sku ? `<br><span style="font-size:11px;color:${C.mid};">SKU ${p.sku}</span>` : ''}
+      </td>
+      <td style="padding:10px 0;border-bottom:1px solid ${C.mint};font-size:14px;text-align:right;white-space:nowrap;font-weight:700;color:${(p.stock ?? 0) <= 0 ? '#B03030' : C.warning};">
+        ${p.stock ?? '—'} pz
+      </td>
+    </tr>`).join('');
+
+  const titolo = list.length === 1
+    ? '1 prodotto in esaurimento'
+    : `${list.length} prodotti in esaurimento`;
 
   const content = `
     <p style="margin:0 0 24px;font-size:15px;line-height:1.8;color:${C.mid};">
-      Un prodotto sta esaurendo le scorte.
+      ${list.length === 1
+        ? 'Un prodotto è sceso sotto la soglia di scorta.'
+        : `${list.length} prodotti sono scesi sotto la soglia di scorta.`}
+      ${threshold ? `<br>Soglia di allerta: <strong>${threshold} unità</strong>.` : ''}
     </p>
 
-    ${warnBlock(`
-      <strong>${product.name || 'Prodotto'}</strong>${product.sku ? ` (SKU: ${product.sku})` : ''}<br>
-      Scorte rimanenti: <strong>${product.stock ?? '—'} unità</strong><br>
-      ${product.threshold ? `Soglia di allerta: ${product.threshold} unità` : ''}
-    `)}
+    ${label('Prodotti sotto soglia')}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <thead>
+        <tr>
+          <th style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};text-align:left;padding-bottom:8px;border-bottom:1.5px solid ${C.border};">Prodotto</th>
+          <th style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};text-align:right;padding-bottom:8px;border-bottom:1.5px solid ${C.border};">Rimanenti</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
 
-    ${cta('Gestisci le scorte in Shopware', `${SHOPWARE_URL}/admin#/sw/product/list`)}`;
+    ${cta('Gestisci le scorte in Shopware', `${SHOPWARE_URL}/admin#/sw/product/list`)}
+
+    <p style="margin:24px 0 0;font-size:11px;line-height:1.7;color:${C.mid};text-align:center;">
+      Riceverai una nuova email solo quando l'elenco dei prodotti sotto soglia cambia.
+    </p>`;
 
   await _send({
     to: MERCHANT_TO,
-    subject: `⚠ Scorte in esaurimento: ${product.name || 'Prodotto'}`,
-    html: layout('Scorte in esaurimento', 'Alert inventario', content),
+    subject: `⚠ Scorte in esaurimento — ${titolo}`,
+    html: layout(titolo, 'Alert inventario', content),
     tag: 'low-stock',
   });
 }
 
 // ── Invio centralizzato — best-effort, non lancia mai ─────────────────────────
+//  Ritorna true solo se Resend ha accettato l'email. Il chiamante può quindi
+//  decidere se ritentare più tardi (vedi la rete di sicurezza in server.js):
+//  senza questo valore un errore Resend restava invisibile e l'email era persa.
+//  3 tentativi con backoff: copre i 429/5xx transitori di Resend.
+const SEND_RETRIES = 3;
+
 async function _send({ to, subject, html, tag }) {
-  try {
-    const { data, error } = await client.emails.send({ from: FROM, to, subject, html,
-      tags: tag ? [{ name: 'type', value: tag }] : [],
-    });
-    if (error) throw new Error(error.message);
-    console.log(`Resend ✓ [${tag || '—'}] → ${to} (id: ${data?.id})`);
-  } catch (e) {
-    console.error(`Resend ✗ [${tag || '—'}] → ${to}:`, e.message);
+  for (let attempt = 1; attempt <= SEND_RETRIES; attempt++) {
+    try {
+      const { data, error } = await client.emails.send({ from: FROM, to, subject, html,
+        tags: tag ? [{ name: 'type', value: tag }] : [],
+      });
+      if (error) throw new Error(error.message);
+      console.log(`Resend ✓ [${tag || '—'}] → ${to} (id: ${data?.id})`);
+      return true;
+    } catch (e) {
+      const last = attempt === SEND_RETRIES;
+      console.error(`Resend ✗ [${tag || '—'}] → ${to} (tentativo ${attempt}/${SEND_RETRIES}):`, e.message);
+      if (last) return false;
+      await new Promise(r => setTimeout(r, 2000 * attempt));
+    }
   }
+  return false;
 }
