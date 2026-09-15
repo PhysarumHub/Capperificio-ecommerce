@@ -485,12 +485,6 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         <p className={styles.stockNote}>Disponibilità massima raggiunta: {maxQty} pezzi.</p>
       )}
       {cartError && <p className={styles.cartError}>{cartError}</p>}
-
-      <ul className={styles.trustList}>
-        <li>Lavorato Artigianalmente</li>
-        <li>Spedizione Gratuita sopra €50</li>
-        <li>Consegna in 24–48h</li>
-      </ul>
     </>
   );
 
