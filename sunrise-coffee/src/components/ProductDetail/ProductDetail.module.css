@@ -127,6 +127,8 @@
 }
 .sectionTitle::before { content: '• '; }
 
+.sectionTitleSpaced { margin-top: 36px; }
+
 /* Brew accordion */
 .brewAccordion { border-top: 1px solid var(--color-border); }
 .brewItem { border-bottom: 1px solid var(--color-border); }

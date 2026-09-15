@@ -8,6 +8,7 @@ import { formatPrice } from '../../lib/utils/price';
 import { getProductImage, getProductSlug, proxyUrl } from '../../lib/utils/image';
 import { getProductVariants } from '../../lib/api/products';
 import { getCatalogEntry } from '../../data/capperificioCatalog';
+import { matchCalibro, CALIBRO_EXPLAINER_HTML, buildCalibroCompareHtml } from '../../data/calibriGuide';
 import {
   resolveProductSoldOut,
   resolveListingSoldOut,
@@ -41,6 +42,11 @@ const BREW_CUSTOM_FIELDS = [
 ];
 
 const B2B_CATEGORY_ID = import.meta.env.VITE_B2B_CATEGORY_ID || null;
+
+// I bullet del catalogo usano **grassetto** in stile markdown.
+function mdBoldToHtml(text) {
+  return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+}
 
 function mapRelatedProduct(product) {
   const price = product.calculatedPrice || product.price?.[0];
@@ -97,6 +103,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const [size, setSize] = useState('250g');
   const [grind, setGrind] = useState('Beans');
   const [openBrew, setOpenBrew] = useState(null);
+  const [openCalibroSection, setOpenCalibroSection] = useState(null);
   const [cartQty, setCartQty] = useState(0);
   const [showControl, setShowControl] = useState(false);
   const [showTag, setShowTag] = useState(false);
@@ -298,6 +305,13 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   // description / properties / customFields popolati per questo prodotto.
   const catalogEntry = useMemo(() => getCatalogEntry(shopwareProduct), [shopwareProduct]);
 
+  // Calibro attivo per la "Guida al calibro": segue la variante selezionata
+  // quando il prodotto ha un configuratore, altrimenti il prodotto stesso.
+  const calibroLabel = activeVariant?.customFields?.capperificio_calibro
+    || shopwareProduct?.customFields?.capperificio_calibro
+    || catalogEntry?.calibro;
+  const activeCalibro = matchCalibro(calibroLabel);
+
   const productName = hasApiProduct
     ? (shopwareProduct.translated?.name || shopwareProduct.name)
     : FALLBACK_PRODUCT.name;
@@ -323,13 +337,24 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     .filter(Boolean);
 
   const PROPERTY_ORDER = ['Origine', 'Ingredienti', 'Calibro', 'Tipo', 'Formato', 'Peso netto', 'Note di gusto', 'Ideale per'];
-  const properties = hasApiProduct ? (shopwareProduct.properties || []) : [];
-  const groupedProperties = properties.reduce((acc, prop) => {
+  const parentProperties = hasApiProduct ? (shopwareProduct.properties || []) : [];
+  const variantProperties = (hasConfigurator && activeVariant?.properties) || [];
+  const groupedProperties = {};
+  for (const prop of parentProperties) {
     const groupName = prop.group?.translated?.name || prop.group?.name || 'Other';
-    if (!acc[groupName]) acc[groupName] = [];
-    acc[groupName].push(prop.translated?.name || prop.name);
-    return acc;
-  }, {});
+    (groupedProperties[groupName] ||= []).push(prop.translated?.name || prop.name);
+  }
+  // Le proprietà della variante selezionata (es. Calibro, Peso netto, Note di
+  // gusto) sostituiscono quelle del padre sullo stesso gruppo, non si sommano:
+  // cambiano da una variante all'altra, non sono cumulative.
+  const variantGroupNames = new Set(
+    variantProperties.map((prop) => prop.group?.translated?.name || prop.group?.name || 'Other')
+  );
+  variantGroupNames.forEach((g) => delete groupedProperties[g]);
+  for (const prop of variantProperties) {
+    const groupName = prop.group?.translated?.name || prop.group?.name || 'Other';
+    (groupedProperties[groupName] ||= []).push(prop.translated?.name || prop.name);
+  }
   const sortedProperties = [
     ...PROPERTY_ORDER.filter((g) => groupedProperties[g]),
     ...Object.keys(groupedProperties).filter((g) => !PROPERTY_ORDER.includes(g)),
@@ -495,6 +520,14 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         <div className={styles.colLeft}>
           <p className={styles.description} dangerouslySetInnerHTML={{ __html: productDescription }} />
 
+          {catalogEntry?.bullets?.length > 0 && (
+            <ul className={styles.bullets}>
+              {catalogEntry.bullets.map((bullet, i) => (
+                <li key={i} dangerouslySetInnerHTML={{ __html: mdBoldToHtml(bullet) }} />
+              ))}
+            </ul>
+          )}
+
           {techRows.length > 0 ? (
             <table className={styles.infoTable}>
               <tbody>
@@ -526,7 +559,32 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
             </table>
           )}
 
-          <div className={styles.sectionTitle}>Suggerimenti d'uso</div>
+          {activeCalibro && (
+            <>
+              <div className={styles.sectionTitle}>Guida al calibro</div>
+              <div className={styles.brewAccordion}>
+                {[
+                  { name: 'Cos’è il calibro', html: CALIBRO_EXPLAINER_HTML },
+                  { name: 'I calibri Capperificio Caro a confronto', html: buildCalibroCompareHtml(activeCalibro.key) },
+                ].map(({ name, html }) => {
+                  const isOpen = openCalibroSection === name;
+                  return (
+                    <div key={name} className={styles.brewItem}>
+                      <button className={styles.brewToggle} onClick={() => setOpenCalibroSection(isOpen ? null : name)}>
+                        <span>{name}</span>
+                        <span className={`${styles.brewIcon} ${isOpen ? styles.brewIconOpen : ''}`}>+</span>
+                      </button>
+                      {isOpen && (
+                        <div className={styles.brewContent} dangerouslySetInnerHTML={{ __html: html }} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          <div className={`${styles.sectionTitle} ${activeCalibro ? styles.sectionTitleSpaced : ''}`}>Suggerimenti d'uso</div>
 
           <div className={styles.brewAccordion}>
             {(() => {

@@ -181,10 +181,11 @@ export async function getProductVariants(parentId) {
     filter: [{ type: 'equals', field: 'parentId', value: parentId }],
     associations: {
       options: { associations: { group: {} } },
+      properties: { associations: { group: {} } },
     },
     includes: {
       product: [
-        'id', 'parentId', 'productNumber', 'options', 'calculatedPrice', 'customFields',
+        'id', 'parentId', 'productNumber', 'options', 'properties', 'calculatedPrice', 'customFields',
         ...STOCK_FIELDS,
       ],
     },
