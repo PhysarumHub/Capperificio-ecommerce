@@ -234,6 +234,13 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     ) || null;
   }, [variants, selectedOptions]);
 
+  // Torna alla prima immagine quando cambia la variante: lo slider mobile
+  // potrebbe restare su un indice fuori range se la nuova variante ha meno
+  // immagini della precedente.
+  useEffect(() => {
+    setImgIndex(0);
+  }, [activeVariant?.id]);
+
   // Se l'utente non ha chiesto una variante specifica (?variant=…) e quella di
   // default risulta esaurita, spostiamo la selezione sulla prima acquistabile:
   // atterrare su "Esaurito" quando altri formati sono disponibili è fuorviante.
@@ -327,10 +334,14 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         || 0)
     : FALLBACK_PRICES[size];
 
-  // Foto: solo i media presenti su Shopware, ordinati per `position` così la
-  // prima immagine mostrata è la prima caricata su Shopware (nessun fallback
-  // a catalogo locale o placeholder).
-  const productImages = (shopwareProduct?.media || [])
+  // Foto: se la variante selezionata ha una propria galleria la usiamo,
+  // altrimenti ricadiamo su quella del prodotto padre. Ordinate per
+  // `position` così la prima immagine mostrata è la prima caricata su
+  // Shopware (nessun fallback a catalogo locale o placeholder).
+  const mediaSource = (hasConfigurator && activeVariant?.media?.length)
+    ? activeVariant.media
+    : (shopwareProduct?.media || []);
+  const productImages = mediaSource
     .slice()
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
     .map((m) => proxyUrl(m.media?.url || m.url))

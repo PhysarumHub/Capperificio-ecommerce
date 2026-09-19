@@ -182,10 +182,13 @@ export async function getProductVariants(parentId) {
     associations: {
       options: { associations: { group: {} } },
       properties: { associations: { group: {} } },
+      cover: { associations: { media: {} } },
+      media: { associations: { media: {} } },
     },
     includes: {
       product: [
         'id', 'parentId', 'productNumber', 'options', 'properties', 'calculatedPrice', 'customFields',
+        'cover', 'media',
         ...STOCK_FIELDS,
       ],
     },
