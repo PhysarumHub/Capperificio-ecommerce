@@ -92,7 +92,13 @@ export function groupVariants(rawList) {
   }
 
   const result = standalone.map((p) => {
-    const siblings = groups[p.id] || [];
+    // `p.children` (associazione richiesta in getProducts) è la fonte di
+    // verità: a differenza dei siblings ricavati scansionando la lista flat
+    // (che riflette solo quello che è entrato in questa pagina/limit),
+    // riporta sempre le varianti REALMENTE esistenti su Shopware in questo
+    // momento — niente varianti fantasma cancellate ma ancora "configurate".
+    const realChildren = p.children?.length ? p.children : null;
+    const siblings = realChildren || groups[p.id] || [];
     return siblings.length ? enrich(p, siblings) : p;
   });
 
@@ -107,17 +113,24 @@ export function groupVariants(rawList) {
 }
 
 /**
- * Chip labels for a card: `configuratorSettings` (always complete, comes from
- * the parent) wins over `_allVariantOptions` (only the children present in the
- * response) and over the child's own `options`.
+ * Chip labels for a card: `_allVariantOptions` (built from the product's real
+ * `children` association, see `enrich`) wins over `configuratorSettings`.
+ *
+ * `configuratorSettings` lists the options a product was CONFIGURED with, on
+ * the parent, and Shopware does not always clean it up when a variant child
+ * is later deleted — trusting it unconditionally shows chips for variants
+ * that no longer exist (clicking them can't resolve a cart id or an image).
+ * `_allVariantOptions` reflects the children Shopware returns right now, so
+ * it's used first; `configuratorSettings` is only a fallback for the rare
+ * case where we have no child data at all (e.g. a transient API hiccup).
  */
 export function resolveVariantOptions(product) {
+  if (product._allVariantOptions?.length) return product._allVariantOptions;
+
   const fromConfigurator = product.configuratorSettings
     ?.map((s) => s.option?.translated?.name || s.option?.name)
     .filter(Boolean);
   if (fromConfigurator?.length) return [...new Set(fromConfigurator)];
-
-  if (product._allVariantOptions?.length) return product._allVariantOptions;
 
   const fromOptions = product.options
     ?.map((o) => o.translated?.name || o.name)

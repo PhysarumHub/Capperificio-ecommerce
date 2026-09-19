@@ -242,11 +242,15 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   }, [activeVariant?.id]);
 
   // Se l'utente non ha chiesto una variante specifica (?variant=…) e quella di
-  // default risulta esaurita, spostiamo la selezione sulla prima acquistabile:
-  // atterrare su "Esaurito" quando altri formati sono disponibili è fuorviante.
+  // default risulta esaurita — o non corrisponde più a nessuna variante reale
+  // (configuratorSettings su Shopware può restare disallineato quando una
+  // variante viene cancellata: il default selezionato può "puntare" a un
+  // figlio che non esiste più) — spostiamo la selezione sulla prima
+  // acquistabile: atterrare su "Esaurito" o su un prodotto fantasma quando
+  // altri formati sono disponibili è fuorviante.
   useEffect(() => {
     if (!variantsLoaded || !hasConfigurator || searchParams.get('variant')) return;
-    if (!activeVariant || isProductAvailable(activeVariant)) return;
+    if (activeVariant && isProductAvailable(activeVariant)) return;
     const fallback = variants.find(isProductAvailable);
     if (!fallback) return;
     const next = {};
@@ -426,10 +430,20 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
 
       {hasApiProduct && hasConfigurator && (
         <div className={styles.optionGroups}>
-          {Object.entries(configuratorGroups).map(([groupName, options]) => (
+          {Object.entries(configuratorGroups).map(([groupName, options]) => {
+            // Una volta caricate le varianti reali, nascondi le opzioni
+            // "configurate" su Shopware ma senza più un prodotto figlio
+            // corrispondente (variante cancellata, configuratorSettings non
+            // ripulito) — mostrarle come chip normali porta a un add-to-cart
+            // rotto e a un'immagine che non cambia mai.
+            const visibleOptions = variantsLoaded
+              ? options.filter((opt) => opt.id in optionAvailability)
+              : options;
+            if (!visibleOptions.length) return null;
+            return (
             <div key={groupName} className={styles.optionGroup}>
               <div className={styles.optionChips}>
-                {options.map((opt) => {
+                {visibleOptions.map((opt) => {
                   // Marcata esaurita solo quando le varianti sono caricate,
                   // così non lampeggia durante il fetch.
                   const optSoldOut = variantsLoaded && optionAvailability[opt.id] === false;
@@ -458,7 +472,8 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
                 })}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

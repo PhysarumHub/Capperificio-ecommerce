@@ -31,6 +31,19 @@ export async function getProducts({ page = 1, limit = 24, filters = [], sort = [
       configuratorSettings: {
         associations: { option: { associations: { group: {} } } },
       },
+      // Varianti figlie REALMENTE esistenti del prodotto padre. A differenza
+      // di `configuratorSettings` (che elenca le opzioni configurate e può
+      // restare disallineato se una variante viene cancellata da Shopware
+      // senza pulire la configurazione) e della scansione della lista flat
+      // (limitata dal `limit` della query), questa associazione torna sempre
+      // i figli correnti del prodotto — vedi lib/utils/variants.js.
+      children: {
+        associations: {
+          options: { associations: { group: {} } },
+          cover: { associations: { media: { associations: { thumbnails: {} } } } },
+          media: { associations: { media: { associations: { thumbnails: {} } } } },
+        },
+      },
     },
   };
 
