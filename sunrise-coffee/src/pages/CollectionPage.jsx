@@ -223,6 +223,8 @@ function mapShopwareProduct(product) {
     options:        resolveVariantOptions(product),
     variantMap:     product._variantMap || {},
     availabilityMap: product._availabilityMap || {},
+    variantImageMap: product._variantImageMap || {},
+    variantHoverImageMap: product._variantHoverImageMap || {},
     collections:    ['all'],
     tipo,
     formato,
@@ -372,6 +374,8 @@ export default function CollectionPage() {
                   options={p.options}
                   variantMap={p.variantMap}
                   availabilityMap={p.availabilityMap}
+                  variantImageMap={p.variantImageMap}
+                  variantHoverImageMap={p.variantHoverImageMap}
                   soldOut={p.soldOut}
                 />
               ))}

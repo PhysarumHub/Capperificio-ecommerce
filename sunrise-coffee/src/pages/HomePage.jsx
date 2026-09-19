@@ -64,6 +64,8 @@ function mapShopwareProduct(product) {
     options: resolveVariantOptions(product),
     variantMap: product._variantMap || {},
     availabilityMap: product._availabilityMap || {},
+    variantImageMap: product._variantImageMap || {},
+    variantHoverImageMap: product._variantHoverImageMap || {},
     soldOut: resolveListingSoldOut(product),
   };
 }

@@ -12,6 +12,7 @@
  */
 
 import { buildVariantAvailabilityMap, isProductAvailable } from './availability';
+import { getProductImage, getProductHoverImage } from './image.js';
 
 /**
  * { [optionName]: childId } — keyed on the child's FIRST option so the keys
@@ -32,6 +33,32 @@ function optionNames(children) {
   )];
 }
 
+/**
+ * { [optionName]: imageUrl } — same key as `buildVariantMap`, so a listing
+ * card can swap its photo when the customer picks a different chip instead
+ * of always showing the parent's cover (the `getProducts` listing query
+ * already requests `cover`/`media` for every entity it returns, children
+ * included, so this needs no extra fetch — see `lib/api/products.js`).
+ */
+function buildVariantImageMap(children) {
+  const map = {};
+  for (const child of children || []) {
+    const name = child.options?.[0]?.translated?.name || child.options?.[0]?.name;
+    if (name) map[name] = getProductImage(child);
+  }
+  return map;
+}
+
+function buildVariantHoverImageMap(children) {
+  const map = {};
+  for (const child of children || []) {
+    const name = child.options?.[0]?.translated?.name || child.options?.[0]?.name;
+    const hover = name && getProductHoverImage(child);
+    if (hover) map[name] = hover;
+  }
+  return map;
+}
+
 function enrich(product, children) {
   const availabilityMap = buildVariantAvailabilityMap(children);
   // Default cart id: the first PURCHASABLE child, so a card never defaults to a
@@ -42,6 +69,8 @@ function enrich(product, children) {
     _allVariantOptions: optionNames(children),
     _variantMap: buildVariantMap(children),
     _availabilityMap: availabilityMap,
+    _variantImageMap: buildVariantImageMap(children),
+    _variantHoverImageMap: buildVariantHoverImageMap(children),
     _firstVariantId: firstAvailable?.id,
   };
 }
