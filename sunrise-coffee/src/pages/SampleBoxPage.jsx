@@ -192,7 +192,7 @@ export default function SampleBoxPage() {
         <span>{PRODUCT_NAME}</span>
       </div>
 
-      <section className={pdp.productSection}>
+      <section className={`${pdp.productSection} ${styles.section}`}>
         {/* ── Sinistra: descrizione e contenuto del box ── */}
         <div className={pdp.colLeft}>
           <p className={pdp.description}>

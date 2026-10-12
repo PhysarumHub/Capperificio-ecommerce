@@ -125,10 +125,18 @@
 }
 .steps strong { color: var(--color-dark); font-weight: 500; }
 
+/* ─── Griglia ─────────────────────────────── */
+/* Le colonne non devono crescere sul contenuto: su mobile la galleria a
+   scorrimento orizzontale allargava la colonna a ~900px e il testo usciva
+   dallo schermo. minmax(0, …) + min-width: 0 le tiene nella viewport. */
+.section > * { min-width: 0; }
+
 /* ─── Galleria mobile (scroll-snap) ───────── */
 .mobileGallery { display: none; }
 
 @media (max-width: 768px) {
+  .section { grid-template-columns: minmax(0, 1fr); }
+
   .mobileGallery {
     display: flex;
     overflow-x: auto;
@@ -139,7 +147,8 @@
   .mobileGallery::-webkit-scrollbar { display: none; }
 
   .mobileSlide {
-    flex: 0 0 calc(100% - 32px);
+    /* 86%: si intravede la foto successiva, invito a scorrere */
+    flex: 0 0 86%;
     margin: 16px 0 16px 16px;
     aspect-ratio: 1 / 1;
     overflow: hidden;
