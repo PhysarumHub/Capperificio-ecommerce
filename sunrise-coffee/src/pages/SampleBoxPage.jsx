@@ -16,7 +16,19 @@ const PRODUCT_NAME = 'Trade Sample Box';
    `src` mostra un segnaposto con `label`. Mancano ancora le foto di frutto
    del cappero e cime all'aceto: aggiungerle qui quando pronte. */
 const GALLERY_DIR = '/images/sample-box';
+/* `cover`: foto di lavorazione e raccolta, già ritagliate in 3:4 sul soggetto
+   (900×1200): riempiono il riquadro sia su desktop sia nel quadrato mobile. */
 const GALLERY = [
+  { src: `${GALLERY_DIR}/capers-in-sea-salt.webp`, width: 900, height: 1200, cover: true,
+    alt: 'Freshly picked Racale capers layered with whole sea salt' },
+  { src: `${GALLERY_DIR}/capers-on-wooden-spoon.webp`, width: 900, height: 1200, cover: true,
+    alt: 'Salt-cured Racale capers on a wooden spoon' },
+  { src: `${GALLERY_DIR}/caper-flower.webp`, width: 900, height: 1200, cover: true,
+    alt: 'Caper flower in bloom on a dry stone wall in Salento' },
+  { src: `${GALLERY_DIR}/caper-buds.webp`, width: 900, height: 1200, cover: true,
+    alt: 'Caper buds on the plant, ready to be picked' },
+  { src: `${GALLERY_DIR}/caper-harvest.webp`, width: 900, height: 1200, cover: true,
+    alt: 'Hand-picking capers in the fields of Racale' },
   { src: `${GALLERY_DIR}/02-capers-in-vinegar.webp`, width: 750, height: 1000,
     alt: 'Racale capers in white wine vinegar' },
   { src: `${GALLERY_DIR}/03-lilliput-capers-sea-salt.webp`, width: 750, height: 1000,
@@ -76,7 +88,7 @@ function formatEur(amount) {
 
 function GalleryItem({ item, className, imgClassName, eager }) {
   return (
-    <div className={className}>
+    <div className={item.cover ? `${className} ${styles.cover}` : className}>
       {item.src ? (
         <img
           src={item.src}

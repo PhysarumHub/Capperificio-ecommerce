@@ -131,6 +131,11 @@
    dallo schermo. minmax(0, …) + min-width: 0 le tiene nella viewport. */
 .section > * { min-width: 0; }
 
+/* ─── Foto a tutto riquadro ──────────────── */
+/* Lavorazione e raccolta: riempiono il riquadro (i vasetti restano "contain"
+   su fondo bianco, come nelle schede prodotto). */
+.cover img { object-fit: cover; }
+
 /* ─── Galleria mobile (scroll-snap) ───────── */
 .mobileGallery { display: none; }
 
