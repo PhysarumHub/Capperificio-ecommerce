@@ -25,6 +25,8 @@ const TerminiCondizioniPage  = lazy(() => import('./pages/TerminiCondizioniPage'
 const NewsletterConfirmPage  = lazy(() => import('./pages/NewsletterConfirmPage'));
 const ContattiPage           = lazy(() => import('./pages/ContattiPage'));
 const FAQPage                = lazy(() => import('./pages/FAQPage'));
+const SampleBoxPage          = lazy(() => import('./pages/SampleBoxPage'));
+const SampleBoxCheckoutPage  = lazy(() => import('./pages/SampleBoxCheckoutPage'));
 const TestPageA              = lazy(() => import('./pages/TestPageA'));
 const TestPageB              = lazy(() => import('./pages/TestPageB'));
 const CylinderCarousel       = lazy(() => import('./components/CylinderCarousel'));
@@ -66,6 +68,10 @@ export default function App() {
 
             <Route path="/contatti" element={<ContattiPage />} />
             <Route path="/faq" element={<FAQPage />} />
+
+            {/* Landing B2B (EN, noindex): box campioni, si paga solo la spedizione */}
+            <Route path="/sample-box" element={<SampleBoxPage />} />
+            <Route path="/sample-box/checkout" element={<SampleBoxCheckoutPage />} />
 
             {/* ── Pagine legali ── */}
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />

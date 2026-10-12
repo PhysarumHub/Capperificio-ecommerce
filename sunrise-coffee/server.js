@@ -83,6 +83,7 @@ import { createShipmentForOrder, packlinkConfigured } from './api/_packlink.js';
 import {
   sendOrderConfirmation, sendOrderShipped, sendOrderCancelled,
   sendMerchantAlert, sendReviewRequest, sendMerchantLowStock, sendRefundIssued, resendConfigured,
+  sendSampleBoxAlert,
 } from './api/_resend.js';
 
 // ── Validazione env vars obbligatorie ────────────────────────────────────────
@@ -117,7 +118,10 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
     console.error('Firma webhook non valida:', err.message);
     return res.status(400).json({ error: 'Webhook signature error' });
   }
-  if (event.type === 'payment_intent.succeeded') {
+  if (event.type === 'payment_intent.succeeded' && event.data.object.metadata?.kind === 'sample-box') {
+    // Box campioni: nessun ordine Shopware, solo l'avviso al merchant (idempotente).
+    await notifySampleBoxPaid(event.data.object).catch(e => console.warn('Webhook sample-box:', e.message));
+  } else if (event.type === 'payment_intent.succeeded') {
     const pi = event.data.object;
     const token = pi.metadata?.contextToken;
     if (token) {
@@ -429,6 +433,103 @@ app.post('/api/admin/refund', paymentLimiter, requireAdminKey, async (req, res) 
   } catch (err) {
     console.error('refund:', err.message);
     res.status(err.status === 400 ? 400 : 502).json({ error: 'Impossibile elaborare il rimborso' });
+  }
+});
+
+// ── Sample box B2B: pagamento della sola spedizione ──────────────────────────
+// Landing /sample-box per i rivenditori: i campioni sono omaggio, il cliente
+// paga solo il trasporto. Fuori da Shopware: niente carrello né ordine, un
+// PaymentIntent con importo deciso qui (mai dal client) in base al paese.
+// Niente metadata.contextToken: il ramo ordini del webhook non li tocca.
+const SAMPLE_BOX_SHIPPING = {
+  BE: { label: 'Belgium', cents: 2500 },
+  IT: { label: 'Italy',   cents: 1000 },
+};
+
+app.get('/api/sample-box', (_req, res) => {
+  res.json({
+    currency: 'EUR',
+    options: Object.entries(SAMPLE_BOX_SHIPPING)
+      .map(([country, { label, cents }]) => ({ country, label, amount: cents / 100 })),
+  });
+});
+
+// Testo libero dal form → metadata/shipping Stripe (max 500 caratteri per valore).
+function cleanText(v, max = 200) {
+  return typeof v === 'string' ? v.trim().slice(0, max) : '';
+}
+
+// Avviso al merchant una sola volta per pagamento: lo chiamano sia il confirm
+// lato client sia il webhook (rete di sicurezza), in qualunque ordine arrivino.
+const sampleBoxNotified = new Set();
+async function notifySampleBoxPaid(pi) {
+  if (sampleBoxNotified.has(pi.id)) return;
+  sampleBoxNotified.add(pi.id);
+  if (!resendConfigured()) return;
+  const ok = await sendSampleBoxAlert(pi);
+  if (!ok) sampleBoxNotified.delete(pi.id);
+}
+
+// Crea il PaymentIntent dal checkout /sample-box/checkout (stesso Payment
+// Element del checkout principale). Importo e paese li decide il server.
+app.post('/api/sample-box/create-intent', paymentLimiter, async (req, res) => {
+  const { country, contact = {}, address = {} } = req.body || {};
+  const option = Object.hasOwn(SAMPLE_BOX_SHIPPING, country) ? SAMPLE_BOX_SHIPPING[country] : null;
+  if (!option) return res.status(400).json({ error: 'Please select a destination country' });
+
+  const c = {
+    company: cleanText(contact.company),
+    vat: cleanText(contact.vat, 40),
+    firstName: cleanText(contact.firstName, 80),
+    lastName: cleanText(contact.lastName, 80),
+    email: cleanText(contact.email, 120),
+    phone: cleanText(contact.phone, 40),
+  };
+  const a = {
+    line1: cleanText(address.line1),
+    postalCode: cleanText(address.postalCode, 20),
+    city: cleanText(address.city, 80),
+  };
+  if (!c.company || !c.firstName || !c.lastName || !c.phone || !a.line1 || !a.postalCode || !a.city
+      || !EMAIL_RE.test(c.email))
+    return res.status(400).json({ error: 'Please fill in all the required fields' });
+
+  try {
+    const pi = await stripe.paymentIntents.create({
+      amount: option.cents,
+      currency: 'eur',
+      automatic_payment_methods: { enabled: true },
+      description: `Sample box shipping to ${option.label} — ${c.company}`,
+      receipt_email: c.email,
+      shipping: {
+        name: `${c.firstName} ${c.lastName} — ${c.company}`,
+        phone: c.phone,
+        address: { line1: a.line1, postal_code: a.postalCode, city: a.city, country },
+      },
+      metadata: { kind: 'sample-box', country, ...c },
+    });
+    res.json({ clientSecret: pi.client_secret, amount: option.cents / 100 });
+  } catch (err) {
+    console.error('sample-box create-intent:', err.message);
+    res.status(502).json({ error: 'Unable to start the payment' });
+  }
+});
+
+// Verifica lato server il pagamento appena confermato dal browser.
+app.post('/api/sample-box/confirm', paymentLimiter, async (req, res) => {
+  const { paymentIntentId } = req.body || {};
+  if (typeof paymentIntentId !== 'string' || !paymentIntentId.startsWith('pi_'))
+    return res.status(400).json({ error: 'Missing payment reference' });
+  try {
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if (pi.metadata?.kind !== 'sample-box') return res.status(400).json({ error: 'Invalid payment' });
+    if (pi.status === 'processing') return res.json({ processing: true });
+    if (pi.status !== 'succeeded') return res.status(402).json({ error: 'Payment not completed' });
+    notifySampleBoxPaid(pi).catch(e => console.warn('sample-box alert:', e.message));
+    res.json({ ok: true, reference: pi.id.slice(-8).toUpperCase() });
+  } catch (err) {
+    console.error('sample-box confirm:', err.message);
+    res.status(502).json({ error: 'Unable to verify the payment' });
   }
 });
 
