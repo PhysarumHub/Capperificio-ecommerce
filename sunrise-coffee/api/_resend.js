@@ -618,7 +618,7 @@ const SAMPLE_BOX_ITEMS = [
   'Caper shoots in vinegar',
 ];
 const COUNTRY_EN = { BE: 'Belgium', IT: 'Italy', NL: 'Netherlands', LU: 'Luxembourg' };
-const B2B_EMAIL = 'b2b@capperificiocaro.com';
+const SAMPLE_BOX_EMAIL = 'info@capperificiocaro.com';
 
 export function sampleBoxConfirmationHtml(pi) {
   const m = pi.metadata || {};
@@ -639,7 +639,7 @@ export function sampleBoxConfirmationHtml(pi) {
     ])}${totalLine('Total paid', amount)}`, { top: 34 })}
     ${noteBox('What happens next',
       'We will email you the tracking number as soon as your box leaves Racale. Once you have tasted the products, we would be glad to plan a first trial order in retail or HoReCa formats.',
-      button('Write to us', `mailto:${B2B_EMAIL}`))}
+      button('Write to us', `mailto:${SAMPLE_BOX_EMAIL}`))}
     ${signature('en')}`;
 
   return {

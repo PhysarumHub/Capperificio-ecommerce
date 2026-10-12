@@ -136,7 +136,7 @@ export default function SampleBoxPage() {
   const goToCheckout = () => navigate('/sample-box/checkout');
 
   /* Se l'API non risponde resta il contatto via email. */
-  const quoteHref = `mailto:${COMPANY.emailB2B}?subject=${encodeURIComponent('Sample box — shipping quote')}`;
+  const quoteHref = `mailto:${COMPANY.email}?subject=${encodeURIComponent('Sample box — shipping quote')}`;
   const available = shipping.options.length > 0;
   const priceLabel = shipping.loading
     ? '\u00A0'
@@ -174,7 +174,7 @@ export default function SampleBoxPage() {
       </ul>
 
       <p className={styles.contact}>
-        Questions? Write to <a href={`mailto:${COMPANY.emailB2B}`}>{COMPANY.emailB2B}</a>
+        Questions? Write to <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>
       </p>
     </>
   );

@@ -182,7 +182,7 @@ function Summary({ quote }) {
             </p>
             <p className={styles.trustItem}>
               <MailIcon size={16} />
-              <span>Questions? <a href={`mailto:${COMPANY.emailB2B}`}>{COMPANY.emailB2B}</a></span>
+              <span>Questions? <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a></span>
             </p>
           </div>
         </div>
@@ -277,7 +277,7 @@ export default function SampleBoxCheckoutPage() {
       });
       setClientSecret(secret);
     } catch (e) {
-      setIntentError(`${e.message}. If the problem persists, write to ${COMPANY.emailB2B}.`);
+      setIntentError(`${e.message}. If the problem persists, write to ${COMPANY.email}.`);
     } finally {
       setIntentLoading(false);
     }
