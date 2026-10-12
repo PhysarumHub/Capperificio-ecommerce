@@ -24,9 +24,9 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
   : null;
 
 const RETURN_PATH = '/sample-box/checkout';
-/* Metodo di pagamento locale per primo: Bancontact in Belgio, Satispay in Italia. */
+/* Card sempre per prima, poi il metodo locale (Bancontact in Belgio, Satispay in Italia). */
 const PAYMENT_ORDER = {
-  BE: ['bancontact', 'card', 'paypal', 'klarna'],
+  BE: ['card', 'bancontact', 'paypal', 'klarna'],
   IT: ['card', 'satispay', 'paypal', 'klarna'],
 };
 const BOX_IMAGE = '/images/sample-box/thumb.webp';
