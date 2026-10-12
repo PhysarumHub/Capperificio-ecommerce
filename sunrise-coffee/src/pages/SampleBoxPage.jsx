@@ -17,15 +17,15 @@ const PRODUCT_NAME = 'Trade Sample Box';
    del cappero e cime all'aceto: aggiungerle qui quando pronte. */
 const GALLERY_DIR = '/images/sample-box';
 const GALLERY = [
-  { src: `${GALLERY_DIR}/01-sample-box-racale.webp`, width: 1200, height: 1200,
+  { src: `${GALLERY_DIR}/01-sample-box-racale.webp`, width: 1000, height: 1000,
     alt: 'Capperificio Caro jars on a stone table in Racale, Salento' },
-  { src: `${GALLERY_DIR}/02-capers-in-vinegar.webp`, width: 900, height: 1200,
+  { src: `${GALLERY_DIR}/02-capers-in-vinegar.webp`, width: 750, height: 1000,
     alt: 'Racale capers in white wine vinegar' },
-  { src: `${GALLERY_DIR}/03-lilliput-capers-sea-salt.webp`, width: 900, height: 1200,
+  { src: `${GALLERY_DIR}/03-lilliput-capers-sea-salt.webp`, width: 750, height: 1000,
     alt: 'Lilliput Racale capers in sea salt, 75 g' },
-  { src: `${GALLERY_DIR}/04-caper-powder.webp`, width: 900, height: 1200,
+  { src: `${GALLERY_DIR}/04-caper-powder.webp`, width: 750, height: 1000,
     alt: 'Racale caper powder, 50 g' },
-  { src: `${GALLERY_DIR}/05-caper-leaves.webp`, width: 900, height: 1200,
+  { src: `${GALLERY_DIR}/05-caper-leaves.webp`, width: 750, height: 1000,
     alt: 'Caper leaves in sea salt, 50 g' },
 ];
 
