@@ -12,16 +12,21 @@ import styles from './SampleBoxPage.module.css';
 
 const PRODUCT_NAME = 'Trade Sample Box';
 
-/* Galleria: per ora segnaposto. Per inserire le foto sostituire `label`
-   con `src` (es. '/images/sample-box/01.webp') e un `alt` descrittivo. */
+/* Galleria in public/images/sample-box (WebP ottimizzati). Una voce senza
+   `src` mostra un segnaposto con `label`. Mancano ancora le foto di frutto
+   del cappero e cime all'aceto: aggiungerle qui quando pronte. */
+const GALLERY_DIR = '/images/sample-box';
 const GALLERY = [
-  { label: 'The complete sample box' },
-  { label: 'Small capers in vinegar' },
-  { label: 'Lilliput capers in sea salt' },
-  { label: 'Caper powder' },
-  { label: 'Caper berries' },
-  { label: 'Caper leaves' },
-  { label: 'Caper shoots in vinegar' },
+  { src: `${GALLERY_DIR}/01-sample-box-racale.webp`, width: 1200, height: 1200,
+    alt: 'Capperificio Caro jars on a stone table in Racale, Salento' },
+  { src: `${GALLERY_DIR}/02-capers-in-vinegar.webp`, width: 900, height: 1200,
+    alt: 'Racale capers in white wine vinegar' },
+  { src: `${GALLERY_DIR}/03-lilliput-capers-sea-salt.webp`, width: 900, height: 1200,
+    alt: 'Lilliput Racale capers in sea salt, 75 g' },
+  { src: `${GALLERY_DIR}/04-caper-powder.webp`, width: 900, height: 1200,
+    alt: 'Racale caper powder, 50 g' },
+  { src: `${GALLERY_DIR}/05-caper-leaves.webp`, width: 900, height: 1200,
+    alt: 'Caper leaves in sea salt, 50 g' },
 ];
 
 const BOX_CONTENTS = [
@@ -79,8 +84,8 @@ function GalleryItem({ item, className, imgClassName, eager }) {
           src={item.src}
           alt={item.alt || item.label}
           className={imgClassName}
-          width="900"
-          height="900"
+          width={item.width || 900}
+          height={item.height || 900}
           loading={eager ? 'eager' : 'lazy'}
           decoding="async"
         />
@@ -103,6 +108,7 @@ export default function SampleBoxPage() {
     title: 'Trade Sample Box',
     description: 'Six specialities from Capperificio Caro, Racale (Salento): complimentary trade samples for retailers and HoReCa. You only pay for shipping.',
     path: '/sample-box',
+    image: GALLERY[0].src,
     noindex: true,
   });
 

@@ -24,7 +24,7 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
   : null;
 
 const RETURN_PATH = '/sample-box/checkout';
-const BOX_IMAGE = '/images/capperificio-caro-capperi-racale.webp';
+const BOX_IMAGE = '/images/sample-box/thumb.webp';
 /* I dati compilati sopravvivono a refresh e rientro da redirect (Bancontact…). */
 const STORAGE_KEY = 'sampleBoxCheckout';
 
