@@ -16,7 +16,7 @@ export default function PaymentSection({
   freeOrder, onFreeOrder, placing,
   totalPrice, onSuccess, onProcessingChange, billingDetails,
   // Checkout fuori dal carrello (es. /sample-box): lingua, rientro e testi.
-  locale = 'it', returnPath = '/checkout', copy = {},
+  locale = 'it', returnPath = '/checkout', copy = {}, paymentMethodOrder,
 }) {
   // L'aspetto dipende dai token CSS, che non cambiano durante la sessione:
   // ricostruirlo a ogni render rimonterebbe gli Elements a ogni battuta.
@@ -102,6 +102,7 @@ export default function PaymentSection({
         billingDetails={billingDetails}
         returnPath={returnPath}
         copy={copy}
+        paymentMethodOrder={paymentMethodOrder}
       />
     </Elements>
   );

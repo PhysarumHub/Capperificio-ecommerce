@@ -528,6 +528,7 @@ app.post('/api/sample-box/confirm', paymentLimiter, async (req, res) => {
     notifySampleBoxPaid(pi).catch(e => console.warn('sample-box alert:', e.message));
     res.json({ ok: true, reference: pi.id.slice(-8).toUpperCase() });
   } catch (err) {
+    if (err.code === 'resource_missing') return res.status(400).json({ error: 'Invalid payment' });
     console.error('sample-box confirm:', err.message);
     res.status(502).json({ error: 'Unable to verify the payment' });
   }

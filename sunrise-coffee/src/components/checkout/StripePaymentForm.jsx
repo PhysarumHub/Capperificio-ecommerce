@@ -13,6 +13,7 @@ import styles from './Checkout.module.css';
  */
 export default function StripePaymentForm({
   onSuccess, totalPrice, disabled, billingDetails, returnPath = '/checkout', copy = {},
+  paymentMethodOrder,
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -70,6 +71,9 @@ export default function StripePaymentForm({
           // Nessun campo di fatturazione duplicato: li abbiamo già tutti dal
           // form e li passiamo alla conferma. Restano solo i dati della carta.
           fields: { billingDetails: 'never' },
+          // Metodo locale in prima posizione (es. Bancontact per il Belgio):
+          // su mobile le schede oltre la terza finiscono nel menu a tendina.
+          ...(paymentMethodOrder ? { paymentMethodOrder } : {}),
         }}
       />
 

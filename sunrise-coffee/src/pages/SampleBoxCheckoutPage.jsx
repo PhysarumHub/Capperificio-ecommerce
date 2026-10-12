@@ -24,6 +24,11 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
   : null;
 
 const RETURN_PATH = '/sample-box/checkout';
+/* Metodo di pagamento locale per primo: Bancontact in Belgio, Satispay in Italia. */
+const PAYMENT_ORDER = {
+  BE: ['bancontact', 'card', 'paypal', 'klarna'],
+  IT: ['card', 'satispay', 'paypal', 'klarna'],
+};
 const BOX_IMAGE = '/images/sample-box/thumb.webp';
 /* I dati compilati sopravvivono a refresh e rientro da redirect (Bancontact…). */
 const STORAGE_KEY = 'sampleBoxCheckout';
@@ -400,7 +405,7 @@ export default function SampleBoxCheckoutPage() {
     processing: 'Processing…',
     pay: selected ? `Pay ${formatEur(selected.amount)}` : 'Pay',
     express: 'Express checkout',
-    orCard: 'or pay by card',
+    orCard: 'or choose a payment method',
     paymentFailed: 'Payment failed. Please try again.',
     orderError: 'Something went wrong while confirming your payment.',
   };
@@ -579,6 +584,7 @@ export default function SampleBoxCheckoutPage() {
                 locale="en"
                 returnPath={RETURN_PATH}
                 copy={paymentCopy}
+                paymentMethodOrder={PAYMENT_ORDER[country]}
               />
 
               {orderError && (
