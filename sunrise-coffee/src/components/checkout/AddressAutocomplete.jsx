@@ -73,11 +73,20 @@ export default function AddressAutocomplete({
     return () => { clearTimeout(timer); controller.abort(); };
   }, [query, countryIso, countryCodes, lang]);
 
+  // OpenStreetMap può raggruppare più civici su un edificio ("114;116;120"):
+  // si tiene quello scritto nella ricerca, altrimenti il primo.
+  const pickHouseNumber = (raw) => {
+    const list = String(raw || '').split(/[;,]/).map((n) => n.trim()).filter(Boolean);
+    if (list.length <= 1) return list[0] || '';
+    const typed = query.match(/\b\d+[a-zA-Z]?\b/g) || [];
+    return list.find((n) => typed.includes(n)) || list[0];
+  };
+
   const choose = (result) => {
     const a = result.address || {};
     onSelect({
       street: a.road || a.pedestrian || a.footway || a.hamlet || '',
-      houseNumber: a.house_number || '',
+      houseNumber: pickHouseNumber(a.house_number),
       city: a.city || a.town || a.village || a.municipality || a.county || '',
       zipcode: a.postcode || '',
       countryIso: (a.country_code || '').toUpperCase(),
