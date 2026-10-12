@@ -441,16 +441,19 @@ app.post('/api/admin/refund', paymentLimiter, requireAdminKey, async (req, res) 
 // paga solo il trasporto. Fuori da Shopware: niente carrello né ordine, un
 // PaymentIntent con importo deciso qui (mai dal client) in base al paese.
 // Niente metadata.contextToken: il ramo ordini del webhook non li tocca.
+// `postcode`: formato del CAP del paese. Il checkout ricava il paese dal CAP
+// (niente menu a tendina) e qui lo si ricontrolla, così un indirizzo non può
+// finire con la tariffa di un altro paese.
 const SAMPLE_BOX_SHIPPING = {
-  BE: { label: 'Belgium', cents: 2500 },
-  IT: { label: 'Italy',   cents: 1000 },
+  BE: { label: 'Belgium', cents: 2500, postcode: '^\\d{4}$' },
+  IT: { label: 'Italy',   cents: 1000, postcode: '^\\d{5}$' },
 };
 
 app.get('/api/sample-box', (_req, res) => {
   res.json({
     currency: 'EUR',
     options: Object.entries(SAMPLE_BOX_SHIPPING)
-      .map(([country, { label, cents }]) => ({ country, label, amount: cents / 100 })),
+      .map(([country, { label, cents, postcode }]) => ({ country, label, amount: cents / 100, postcode })),
   });
 });
 
@@ -501,6 +504,8 @@ app.post('/api/sample-box/create-intent', paymentLimiter, async (req, res) => {
   if (!c.company || !c.firstName || !c.lastName || !c.phone || !a.line1 || !a.postalCode || !a.city
       || !EMAIL_RE.test(c.email))
     return res.status(400).json({ error: 'Please fill in all the required fields' });
+  if (!new RegExp(option.postcode).test(a.postalCode.replace(/\s/g, '')))
+    return res.status(400).json({ error: `The postcode does not match ${option.label}` });
 
   try {
     const pi = await stripe.paymentIntents.create({

@@ -14,7 +14,13 @@ import styles from './Checkout.module.css';
  *  · le voci sono `<button>`: prima erano `<div>` con `onMouseDown`, invisibili
  *    a tastiera e screen reader.
  */
-export default function AddressAutocomplete({ countryIso, onSelect, disabled }) {
+export default function AddressAutocomplete({
+  countryIso, onSelect, disabled,
+  // Fuori dallo shop (es. /sample-box, in inglese): più paesi e testi propri.
+  countryCodes, lang = 'it',
+  placeholder = 'Cerca il tuo indirizzo…',
+  emptyText = 'Nessun indirizzo trovato. Compila i campi qui sotto a mano.',
+}) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -47,11 +53,12 @@ export default function AddressAutocomplete({ countryIso, onSelect, disabled }) 
         });
         // Restringe al paese scelto: senza questo i risultati arrivavano da
         // tutto il mondo e l'utente doveva scorrere per trovare casa propria.
-        if (countryIso) params.set('countrycodes', countryIso.toLowerCase());
+        if (countryCodes) params.set('countrycodes', countryCodes.toLowerCase());
+        else if (countryIso) params.set('countrycodes', countryIso.toLowerCase());
 
         const res = await fetch(
           `https://nominatim.openstreetmap.org/search?${params}`,
-          { headers: { 'Accept-Language': 'it' }, signal: controller.signal }
+          { headers: { 'Accept-Language': lang }, signal: controller.signal }
         );
         const data = await res.json();
         setResults(Array.isArray(data) ? data : []);
@@ -64,7 +71,7 @@ export default function AddressAutocomplete({ countryIso, onSelect, disabled }) 
     }, 350);
 
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [query, countryIso]);
+  }, [query, countryIso, countryCodes, lang]);
 
   const choose = (result) => {
     const a = result.address || {};
@@ -111,7 +118,7 @@ export default function AddressAutocomplete({ countryIso, onSelect, disabled }) 
         onFocus={() => setOpen(true)}
         onBlur={() => { blurTimer.current = setTimeout(() => setOpen(false), 150); }}
         onKeyDown={onKeyDown}
-        placeholder="Cerca il tuo indirizzo…"
+        placeholder={placeholder}
         autoComplete="off"
         spellCheck={false}
         disabled={disabled}
@@ -119,7 +126,7 @@ export default function AddressAutocomplete({ countryIso, onSelect, disabled }) 
         aria-expanded={showList}
         aria-controls={listId}
         aria-autocomplete="list"
-        aria-label="Cerca il tuo indirizzo"
+        aria-label={placeholder.replace('…', '')}
       />
       {loading && <SpinnerIcon size={16} className={`${styles.autocompleteSpinner} ${styles.spinner}`} />}
 
@@ -127,7 +134,7 @@ export default function AddressAutocomplete({ countryIso, onSelect, disabled }) 
         <div className={styles.suggestions} id={listId} role="listbox">
           {results.length === 0 ? (
             <p className={styles.emptyHint}>
-              Nessun indirizzo trovato. Compila i campi qui sotto a mano.
+              {emptyText}
             </p>
           ) : (
             results.map((result, i) => {

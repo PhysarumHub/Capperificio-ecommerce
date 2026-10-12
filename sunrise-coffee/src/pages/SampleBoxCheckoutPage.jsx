@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 
 import { useSEO } from '../hooks/useSEO';
-import { isValidPostcode, isValidPhone, postcodeExample } from '../lib/utils/address';
+import { isValidPhone } from '../lib/utils/address';
 import { COMPANY } from '../data/company';
 import Field from '../components/checkout/Field';
+import AddressAutocomplete from '../components/checkout/AddressAutocomplete';
 import PaymentSection from '../components/checkout/PaymentSection';
 import {
   CheckIcon, AlertIcon, ArrowRightIcon, ArrowLeftIcon, SpinnerIcon, ChevronIcon,
@@ -42,11 +43,19 @@ const EMPTY = {
 
 const STEPS = [
   { title: 'Your details', label: 'Details', fields: ['company', 'vat', 'firstName', 'lastName', 'email', 'phone'] },
-  { title: 'Shipping address', label: 'Shipping', fields: ['street', 'houseNumber', 'zipcode', 'city', 'country'] },
+  { title: 'Shipping address', label: 'Shipping', fields: ['street', 'houseNumber', 'zipcode', 'city'] },
   { title: 'Payment', label: 'Payment', fields: [] },
 ];
 
-function validate(values, country, countries) {
+/* Il paese si ricava dal CAP: ogni paese servito ha un formato distinto
+   (Belgio 4 cifre, Italia 5), definito dal server in /api/sample-box. */
+function detectCountry(zipcode, options) {
+  const zip = (zipcode || '').replace(/\s/g, '');
+  if (!zip) return '';
+  return options.find((o) => o.postcode && new RegExp(o.postcode).test(zip))?.country || '';
+}
+
+function validate(values, country, options) {
   const errors = {};
   if (!values.company.trim()) errors.company = 'Enter your company name';
   if (!values.firstName.trim()) errors.firstName = 'Enter your first name';
@@ -56,9 +65,9 @@ function validate(values, country, countries) {
   else if (!isValidPhone(values.phone)) errors.phone = 'Enter a valid phone number';
   if (!values.street.trim()) errors.street = 'Enter the street';
   if (!values.houseNumber.trim()) errors.houseNumber = 'Enter the number';
-  if (!isValidPostcode(values.zipcode, country)) errors.zipcode = 'Enter a valid postcode';
+  if (!values.zipcode.trim()) errors.zipcode = 'Enter the postcode';
+  else if (!country) errors.zipcode = `Samples ship to ${options.map((o) => o.label).join(' and ') || 'Belgium and Italy'} only: enter a valid postcode`;
   if (!values.city.trim()) errors.city = 'Enter the city';
-  if (!countries.includes(country)) errors.country = 'Select the destination country';
   return errors;
 }
 
@@ -188,7 +197,6 @@ export default function SampleBoxCheckoutPage() {
   const saved = useRef(loadSaved()).current;
 
   const [options, setOptions] = useState([]);
-  const [country, setCountry] = useState(() => saved.country || '');
   const [values, setValues] = useState(() => ({ ...EMPTY, ...(saved.values || {}) }));
   const [touched, setTouched] = useState({});
   const [step, setStep] = useState(0);
@@ -217,8 +225,8 @@ export default function SampleBoxCheckoutPage() {
   }, []);
 
   useEffect(() => {
-    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ values, country })); } catch { /* storage pieno/negato */ }
-  }, [values, country]);
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ values })); } catch { /* storage pieno/negato */ }
+  }, [values]);
 
   // Cambio step: il fuoco va al titolo (lo screen reader annuncia lo step).
   useEffect(() => {
@@ -235,8 +243,9 @@ export default function SampleBoxCheckoutPage() {
     titleRef.current?.focus({ preventScroll: true });
   }, [step]);
 
+  const country = detectCountry(values.zipcode, options);
   const selected = options.find((o) => o.country === country);
-  const errors = validate(values, country, options.map((o) => o.country));
+  const errors = validate(values, country, options);
   // Il costo compare solo a indirizzo completo e valido (paese compreso).
   const quote = selected && !stepHasErrors(1, errors) ? selected : null;
   const errorFor = (key) => {
@@ -485,7 +494,17 @@ export default function SampleBoxCheckoutPage() {
           {step === 1 && (
             <form key="s1" className={ms.panel} onSubmit={next} noValidate>
               <h2 className={ms.panelTitle} ref={titleRef} tabIndex={-1}>Shipping address</h2>
-              <p className={ms.panelHint}>Where should we deliver the box?</p>
+              <p className={ms.panelHint}>Search your address or fill in the fields. We ship samples to Belgium and Italy.</p>
+              <AddressAutocomplete
+                countryCodes={options.map((o) => o.country).join(',') || 'be,it'}
+                lang="en"
+                placeholder="Search your address…"
+                emptyText="No address found. Please fill in the fields below."
+                onSelect={({ street, houseNumber, city, zipcode }) => {
+                  setValues((v) => ({ ...v, street, houseNumber, city, zipcode }));
+                  setTouched((t) => ({ ...t, street: true, houseNumber: true, city: true, zipcode: true }));
+                }}
+              />
               <div className={styles.fieldGrid}>
                 <div className={styles.streetRow}>
                   <Field label="Street" name="street" autoComplete="address-line1" {...fieldProps('street')} />
@@ -493,31 +512,9 @@ export default function SampleBoxCheckoutPage() {
                 </div>
                 <Field
                   label="Postcode" name="zipcode" autoComplete="postal-code"
-                  placeholder={postcodeExample(country)} {...fieldProps('zipcode')}
+                  inputMode="numeric" {...fieldProps('zipcode')}
                 />
                 <Field label="City" name="city" autoComplete="address-level2" {...fieldProps('city')} />
-                <Field label="Country" as="custom" error={errorFor('country')} full>
-                  {({ id, describedBy }) => (
-                    <div className={styles.selectWrap}>
-                      <select
-                        id={id}
-                        name="country"
-                        className={styles.select}
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
-                        onBlur={() => setTouched((t) => ({ ...t, country: true }))}
-                        aria-describedby={describedBy}
-                        autoComplete="country"
-                      >
-                        <option value="" disabled>Select your country</option>
-                        {options.map((o) => (
-                          <option key={o.country} value={o.country}>{o.label}</option>
-                        ))}
-                      </select>
-                      <ChevronIcon size={16} className={styles.selectChevron} />
-                    </div>
-                  )}
-                </Field>
               </div>
 
               <div className={styles.methodStatic} style={{ marginTop: 'var(--space-11)' }} aria-live="polite">
@@ -525,7 +522,7 @@ export default function SampleBoxCheckoutPage() {
                 {quote ? (
                   <div>
                     <p className={styles.methodName}>Tracked courier · {formatEur(quote.amount)}</p>
-                    <p className={styles.methodDesc}>Shipped from Racale (Italy) to {quote.label}.</p>
+                    <p className={styles.methodDesc}>Shipped from Racale to {quote.label}, detected from your postcode.</p>
                   </div>
                 ) : (
                   <div>
