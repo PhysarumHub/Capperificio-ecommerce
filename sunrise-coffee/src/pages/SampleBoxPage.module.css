@@ -1,0 +1,167 @@
+/* Integrazioni alla scheda prodotto (ProductDetail.module.css) per /sample-box */
+
+/* ─── Segnaposto galleria ─────────────────── */
+.placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 24px;
+  background:
+    repeating-linear-gradient(-45deg, transparent 0 14px, rgba(216, 64, 50, .05) 14px 15px),
+    var(--color-cream);
+  border: 1px dashed var(--color-card-border);
+  border-radius: inherit;
+}
+.placeholderLabel {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-xl);
+  color: var(--color-mid);
+}
+
+/* ─── Pannello acquisto ───────────────────── */
+.lead {
+  font-size: var(--text-md);
+  line-height: 1.6;
+  color: var(--color-dark);
+  margin-bottom: 20px;
+}
+.lead strong { color: var(--color-red); font-weight: 600; }
+
+.freeBadge {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 2px 10px;
+  border-radius: 30px;
+  background: var(--color-red);
+  color: var(--color-white);
+  font-size: var(--text-sm);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.pickerLabel {
+  margin-bottom: 10px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--color-dark);
+}
+
+
+/* Rassicurazioni sotto il pulsante (stile rimosso dalla PDP, tenuto qui) */
+.trustList {
+  list-style: none;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
+}
+.trustList li {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--color-red);
+  padding: 4px 0;
+}
+.trustList li::before { content: '• '; }
+
+.contact {
+  margin-top: 20px;
+  font-size: var(--text-sm);
+  color: var(--color-mid);
+}
+.contact a { color: var(--color-red); }
+
+/* ─── Colonna sinistra ────────────────────── */
+.contentsAccordion { margin-bottom: 36px; }
+
+.itemNum {
+  display: inline-block;
+  min-width: 28px;
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--color-red);
+}
+
+.steps {
+  list-style: none;
+  counter-reset: step;
+  margin-bottom: 32px;
+}
+.steps li {
+  counter-increment: step;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0 12px 40px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--color-mid);
+}
+.steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 12px;
+  width: 26px;
+  height: 26px;
+  border: 1.5px solid var(--color-red);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-red);
+}
+.steps strong { color: var(--color-dark); font-weight: 500; }
+
+/* ─── Griglia ─────────────────────────────── */
+/* Le colonne non devono crescere sul contenuto: su mobile la galleria a
+   scorrimento orizzontale allargava la colonna a ~900px e il testo usciva
+   dallo schermo. minmax(0, …) + min-width: 0 le tiene nella viewport. */
+.section > * { min-width: 0; }
+
+/* ─── Galleria mobile (scroll-snap) ───────── */
+.mobileGallery { display: none; }
+
+@media (max-width: 768px) {
+  .section { grid-template-columns: minmax(0, 1fr); }
+
+  .mobileGallery {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    background: var(--color-light);
+    scrollbar-width: none;
+  }
+  .mobileGallery::-webkit-scrollbar { display: none; }
+
+  .mobileSlide {
+    /* 86%: si intravede la foto successiva, invito a scorrere */
+    flex: 0 0 86%;
+    margin: 16px 0 16px 16px;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: 16px;
+    background: var(--color-white);
+    scroll-snap-align: center;
+  }
+  .mobileSlide:last-child { margin-right: 16px; }
+
+  .mobileSlideImg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+}

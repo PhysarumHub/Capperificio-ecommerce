@@ -627,6 +627,56 @@ export async function sendMerchantAlert(order, packlinkRef = null) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  8b. BOX CAMPIONI PAGATO → merchant
+//  pi = PaymentIntent Stripe di /sample-box (nessun ordine Shopware): i dati
+//  del rivenditore stanno in metadata, l'indirizzo in pi.shipping.
+// ─────────────────────────────────────────────────────────────────────────────
+export async function sendSampleBoxAlert(pi) {
+  if (!client || !MERCHANT_TO) {
+    if (!MERCHANT_TO) console.warn('Resend sendSampleBoxAlert: RESEND_MERCHANT_TO non configurato');
+    return false;
+  }
+  const m = pi.metadata || {};
+  const s = pi.shipping || {};
+  const esc = (v) => String(v ?? '').replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  const total = pi.amount / 100;
+
+  const content = `
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.8;color:${C.mid};">
+      Un rivenditore ha pagato la spedizione del box campioni (6 specialità). Da preparare e spedire.
+    </p>
+
+    ${infoBlock(`
+      <p style="margin:0 0 3px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:${C.mid};">Azienda</p>
+      <p style="margin:0;font-size:22px;font-weight:700;color:${C.dark};font-family:Georgia,'Times New Roman',serif;">${esc(m.company)}</p>
+      <p style="margin:4px 0 0;font-size:18px;font-weight:700;color:${C.green};">${euro(total)} spedizione · ${esc(m.country)}</p>
+    `)}
+
+    ${label('Contatto')}
+    <p style="margin:0 0 24px;font-size:14px;line-height:1.8;color:${C.dark};">
+      ${esc(m.firstName)} ${esc(m.lastName)}<br>
+      <a href="mailto:${esc(m.email)}" style="color:${C.green};">${esc(m.email)}</a><br>
+      ${esc(m.phone)}${m.vat ? `<br>P. IVA / VAT: ${esc(m.vat)}` : ''}
+    </p>
+
+    ${label('Spedire a')}
+    <p style="margin:0 0 24px;font-size:14px;line-height:1.8;color:${C.dark};">
+      ${esc(s.name)}<br>
+      ${esc(s.address?.line1)}<br>
+      ${esc(s.address?.postal_code)} ${esc(s.address?.city)} · ${esc(s.address?.country)}
+    </p>
+
+    ${cta('Apri pagamento su Stripe', `https://dashboard.stripe.com/payments/${pi.id}`)}`;
+
+  return _send({
+    to: MERCHANT_TO,
+    subject: `Box campioni pagato — ${m.company || 'rivenditore'} (${m.country || '—'})`,
+    html: layout('Box campioni da spedire', 'Alert merchant', content, { tag: euro(total) }),
+    tag: 'merchant-sample-box',
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  9. SCORTE IN ESAURIMENTO → merchant
 //  products = [{ name, sku, stock }]  — UNA sola email riepilogativa per tutti
 //  i prodotti sotto soglia (mai una email per prodotto: vedi server.js, che la

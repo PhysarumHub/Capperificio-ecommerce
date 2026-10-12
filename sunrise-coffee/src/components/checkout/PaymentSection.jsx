@@ -15,6 +15,8 @@ export default function PaymentSection({
   stripePromise, clientSecret, loading, error, onRetry,
   freeOrder, onFreeOrder, placing,
   totalPrice, onSuccess, onProcessingChange, billingDetails,
+  // Checkout fuori dal carrello (es. /sample-box): lingua, rientro e testi.
+  locale = 'it', returnPath = '/checkout', copy = {},
 }) {
   // L'aspetto dipende dai token CSS, che non cambiano durante la sessione:
   // ricostruirlo a ogni render rimonterebbe gli Elements a ogni battuta.
@@ -38,7 +40,7 @@ export default function PaymentSection({
     return (
       <div className={styles.loadingBlock}>
         <SpinnerIcon size={18} className={styles.spinner} />
-        Preparazione del pagamento…
+        {copy.preparing || 'Preparazione del pagamento…'}
       </div>
     );
   }
@@ -51,7 +53,7 @@ export default function PaymentSection({
           <span>{error}</span>
         </p>
         <button type="button" className={styles.btnSecondary} onClick={onRetry} style={{ marginTop: 'var(--space-7)' }}>
-          Riprova
+          {copy.retry || 'Riprova'}
         </button>
       </div>
     );
@@ -85,14 +87,21 @@ export default function PaymentSection({
   return (
     <Elements
       stripe={stripePromise}
-      options={{ clientSecret, locale: 'it', appearance, fonts }}
+      options={{ clientSecret, locale, appearance, fonts }}
     >
-      <ExpressCheckout onSuccess={onSuccess} onProcessingChange={onProcessingChange} />
+      <ExpressCheckout
+        onSuccess={onSuccess}
+        onProcessingChange={onProcessingChange}
+        returnPath={returnPath}
+        copy={copy}
+      />
       <StripePaymentForm
         onSuccess={onSuccess}
         totalPrice={totalPrice}
         disabled={placing}
         billingDetails={billingDetails}
+        returnPath={returnPath}
+        copy={copy}
       />
     </Elements>
   );
