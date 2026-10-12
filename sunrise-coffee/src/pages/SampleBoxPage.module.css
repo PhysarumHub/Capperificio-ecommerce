@@ -45,16 +45,6 @@
   vertical-align: middle;
 }
 
-.pickerLabel {
-  margin-bottom: 10px;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: var(--color-dark);
-}
-
-
 /* Rassicurazioni sotto il pulsante (stile rimosso dalla PDP, tenuto qui) */
 .trustList {
   list-style: none;

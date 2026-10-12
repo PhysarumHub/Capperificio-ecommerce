@@ -73,7 +73,8 @@ const DETAILS = [
   ['Formats available', 'Retail jars & HoReCa packaging'],
   ['Samples', 'Complimentary'],
   ['You pay', 'Courier shipping only'],
-  ['Shipping', 'Belgium €25 · Italy €10'],
+  ['Ships to', 'Belgium, Italy'],
+  ['Shipping', 'Calculated at checkout from your address'],
 ];
 
 const STEPS = [
@@ -111,7 +112,6 @@ function GalleryItem({ item, className, imgClassName, eager }) {
 export default function SampleBoxPage() {
   const navigate = useNavigate();
   const [shipping, setShipping] = useState({ loading: true, options: [] });
-  const [country, setCountry] = useState('BE');
   const [openItem, setOpenItem] = useState(BOX_CONTENTS[0].name);
 
   useSEO({
@@ -131,39 +131,22 @@ export default function SampleBoxPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Nessun carrello: si va dritti al checkout dedicato col paese già scelto.
-  const goToCheckout = () => navigate(`/sample-box/checkout?country=${country}`);
+  // Nessun carrello: dritti al checkout dedicato. Il costo di spedizione si
+  // calcola lì, dal paese inserito nell'indirizzo.
+  const goToCheckout = () => navigate('/sample-box/checkout');
 
-  const quoteHref = `mailto:${COMPANY.emailB2B}?subject=${encodeURIComponent('Sample box — shipping quote')}`;
   /* Se l'API non risponde resta il contatto via email. */
-  const selected = shipping.options.find((o) => o.country === country);
+  const quoteHref = `mailto:${COMPANY.emailB2B}?subject=${encodeURIComponent('Sample box — shipping quote')}`;
+  const available = shipping.options.length > 0;
   const priceLabel = shipping.loading
-    ? ' '
-    : selected
-      ? `${formatEur(selected.amount)} shipping to ${selected.label}`
+    ? '\u00A0'
+    : available
+      ? 'Shipping calculated at checkout'
       : 'Shipping quote on request';
 
-  const countryPicker = shipping.options.length > 0 && (
-    <div className={pdp.optionGroups}>
-      <p className={styles.pickerLabel}>Ship to</p>
-      <div className={pdp.optionChips}>
-        {shipping.options.map((o) => (
-          <button
-            key={o.country}
-            className={`${pdp.optionChip} ${o.country === country ? pdp.optionChipSelected : ''}`}
-            aria-pressed={o.country === country}
-            onClick={() => setCountry(o.country)}
-          >
-            {o.label} · {formatEur(o.amount)}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-
-  const cta = selected ? (
+  const cta = available ? (
     <button className={pdp.btnAddCart} onClick={goToCheckout}>
-      Request the box <span>→</span> {formatEur(selected.amount)}
+      Request the box <span>→</span>
     </button>
   ) : (
     <a className={pdp.btnAddCart} href={quoteHref} aria-disabled={shipping.loading}>
@@ -181,8 +164,6 @@ export default function SampleBoxPage() {
       <div className={pdp.pdpPrice}>
         <span className={styles.freeBadge}>Samples free</span> {priceLabel}
       </div>
-
-      {countryPicker}
 
       {cta}
 
@@ -282,7 +263,7 @@ export default function SampleBoxPage() {
             <div className={pdp.mobileStickyName}>{PRODUCT_NAME}</div>
             <div className={pdp.mobileStickyPrice}>{priceLabel}</div>
           </div>
-          {selected ? (
+          {available ? (
             <button className={pdp.mobileStickyBtn} onClick={goToCheckout}>Request the box</button>
           ) : (
             <a className={pdp.mobileStickyBtn} href={quoteHref}>Get a quote</a>

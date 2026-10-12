@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 
 import { useSEO } from '../hooks/useSEO';
@@ -42,11 +42,11 @@ const EMPTY = {
 
 const STEPS = [
   { title: 'Your details', label: 'Details', fields: ['company', 'vat', 'firstName', 'lastName', 'email', 'phone'] },
-  { title: 'Shipping address', label: 'Shipping', fields: ['street', 'houseNumber', 'zipcode', 'city'] },
+  { title: 'Shipping address', label: 'Shipping', fields: ['street', 'houseNumber', 'zipcode', 'city', 'country'] },
   { title: 'Payment', label: 'Payment', fields: [] },
 ];
 
-function validate(values, country) {
+function validate(values, country, countries) {
   const errors = {};
   if (!values.company.trim()) errors.company = 'Enter your company name';
   if (!values.firstName.trim()) errors.firstName = 'Enter your first name';
@@ -58,6 +58,7 @@ function validate(values, country) {
   if (!values.houseNumber.trim()) errors.houseNumber = 'Enter the number';
   if (!isValidPostcode(values.zipcode, country)) errors.zipcode = 'Enter a valid postcode';
   if (!values.city.trim()) errors.city = 'Enter the city';
+  if (!countries.includes(country)) errors.country = 'Select the destination country';
   return errors;
 }
 
@@ -94,7 +95,7 @@ async function postJson(url, body) {
 }
 
 /* Riepilogo: sticky a destra su desktop, richiudibile in cima su mobile. */
-function Summary({ selected }) {
+function Summary({ quote }) {
   const [open, setOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(() => window.matchMedia('(max-width: 900px)').matches);
   useEffect(() => {
@@ -104,7 +105,7 @@ function Summary({ selected }) {
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
-  const total = selected ? formatEur(selected.amount) : '—';
+  const total = quote ? formatEur(quote.amount) : '—';
 
   return (
     <aside className={styles.summary} aria-label="Order summary">
@@ -147,8 +148,10 @@ function Summary({ selected }) {
               <span className={styles.totalAccent}>Complimentary</span>
             </div>
             <div className={styles.totalRow}>
-              <span className={styles.totalLabel}>Shipping{selected ? ` to ${selected.label}` : ''}</span>
-              <span>{total}</span>
+              <span className={styles.totalLabel}>Shipping{quote ? ` to ${quote.label}` : ''}</span>
+              {quote
+                ? <span>{total}</span>
+                : <span className={styles.totalLabel}>Calculated from your address</span>}
             </div>
           </div>
 
@@ -182,11 +185,10 @@ function Summary({ selected }) {
 export default function SampleBoxCheckoutPage() {
   useSEO({ title: 'Sample Box Checkout', path: RETURN_PATH, noindex: true });
 
-  const [searchParams] = useSearchParams();
   const saved = useRef(loadSaved()).current;
 
   const [options, setOptions] = useState([]);
-  const [country, setCountry] = useState(() => searchParams.get('country') || saved.country || 'BE');
+  const [country, setCountry] = useState(() => saved.country || '');
   const [values, setValues] = useState(() => ({ ...EMPTY, ...(saved.values || {}) }));
   const [touched, setTouched] = useState({});
   const [step, setStep] = useState(0);
@@ -234,7 +236,9 @@ export default function SampleBoxCheckoutPage() {
   }, [step]);
 
   const selected = options.find((o) => o.country === country);
-  const errors = validate(values, country);
+  const errors = validate(values, country, options.map((o) => o.country));
+  // Il costo compare solo a indirizzo completo e valido (paese compreso).
+  const quote = selected && !stepHasErrors(1, errors) ? selected : null;
   const errorFor = (key) => {
     const owner = STEPS.findIndex((s) => s.fields.includes(key));
     return (attempted[owner] || touched[key]) ? errors[key] : undefined;
@@ -288,7 +292,6 @@ export default function SampleBoxCheckoutPage() {
       document.querySelector(`[name="${first}"]`)?.focus();
       return;
     }
-    if (step === 1 && !selected) return;
     goTo(step + 1);
   };
 
@@ -484,27 +487,6 @@ export default function SampleBoxCheckoutPage() {
               <h2 className={ms.panelTitle} ref={titleRef} tabIndex={-1}>Shipping address</h2>
               <p className={ms.panelHint}>Where should we deliver the box?</p>
               <div className={styles.fieldGrid}>
-                <Field label="Country" as="custom" error={null} full>
-                  {({ id }) => (
-                    <div className={styles.selectWrap}>
-                      <select
-                        id={id}
-                        className={styles.select}
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
-                        autoComplete="country"
-                      >
-                        {options.map((o) => (
-                          <option key={o.country} value={o.country}>
-                            {o.label} — {formatEur(o.amount)} shipping
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronIcon size={16} className={styles.selectChevron} />
-                    </div>
-                  )}
-                </Field>
-
                 <div className={styles.streetRow}>
                   <Field label="Street" name="street" autoComplete="address-line1" {...fieldProps('street')} />
                   <Field label="No." name="houseNumber" autoComplete="address-line2" {...fieldProps('houseNumber')} />
@@ -514,17 +496,44 @@ export default function SampleBoxCheckoutPage() {
                   placeholder={postcodeExample(country)} {...fieldProps('zipcode')}
                 />
                 <Field label="City" name="city" autoComplete="address-level2" {...fieldProps('city')} />
+                <Field label="Country" as="custom" error={errorFor('country')} full>
+                  {({ id, describedBy }) => (
+                    <div className={styles.selectWrap}>
+                      <select
+                        id={id}
+                        name="country"
+                        className={styles.select}
+                        value={country}
+                        onChange={(e) => setCountry(e.target.value)}
+                        onBlur={() => setTouched((t) => ({ ...t, country: true }))}
+                        aria-describedby={describedBy}
+                        autoComplete="country"
+                      >
+                        <option value="" disabled>Select your country</option>
+                        {options.map((o) => (
+                          <option key={o.country} value={o.country}>{o.label}</option>
+                        ))}
+                      </select>
+                      <ChevronIcon size={16} className={styles.selectChevron} />
+                    </div>
+                  )}
+                </Field>
               </div>
 
-              {selected && (
-                <div className={styles.methodStatic} style={{ marginTop: 'var(--space-11)' }}>
-                  <TruckIcon size={19} className={styles.methodIcon} />
+              <div className={styles.methodStatic} style={{ marginTop: 'var(--space-11)' }} aria-live="polite">
+                <TruckIcon size={19} className={styles.methodIcon} />
+                {quote ? (
                   <div>
-                    <p className={styles.methodName}>Tracked courier · {formatEur(selected.amount)}</p>
-                    <p className={styles.methodDesc}>Shipped from Racale (Italy) to {selected.label}.</p>
+                    <p className={styles.methodName}>Tracked courier · {formatEur(quote.amount)}</p>
+                    <p className={styles.methodDesc}>Shipped from Racale (Italy) to {quote.label}.</p>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div>
+                    <p className={styles.methodName}>Shipping cost</p>
+                    <p className={styles.methodDesc}>Calculated as soon as you enter your full address.</p>
+                  </div>
+                )}
+              </div>
 
               {orderError && (
                 <p className={styles.errorBanner} role="alert">
@@ -535,7 +544,7 @@ export default function SampleBoxCheckoutPage() {
 
               <div className={ms.nav}>
                 {backButton}
-                <button type="submit" className={styles.btnPrimary} disabled={!selected}>
+                <button type="submit" className={styles.btnPrimary}>
                   <span className={ms.labelLong}>Continue to payment</span>
                   <span className={ms.labelShort}>Payment</span>
                   <ArrowRightIcon size={17} />
@@ -602,7 +611,7 @@ export default function SampleBoxCheckoutPage() {
           )}
         </div>
 
-        <Summary selected={selected} />
+        <Summary quote={step === 0 ? null : quote} />
       </div>
     </div>
   );
