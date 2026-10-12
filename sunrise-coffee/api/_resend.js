@@ -108,9 +108,19 @@ function totalsBlock(order) {
 }
 
 // ── Layout base ───────────────────────────────────────────────────────────────
-function layout(title, eyebrow, content, { tag = '' } = {}) {
+// `lang: 'en'` per le email ai clienti esteri (box campioni B2B): cambia solo
+// attributo lang, link e firma del footer.
+const FOOTER = {
+  it: { links: [['Prodotti', '/collections/all'], ['La nostra storia', '/storia'], ['Contatti', '/contatti']],
+        tagline: 'Capperi, cucunci e foglie. Tre generazioni di sapere artigianale.' },
+  en: { links: [['Sample box', '/sample-box'], ['Our story', '/storia'], ['Contact', '/contatti']],
+        tagline: 'Capers, caper berries and leaves. Three generations of craft.' },
+};
+
+function layout(title, eyebrow, content, { tag = '', lang = 'it' } = {}) {
+  const f = FOOTER[lang] || FOOTER.it;
   return `<!DOCTYPE html>
-<html lang="it">
+<html lang="${lang}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -143,18 +153,14 @@ function layout(title, eyebrow, content, { tag = '' } = {}) {
     <!-- Footer -->
     <tr><td style="background:${C.dark};padding:24px 40px;border-radius:0 0 10px 10px;text-align:center;">
       <p style="margin:0 0 6px;font-size:11px;color:${C.mid};letter-spacing:.06em;">
-        <a href="${SITE_URL}/collections/all" style="color:${C.green};text-decoration:none;">Prodotti</a>
-        &nbsp;·&nbsp;
-        <a href="${SITE_URL}/storia" style="color:${C.green};text-decoration:none;">La nostra storia</a>
-        &nbsp;·&nbsp;
-        <a href="${SITE_URL}/contatti" style="color:${C.green};text-decoration:none;">Contatti</a>
+        ${f.links.map(([t, href]) => `<a href="${SITE_URL}${href}" style="color:${C.green};text-decoration:none;">${t}</a>`).join('\n        &nbsp;·&nbsp;\n        ')}
       </p>
       <p style="margin:8px 0 0;font-size:10px;color:${C.mid};letter-spacing:.04em;opacity:.7;">
         © 2026 Capperificio di Racale · Racale (LE) ·
         <a href="${SITE_URL}" style="color:${C.mid};text-decoration:none;">capperificiocaro.com</a>
       </p>
       <p style="margin:6px 0 0;font-size:10px;color:${C.mid};opacity:.5;font-style:italic;">
-        Capperi, cucunci e foglie. Tre generazioni di sapere artigianale.
+        ${f.tagline}
       </p>
     </td></tr>
 
@@ -674,6 +680,107 @@ export async function sendSampleBoxAlert(pi) {
     html: layout('Box campioni da spedire', 'Alert merchant', content, { tag: euro(total) }),
     tag: 'merchant-sample-box',
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  8c. BOX CAMPIONI PAGATO → cliente (in inglese)
+//  Il tracking non parte in automatico (niente Packlink per il box): lo manda
+//  il merchant a mano, quindi qui si promette solo "appena spedito".
+// ─────────────────────────────────────────────────────────────────────────────
+const SAMPLE_BOX_ITEMS = [
+  'Small capers in vinegar',
+  'Lilliput capers in sea salt',
+  'Caper powder',
+  'Caper berries',
+  'Caper leaves',
+  'Caper shoots in vinegar',
+];
+const COUNTRY_EN = { BE: 'Belgium', IT: 'Italy', NL: 'Netherlands', LU: 'Luxembourg' };
+const B2B_EMAIL = 'b2b@capperificiocaro.com';
+
+export function sampleBoxConfirmationHtml(pi) {
+  const m = pi.metadata || {};
+  const s = pi.shipping || {};
+  const esc = (v) => String(v ?? '').replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  const eur = (n) => `€${n.toFixed(2)}`;
+  const ref = pi.id.slice(-8).toUpperCase();
+  const country = COUNTRY_EN[s.address?.country] || s.address?.country || '';
+
+  const items = SAMPLE_BOX_ITEMS.map((name, i) => `
+      <tr>
+        <td style="padding:9px 0;border-bottom:1px solid ${C.mint};font-size:14px;color:${C.mid};width:28px;font-family:Georgia,'Times New Roman',serif;font-style:italic;">0${i + 1}</td>
+        <td style="padding:9px 0;border-bottom:1px solid ${C.mint};font-size:14px;color:${C.dark};">${name}</td>
+      </tr>`).join('');
+
+  const content = `
+    <p style="margin:0 0 20px;font-size:15px;line-height:1.8;color:${C.dark};">
+      Dear ${esc(m.firstName) || 'partner'},
+    </p>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.8;color:${C.mid};">
+      thank you for your interest in Capperificio Caro. We have received your payment and we are
+      preparing your sample box with all six of our specialities, straight from our facility in Racale, Salento.
+    </p>
+
+    <div style="background:${C.mint};border-left:3px solid ${C.dark};padding:16px 20px;margin-bottom:28px;border-radius:0 6px 6px 0;">
+      <p style="margin:0 0 3px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:${C.mid};font-weight:600;">Reference</p>
+      <p style="margin:0;font-size:22px;font-weight:700;color:${C.dark};letter-spacing:.04em;font-family:Georgia,'Times New Roman',serif;">#${ref}</p>
+    </div>
+
+    ${label("What's inside your box")}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">${items}</table>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
+      <tr>
+        <td style="font-size:13px;color:${C.mid};padding:3px 0;">Samples</td>
+        <td style="font-size:13px;text-align:right;padding:3px 0;"><span style="color:${C.green};font-weight:600;">Complimentary</span></td>
+      </tr>
+      <tr>
+        <td style="font-size:13px;color:${C.mid};padding:3px 0;">Shipping${country ? ` to ${esc(country)}` : ''}</td>
+        <td style="font-size:13px;color:${C.dark};text-align:right;padding:3px 0;">${eur(pi.amount / 100)}</td>
+      </tr>
+      <tr>
+        <td style="font-size:16px;font-weight:700;color:${C.dark};padding:12px 0 0;border-top:1.5px solid ${C.border};">Total paid</td>
+        <td style="font-size:16px;font-weight:700;color:${C.dark};text-align:right;padding:12px 0 0;border-top:1.5px solid ${C.border};">${eur(pi.amount / 100)}</td>
+      </tr>
+    </table>
+
+    ${label('Shipping to')}
+    <p style="margin:0 0 28px;font-size:14px;line-height:1.8;color:${C.dark};">
+      ${esc(m.company)}<br>
+      ${esc(m.firstName)} ${esc(m.lastName)}<br>
+      ${esc(s.address?.line1)}<br>
+      ${esc(s.address?.postal_code)} ${esc(s.address?.city)}${country ? ` · ${esc(country)}` : ''}
+    </p>
+
+    ${label('What happens next')}
+    <p style="margin:0 0 12px;font-size:14px;line-height:1.8;color:${C.mid};">
+      We will email you the tracking number as soon as your box leaves Racale.
+      Once you have tasted the products, we would be glad to discuss a first trial order
+      in retail or HoReCa formats.
+    </p>
+    <p style="margin:0;font-size:14px;line-height:1.8;color:${C.mid};">
+      For any question, simply write to
+      <a href="mailto:${B2B_EMAIL}" style="color:${C.green};">${B2B_EMAIL}</a>.
+    </p>
+
+    ${cta('View the sample box', `${SITE_URL}/sample-box`)}
+
+    <p style="margin:28px 0 0;font-size:14px;line-height:1.8;color:${C.dark};">
+      Warm regards from Salento,<br>
+      <span style="font-family:Georgia,'Times New Roman',serif;font-style:italic;">The Capperificio Caro team</span>
+    </p>`;
+
+  return {
+    subject: `Your Capperificio Caro sample box — #${ref}`,
+    html: layout('Thank you — your sample box is confirmed', 'Trade samples', content, { tag: 'Payment received', lang: 'en' }),
+  };
+}
+
+export async function sendSampleBoxConfirmation(pi, { to } = {}) {
+  const email = to || pi.metadata?.email;
+  if (!client || !email) return false;
+  const { subject, html } = sampleBoxConfirmationHtml(pi);
+  return _send({ to: email, subject, html, tag: 'sample-box-confirmation' });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

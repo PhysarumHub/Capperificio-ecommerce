@@ -378,8 +378,8 @@ export default function SampleBoxCheckoutPage() {
         <p className={styles.resultOrder}>Reference <strong>#{reference}</strong></p>
       )}
       <p className={styles.resultText}>
-        We are preparing your sample box with all six specialities. You will receive the
-        payment receipt and, once shipped, the tracking details by email.
+        We are preparing your sample box with all six specialities. A confirmation is on its
+        way to your inbox, and we will email you the tracking number as soon as the box ships.
       </p>
     </ResultScreen>
   );

@@ -83,7 +83,7 @@ import { createShipmentForOrder, packlinkConfigured } from './api/_packlink.js';
 import {
   sendOrderConfirmation, sendOrderShipped, sendOrderCancelled,
   sendMerchantAlert, sendReviewRequest, sendMerchantLowStock, sendRefundIssued, resendConfigured,
-  sendSampleBoxAlert,
+  sendSampleBoxAlert, sendSampleBoxConfirmation,
 } from './api/_resend.js';
 
 // ── Validazione env vars obbligatorie ────────────────────────────────────────
@@ -459,15 +459,23 @@ function cleanText(v, max = 200) {
   return typeof v === 'string' ? v.trim().slice(0, max) : '';
 }
 
-// Avviso al merchant una sola volta per pagamento: lo chiamano sia il confirm
-// lato client sia il webhook (rete di sicurezza), in qualunque ordine arrivino.
+// Email al pagamento (avviso merchant + conferma cliente) una sola volta per
+// tipo: le chiamano sia il confirm lato client sia il webhook (rete di
+// sicurezza), in qualunque ordine. Se un invio fallisce, il successivo ritenta
+// solo quello.
 const sampleBoxNotified = new Set();
+async function sendOnce(key, send) {
+  if (sampleBoxNotified.has(key)) return;
+  sampleBoxNotified.add(key);
+  const ok = await send();
+  if (!ok) sampleBoxNotified.delete(key);
+}
 async function notifySampleBoxPaid(pi) {
-  if (sampleBoxNotified.has(pi.id)) return;
-  sampleBoxNotified.add(pi.id);
   if (!resendConfigured()) return;
-  const ok = await sendSampleBoxAlert(pi);
-  if (!ok) sampleBoxNotified.delete(pi.id);
+  await Promise.all([
+    sendOnce(`${pi.id}:merchant`, () => sendSampleBoxAlert(pi)),
+    sendOnce(`${pi.id}:customer`, () => sendSampleBoxConfirmation(pi)),
+  ]);
 }
 
 // Crea il PaymentIntent dal checkout /sample-box/checkout (stesso Payment
