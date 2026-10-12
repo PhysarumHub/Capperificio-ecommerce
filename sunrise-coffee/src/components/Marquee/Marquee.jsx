@@ -23,7 +23,7 @@ const PRODUCT_NAMES = [
 export function ProductsMarquee({ names = PRODUCT_NAMES }) {
   const items = [...names, ...names].map((name, i) => (
     <span key={i}>
-      <Link to={`/product/${name.toLowerCase().replace(/\s+/g, '-')}`}>{name}</Link>
+      <Link to={`/prodotti/${name.toLowerCase().replace(/\s+/g, '-')}`}>{name}</Link>
       <span className={styles.sep}>&rsaquo;</span>
     </span>
   ));

@@ -15,9 +15,11 @@
 //      sendWelcome(customer)                     — nuovo account registrato
 //      sendPasswordReset(customer, resetUrl)     — reset password
 //      sendReviewRequest(order)                  — 10gg dopo spedizione
+//      sendSampleBoxConfirmation(pi)             — box campioni pagato (EN)
 //    Merchant:
 //      sendMerchantAlert(order, packlinkRef)     — nuovo ordine ricevuto
-//      sendMerchantLowStock(product)             — scorte in esaurimento
+//      sendSampleBoxAlert(pi)                    — box campioni pagato
+//      sendMerchantLowStock(products)            — scorte in esaurimento
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { Resend } from 'resend';
@@ -31,27 +33,40 @@ const SHOPWARE_URL = `http://${process.env.SHOPWARE_DOMAIN || '157.90.241.97:809
 
 export function resendConfigured() { return Boolean(client); }
 
-// ── Design tokens (speculari a global.css) ────────────────────────────────────
+// ── Stile "Editorial" (allineato al sito) ─────────────────────────────────────
+//  Stessa grammatica di scheda prodotto e /sample-box: fondo crema, titoli in
+//  PP Editorial (riga 2 in corsivo verde), etichette "• MAIUSCOLO", elenchi a
+//  filetti, riquadro verdino per i prossimi passi, pulsanti a pillola.
+//  Codice email-safe: tabelle + stili inline. I font del brand si caricano solo
+//  dove il client lo consente (Apple Mail, iOS); altrove ripiegano su Georgia /
+//  Helvetica senza rompere l'impaginazione. Logo e foto sono PNG/JPG serviti dal
+//  sito: Gmail e Outlook non mostrano SVG e (alcuni) WebP.
 const C = {
   dark:    '#2C4A2C',   // color-dark
-  green:   '#547054',   // color-red (brand green)
+  green:   '#547054',   // color-red (verde brand)
   mid:     '#6B8A6B',   // color-mid
-  cream:   '#FCF3DF',   // body background
-  mint:    '#EAF0E5',   // color-cream
+  cream:   '#FCF3DF',   // fondo pagina
+  mint:    '#EAF0E5',   // color-cream (verdino)
+  line:    '#D9D8C2',   // color-border su crema, in esadecimale per Outlook
   white:   '#FFFFFF',
-  border:  'rgba(84,112,84,0.22)',
-  warning: '#7A4800',
-  warnBg:  '#FFF3E0',
+  warning: '#6B4A12',
+  warnBg:  '#F5E6C3',
+  danger:  '#9A2B2B',
 };
+const SERIF = "'PP Editorial Old', Georgia, 'Times New Roman', serif";
+const SANS  = "'Paralucent', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+const LOGO_URL = `${SITE_URL}/images/email/logo.png`;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function euro(n) {
   return typeof n === 'number' ? `€${n.toFixed(2).replace('.', ',')}` : '—';
 }
+function euroEn(n) {
+  return typeof n === 'number' ? `€${n.toFixed(2)}` : '—';
+}
 
-function dateIt(iso) {
-  if (!iso) return '';
-  return new Date(iso).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 }
 
 function addr(a) {
@@ -62,100 +77,91 @@ function addr(a) {
     [a.street, a.additionalAddressLine2].filter(Boolean).join(' '),
     `${a.zipcode || ''} ${a.city || ''}`.trim(),
     a.country?.name || '',
-  ].filter(Boolean).join('<br>');
-}
-
-function productRows(lineItems = []) {
-  return (lineItems || [])
-    .filter(i => i.type === 'product' || !i.type)
-    .map(i => `
-      <tr>
-        <td style="padding:10px 0;border-bottom:1px solid ${C.mint};font-size:14px;color:${C.dark};line-height:1.4;">
-          ${i.label || '—'}
-        </td>
-        <td style="padding:10px 0;border-bottom:1px solid ${C.mint};font-size:14px;color:${C.mid};text-align:center;white-space:nowrap;">
-          ×${i.quantity || 1}
-        </td>
-        <td style="padding:10px 0;border-bottom:1px solid ${C.mint};font-size:14px;color:${C.dark};text-align:right;white-space:nowrap;font-weight:600;">
-          ${euro(i.price?.totalPrice)}
-        </td>
-      </tr>`).join('');
-}
-
-function totalsBlock(order) {
-  const shipping = order.deliveries?.[0]?.shippingCosts?.totalPrice ?? 0;
-  const total    = order.price?.totalPrice;
-  const sub      = order.price?.positionPrice ?? (total - shipping);
-  return `
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
-      ${sub != null ? `<tr>
-        <td style="font-size:13px;color:${C.mid};padding:3px 0;">Subtotale</td>
-        <td style="font-size:13px;color:${C.dark};text-align:right;padding:3px 0;">${euro(sub)}</td>
-      </tr>` : ''}
-      <tr>
-        <td style="font-size:13px;color:${C.mid};padding:3px 0;">Spedizione</td>
-        <td style="font-size:13px;text-align:right;padding:3px 0;">
-          ${shipping <= 0
-            ? `<span style="color:${C.green};font-weight:600;">Gratuita</span>`
-            : euro(shipping)}
-        </td>
-      </tr>
-      <tr>
-        <td style="font-size:16px;font-weight:700;color:${C.dark};padding:12px 0 0;border-top:1.5px solid ${C.border};">Totale</td>
-        <td style="font-size:16px;font-weight:700;color:${C.dark};text-align:right;padding:12px 0 0;border-top:1.5px solid ${C.border};">${euro(total)}</td>
-      </tr>
-    </table>`;
+  ].filter(Boolean).map(esc).join('<br>');
 }
 
 // ── Layout base ───────────────────────────────────────────────────────────────
-function layout(title, eyebrow, content, { tag = '' } = {}) {
+//  eyebrow  → "• CONFERMA ORDINE" sotto il logo
+//  title    → [riga 1, riga 2 in corsivo verde (facoltativa)]
+//  intro    → paragrafo sotto il titolo (HTML)
+//  pills    → [{ text, filled }] — riferimento ordine, stato
+//  preheader→ anteprima mostrata dalla casella prima di aprire l'email
+const FOOTER = {
+  it: { line: 'Raccolti a mano a Racale · Salento',
+        links: [['Prodotti', '/collections/all'], ['La nostra storia', '/storia'], ['Contatti', '/contatti']],
+        tagline: 'Capperi, cucunci e foglie. Tre generazioni di sapere artigianale.' },
+  en: { line: 'Hand-picked in Racale · Salento · Italy',
+        links: [['Sample box', '/sample-box'], ['Our story', '/storia'], ['Contact', '/contatti']],
+        tagline: 'Capers, caper berries and leaves. Three generations of craft.' },
+};
+
+function pills(list = []) {
+  if (!list.length) return '';
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 0;"><tr>${list.map(p => `
+    <td style="padding:0 8px 0 0;">
+      <span style="display:inline-block;padding:${p.filled ? '7px 15px' : '5.5px 13.5px'};border-radius:30px;font-family:${SANS};font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;${p.filled
+        ? `background:${C.green};color:${C.cream};`
+        : `border:1.5px solid ${C.green};color:${C.green};`}">${p.text}</span>
+    </td>`).join('')}</tr></table>`;
+}
+
+function layout({ eyebrow = '', title = [], intro = '', pills: pl = [], preheader = '', lang = 'it' }, content) {
+  const f = FOOTER[lang] || FOOTER.it;
+  const [t1, t2] = title;
+  const docTitle = [t1, t2].filter(Boolean).join(' ');
   return `<!DOCTYPE html>
-<html lang="it">
+<html lang="${lang}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${title}</title>
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>${docTitle}</title>
+<style>
+@font-face{font-family:'PP Editorial Old';font-style:normal;font-weight:400;src:url(${SITE_URL}/fonts/PPEditorialOld-Regular.woff2) format('woff2')}
+@font-face{font-family:'PP Editorial Old';font-style:italic;font-weight:400;src:url(${SITE_URL}/fonts/PPEditorialOld-Italic.woff2) format('woff2')}
+@font-face{font-family:'Paralucent';font-weight:300;src:url(${SITE_URL}/fonts/Paralucent-Light.woff2) format('woff2')}
+@font-face{font-family:'Paralucent';font-weight:500;src:url(${SITE_URL}/fonts/Paralucent-Medium.woff2) format('woff2')}
+@media (max-width:620px){
+  .px{padding-left:24px!important;padding-right:24px!important}
+  .h1{font-size:36px!important}
+  .photo{width:100%!important;height:auto!important}
+}
+</style>
 </head>
-<body style="margin:0;padding:0;background:${C.cream};font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:${C.dark};-webkit-font-smoothing:antialiased;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-       style="background:${C.cream};padding:40px 16px 60px;">
-  <tr><td align="center">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-         style="max-width:600px;">
+<body style="margin:0;padding:0;background:${C.cream};-webkit-font-smoothing:antialiased;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${C.cream};">${preheader}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.cream};">
+  <tr><td align="center" style="padding:0 0 24px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;font-family:${SANS};font-weight:300;color:${C.dark};">
 
-    <!-- Header -->
-    <tr><td style="background:${C.dark};padding:32px 40px 28px;border-radius:10px 10px 0 0;text-align:center;">
-      <p style="margin:0 0 10px;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:${C.mid};font-weight:600;">
-        Capperificio di Racale
-      </p>
-      ${eyebrow ? `<p style="margin:0 0 6px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:${C.green};">${eyebrow}</p>` : ''}
-      <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:400;font-style:italic;color:${C.cream};letter-spacing:.02em;line-height:1.3;">
-        ${title}
+    <!-- Logo -->
+    <tr><td align="center" style="padding:40px 48px 30px;border-bottom:1px solid ${C.line};" class="px">
+      <a href="${SITE_URL}" style="text-decoration:none;"><img src="${LOGO_URL}" width="44" height="64" alt="Capperificio Caro" style="display:block;border:0;width:44px;height:auto;"></a>
+      ${eyebrow ? `<p style="margin:14px 0 0;font-family:${SANS};font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:${C.green};">• ${eyebrow}</p>` : ''}
+    </td></tr>
+
+    <!-- Titolo -->
+    <tr><td style="padding:42px 48px 0;" class="px">
+      <h1 class="h1" style="margin:0;font-family:${SERIF};font-weight:400;font-size:44px;line-height:1.04;color:${C.dark};">
+        ${t1 || ''}${t2 ? `<br><span style="font-style:italic;color:${C.green};">${t2}</span>` : ''}
       </h1>
-      ${tag ? `<div style="display:inline-block;margin-top:14px;background:${C.green};color:${C.cream};font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:4px 14px;border-radius:100px;">${tag}</div>` : ''}
+      ${intro ? `<p style="margin:18px 0 0;font-family:${SANS};font-size:15px;line-height:1.75;color:${C.dark};">${intro}</p>` : ''}
+      ${pills(pl)}
     </td></tr>
 
-    <!-- Body -->
-    <tr><td style="background:${C.white};padding:36px 40px;border:1px solid ${C.mint};border-top:none;border-bottom:none;">
-      ${content}
-    </td></tr>
+    ${content}
 
     <!-- Footer -->
-    <tr><td style="background:${C.dark};padding:24px 40px;border-radius:0 0 10px 10px;text-align:center;">
-      <p style="margin:0 0 6px;font-size:11px;color:${C.mid};letter-spacing:.06em;">
-        <a href="${SITE_URL}/collections/all" style="color:${C.green};text-decoration:none;">Prodotti</a>
-        &nbsp;·&nbsp;
-        <a href="${SITE_URL}/storia" style="color:${C.green};text-decoration:none;">La nostra storia</a>
-        &nbsp;·&nbsp;
-        <a href="${SITE_URL}/contatti" style="color:${C.green};text-decoration:none;">Contatti</a>
-      </p>
-      <p style="margin:8px 0 0;font-size:10px;color:${C.mid};letter-spacing:.04em;opacity:.7;">
-        © 2026 Capperificio di Racale · Racale (LE) ·
-        <a href="${SITE_URL}" style="color:${C.mid};text-decoration:none;">capperificiocaro.com</a>
-      </p>
-      <p style="margin:6px 0 0;font-size:10px;color:${C.mid};opacity:.5;font-style:italic;">
-        Capperi, cucunci e foglie. Tre generazioni di sapere artigianale.
-      </p>
+    <tr><td align="center" style="padding:44px 48px 40px;" class="px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="border-top:1px solid ${C.line};padding-top:30px;">
+        <p style="margin:0 0 10px;font-family:${SANS};font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:${C.green};">${f.line}</p>
+        <p style="margin:0 0 10px;font-family:${SANS};font-size:12px;color:${C.mid};">
+          ${f.links.map(([t, href]) => `<a href="${SITE_URL}${href}" style="color:${C.green};text-decoration:underline;">${t}</a>`).join(' &nbsp;·&nbsp; ')}
+        </p>
+        <p style="margin:0;font-family:${SERIF};font-style:italic;font-size:14px;color:${C.mid};">${f.tagline}</p>
+        <p style="margin:12px 0 0;font-family:${SANS};font-size:10px;color:${C.mid};">© ${new Date().getFullYear()} Capperificio Caro · Racale (LE) · <a href="${SITE_URL}" style="color:${C.mid};text-decoration:none;">capperificiocaro.com</a></p>
+      </td></tr></table>
     </td></tr>
 
   </table>
@@ -165,98 +171,142 @@ function layout(title, eyebrow, content, { tag = '' } = {}) {
 </html>`;
 }
 
-// ── Componenti riusabili ──────────────────────────────────────────────────────
-function badge(n) {
-  return `
-    <div style="background:${C.mint};border-left:3px solid ${C.dark};padding:16px 20px;margin-bottom:28px;border-radius:0 6px 6px 0;">
-      <p style="margin:0 0 3px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:${C.mid};font-weight:600;">Numero ordine</p>
-      <p style="margin:0;font-size:22px;font-weight:700;color:${C.dark};letter-spacing:.04em;font-family:Georgia,'Times New Roman',serif;">#${n}</p>
-    </div>`;
-}
-
-function cta(label, url) {
-  return `
-    <div style="text-align:center;margin:32px 0 8px;">
-      <a href="${url}"
-         style="display:inline-block;background:${C.green};color:${C.white};text-decoration:none;
-                padding:13px 36px;border-radius:100px;font-size:12px;letter-spacing:.1em;
-                text-transform:uppercase;font-weight:600;">
-        ${label}
-      </a>
-    </div>`;
+// ── Componenti (ognuno è una riga <tr> del layout) ────────────────────────────
+function section(inner, { top = 38 } = {}) {
+  return `<tr><td style="padding:${top}px 48px 0;" class="px">${inner}</td></tr>`;
 }
 
 function label(text) {
-  return `<h2 style="margin:0 0 10px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:${C.mid};font-weight:600;border-bottom:1px solid ${C.mint};padding-bottom:8px;">${text}</h2>`;
+  return `<p style="margin:0 0 12px;font-family:${SANS};font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:${C.green};">• ${text}</p>`;
 }
 
-function infoBlock(html) {
-  return `<div style="background:${C.mint};padding:16px 20px;border-radius:6px;margin-bottom:24px;">${html}</div>`;
+function text(html, { color = C.dark, size = 15, top = 0 } = {}) {
+  return `<p style="margin:${top}px 0 0;font-family:${SANS};font-size:${size}px;line-height:1.75;color:${color};">${html}</p>`;
 }
 
-function warnBlock(html) {
-  return `<div style="background:${C.warnBg};border-left:3px solid #E07000;padding:14px 18px;border-radius:0 6px 6px 0;margin-bottom:24px;">
-    <p style="margin:0;font-size:13px;color:${C.warning};line-height:1.6;">${html}</p>
-  </div>`;
+// Elenco a filetti. rows = [{ num, left, sub, right, rightColor }]
+function list(rows) {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${C.line};">${rows.map(r => `
+    <tr>
+      ${r.num ? `<td valign="top" style="width:34px;padding:13px 0;border-bottom:1px solid ${C.line};font-family:${SERIF};font-style:italic;font-size:18px;color:${C.green};">${r.num}</td>` : ''}
+      <td valign="top" style="padding:13px 0;border-bottom:1px solid ${C.line};font-family:${SANS};font-size:15px;font-weight:500;color:${C.dark};line-height:1.4;">
+        ${r.left}${r.sub ? `<br><span style="font-size:12px;font-weight:300;color:${C.mid};">${r.sub}</span>` : ''}
+      </td>
+      ${r.right != null ? `<td valign="top" align="right" style="padding:13px 0 13px 16px;border-bottom:1px solid ${C.line};font-family:${SANS};font-size:15px;font-weight:500;color:${r.rightColor || C.green};white-space:nowrap;">${r.right}</td>` : ''}
+    </tr>`).join('')}
+  </table>`;
 }
 
-function successBlock(html) {
-  return `<div style="background:#E8F0E4;border-left:3px solid #5A8A4A;padding:14px 18px;border-radius:0 6px 6px 0;margin-bottom:24px;">
-    <p style="margin:0;font-size:13px;color:#2C4A2C;line-height:1.6;">${html}</p>
-  </div>`;
+function itemsList(lineItems = []) {
+  return list((lineItems || [])
+    .filter(i => i.type === 'product' || !i.type)
+    .map(i => ({
+      left: esc(i.label || '—'),
+      sub: `Quantità ${i.quantity || 1}`,
+      right: euro(i.price?.totalPrice),
+    })));
 }
 
-function divider() {
-  return `<hr style="border:none;border-top:1px solid ${C.mint};margin:24px 0;">`;
+// Tabella dettagli a due colonne, come la scheda prodotto. rows = [[chiave, valore]]
+function details(rows) {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${C.line};">${rows.filter(Boolean).map(([k, v]) => `
+    <tr>
+      <td valign="top" style="width:44%;padding:11px 0;border-bottom:1px solid ${C.line};font-family:${SANS};font-size:14px;font-weight:500;color:${C.dark};">${k}</td>
+      <td valign="top" style="padding:11px 0;border-bottom:1px solid ${C.line};font-family:${SANS};font-size:14px;color:${C.green};line-height:1.6;">${v}</td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+function totalLine(lbl, value) {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;"><tr>
+    <td style="font-family:${SERIF};font-size:26px;color:${C.dark};">${lbl}</td>
+    <td align="right" style="font-family:${SERIF};font-size:30px;color:${C.green};white-space:nowrap;">${value}</td>
+  </tr></table>`;
+}
+
+function orderTotals(order) {
+  const shipping = order.deliveries?.[0]?.shippingCosts?.totalPrice ?? 0;
+  const total    = order.price?.totalPrice;
+  const sub      = order.price?.positionPrice ?? (total - shipping);
+  return details([
+    sub != null ? ['Subtotale', euro(sub)] : null,
+    ['Spedizione', shipping <= 0 ? 'Gratuita' : euro(shipping)],
+  ]) + totalLine('Totale', euro(total));
+}
+
+function button(lbl, url) {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:20px;"><tr>
+    <td style="background:${C.green};border-radius:30px;">
+      <a href="${url}" style="display:inline-block;padding:15px 30px;font-family:${SANS};font-size:13px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:${C.cream};text-decoration:none;border-radius:30px;">${lbl} →</a>
+    </td>
+  </tr></table>`;
+}
+
+// Riquadro verdino "prossimi passi". body = HTML, cta = button(...) facoltativo
+function noteBox(title, body, cta = '') {
+  return section(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.mint};border-radius:20px;"><tr><td style="padding:28px;">
+    <p style="margin:0 0 10px;font-family:${SERIF};font-style:italic;font-size:24px;color:${C.dark};">${title}</p>
+    <p style="margin:0;font-family:${SANS};font-size:14px;line-height:1.7;color:${C.dark};">${body}</p>
+    ${cta}
+  </td></tr></table>`);
+}
+
+function warnBox(html) {
+  return section(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.warnBg};border-radius:14px;"><tr><td style="padding:18px 22px;">
+    <p style="margin:0;font-family:${SANS};font-size:14px;line-height:1.65;color:${C.warning};">${html}</p>
+  </td></tr></table>`, { top: 28 });
+}
+
+function photo(url, alt) {
+  return `<tr><td style="padding:34px 28px 0;"><img class="photo" src="${url}" width="544" height="380" alt="${alt}" style="display:block;border:0;width:544px;height:380px;border-radius:20px;"></td></tr>`;
+}
+
+function signature(lang = 'it') {
+  return section(`
+    <p style="margin:0;font-family:${SANS};font-size:15px;color:${C.dark};">${lang === 'en' ? 'Warm regards from Salento,' : 'Un caro saluto dal Salento,'}</p>
+    <p style="margin:6px 0 0;font-family:${SERIF};font-style:italic;font-size:24px;color:${C.green};">${lang === 'en' ? 'The Capperificio Caro team' : 'Il team del Capperificio Caro'}</p>`, { top: 36 });
+}
+
+function helpLine(prefix = 'Per qualsiasi domanda scrivi a', email = 'ordini@capperificiocaro.com') {
+  return section(text(`${prefix} <a href="mailto:${email}" style="color:${C.green};">${email}</a>`, { color: C.mid, size: 13 }), { top: 22 });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  1. CONFERMA ORDINE → cliente
 // ─────────────────────────────────────────────────────────────────────────────
+//  Ritorna true se l'email è stata accettata da Resend, false altrimenti:
+//  il chiamante deve poter ritentare (la conferma ordine non può andare persa).
 export async function sendOrderConfirmation(order) {
-  if (!client) return;
+  if (!client) return false;
   const to = order.orderCustomer?.email;
-  if (!to) return console.warn('Resend sendOrderConfirmation: email cliente mancante');
+  if (!to) {
+    console.warn('Resend sendOrderConfirmation: email cliente mancante');
+    return false;
+  }
   const num = order.orderNumber || order.id;
-  const firstName = order.orderCustomer?.firstName || 'Cliente';
+  const firstName = esc(order.orderCustomer?.firstName || 'Cliente');
   const delivery = order.deliveries?.[0]?.shippingOrderAddress;
 
   const content = `
-    <p style="margin:0 0 24px;font-size:15px;line-height:1.8;color:${C.mid};">
-      Ciao <strong style="color:${C.dark};">${firstName}</strong>,<br>
-      il tuo ordine è confermato. Lo stiamo preparando con cura nel nostro laboratorio a Racale.
-    </p>
+    ${section(`${label('Il tuo ordine')}${itemsList(order.lineItems)}`)}
+    ${section(`${label('Dettagli')}${orderTotals(order)}`, { top: 32 })}
+    ${delivery ? section(`${label('Spedizione a')}${text(addr(delivery), { color: C.green, size: 14 })}`, { top: 32 }) : ''}
+    ${noteBox('Cosa succede ora',
+      'Prepariamo il tuo pacco a mano nel nostro laboratorio. Riceverai una seconda email non appena partirà, con il numero di tracking.',
+      button('Scopri altri prodotti', `${SITE_URL}/collections/all`))}
+    ${signature()}
+    ${helpLine()}`;
 
-    ${badge(num)}
-
-    ${label('Prodotti ordinati')}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-      <thead>
-        <tr>
-          <th style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};text-align:left;padding-bottom:8px;border-bottom:1.5px solid ${C.border};">Prodotto</th>
-          <th style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};text-align:center;padding-bottom:8px;border-bottom:1.5px solid ${C.border};">Qtà</th>
-          <th style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};text-align:right;padding-bottom:8px;border-bottom:1.5px solid ${C.border};">Prezzo</th>
-        </tr>
-      </thead>
-      <tbody>${productRows(order.lineItems)}</tbody>
-    </table>
-
-    ${totalsBlock(order)}
-
-    ${delivery ? `${label('Indirizzo di spedizione')}<p style="margin:0 0 28px;font-size:14px;line-height:1.8;color:${C.dark};">${addr(delivery)}</p>` : ''}
-
-    ${successBlock('Riceverai una seconda email non appena la spedizione partirà, con il numero di tracking.')}
-
-    ${cta('Scopri altri prodotti', `${SITE_URL}/collections/all`)}
-
-    <p style="margin:24px 0 0;font-size:12px;line-height:1.7;color:${C.mid};text-align:center;">
-      Per qualsiasi domanda scrivi a <a href="mailto:ordini@capperificiocaro.com" style="color:${C.green};">ordini@capperificiocaro.com</a>
-    </p>`;
-
-  await _send({
+  return _send({
     to,
     subject: `Ordine #${num} confermato — Capperificio di Racale`,
-    html: layout('Il tuo ordine è confermato', 'Conferma ordine', content, { tag: `#${num}` }),
+    html: layout({
+      eyebrow: 'Conferma ordine',
+      title: [`Grazie, ${firstName}.`, 'Il tuo ordine è confermato.'],
+      intro: `Lo stiamo preparando con cura nel nostro laboratorio a <span style="font-family:${SERIF};font-style:italic;font-size:17px;">Racale</span>, nel cuore del Salento.`,
+      pills: [{ text: `Ordine #${num}` }, { text: 'Pagamento ricevuto', filled: true }],
+      preheader: `Ordine #${num} confermato: lo stiamo preparando a Racale.`,
+    }, content),
     tag: 'order-confirmation',
   });
 }
@@ -271,54 +321,33 @@ export async function sendOrderShipped(order, tracking = {}) {
   const to = order.orderCustomer?.email;
   if (!to) return console.warn('Resend sendOrderShipped: email cliente mancante');
   const num = order.orderNumber || order.id;
-  const firstName = order.orderCustomer?.firstName || 'Cliente';
+  const firstName = esc(order.orderCustomer?.firstName || 'Cliente');
   const delivery = order.deliveries?.[0]?.shippingOrderAddress;
 
   const trackBlock = tracking.number
-    ? `${label('Traccia la tua spedizione')}
-       ${infoBlock(`
-         <p style="margin:0 0 4px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};">Corriere</p>
-         <p style="margin:0 0 12px;font-size:15px;font-weight:700;color:${C.dark};">${tracking.carrier || '—'}</p>
-         <p style="margin:0 0 4px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};">Numero di tracking</p>
-         <p style="margin:0;font-size:15px;font-weight:700;color:${C.dark};">${tracking.number}</p>
-       `)}
-       ${tracking.url ? cta('Traccia il pacco', tracking.url) : ''}`
-    : warnBlock('I dettagli di tracking saranno disponibili a breve sul sito del corriere.');
+    ? section(`${label('Traccia la spedizione')}${details([
+        ['Corriere', esc(tracking.carrier || '—')],
+        ['Numero di tracking', esc(tracking.number)],
+      ])}${tracking.url ? button('Traccia il pacco', tracking.url) : ''}`)
+    : warnBox('I dettagli di tracking saranno disponibili a breve sul sito del corriere.');
 
   const content = `
-    <p style="margin:0 0 24px;font-size:15px;line-height:1.8;color:${C.mid};">
-      Ciao <strong style="color:${C.dark};">${firstName}</strong>,<br>
-      ottima notizia — il tuo ordine è partito ed è in viaggio verso di te.
-    </p>
-
-    ${badge(num)}
-
     ${trackBlock}
-
-    ${delivery ? `${label('Indirizzo di consegna')}<p style="margin:0 0 28px;font-size:14px;line-height:1.8;color:${C.dark};">${addr(delivery)}</p>` : ''}
-
-    ${divider()}
-
-    ${label('Prodotti in spedizione')}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-      <thead>
-        <tr>
-          <th style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};text-align:left;padding-bottom:8px;border-bottom:1.5px solid ${C.border};">Prodotto</th>
-          <th style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};text-align:center;padding-bottom:8px;border-bottom:1.5px solid ${C.border};">Qtà</th>
-          <th style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};text-align:right;padding-bottom:8px;border-bottom:1.5px solid ${C.border};">Prezzo</th>
-        </tr>
-      </thead>
-      <tbody>${productRows(order.lineItems)}</tbody>
-    </table>
-
-    <p style="margin:0;font-size:12px;line-height:1.7;color:${C.mid};text-align:center;">
-      Per qualsiasi domanda scrivi a <a href="mailto:ordini@capperificiocaro.com" style="color:${C.green};">ordini@capperificiocaro.com</a>
-    </p>`;
+    ${delivery ? section(`${label('Consegna a')}${text(addr(delivery), { color: C.green, size: 14 })}`, { top: 32 }) : ''}
+    ${section(`${label('Nel pacco')}${itemsList(order.lineItems)}`, { top: 32 })}
+    ${signature()}
+    ${helpLine()}`;
 
   await _send({
     to,
     subject: `Il tuo ordine #${num} è in viaggio — Capperificio di Racale`,
-    html: layout('Il tuo ordine è partito', 'Spedizione confermata', content, { tag: 'In spedizione' }),
+    html: layout({
+      eyebrow: 'Spedizione',
+      title: [`Buone notizie, ${firstName}.`, 'Il tuo ordine è partito.'],
+      intro: 'I tuoi capperi hanno lasciato Racale e sono in viaggio verso di te.',
+      pills: [{ text: `Ordine #${num}` }, { text: 'In viaggio', filled: true }],
+      preheader: `L'ordine #${num} è partito${tracking.number ? `: tracking ${tracking.number}` : ''}.`,
+    }, content),
     tag: 'order-shipped',
   });
 }
@@ -331,42 +360,28 @@ export async function sendOrderCancelled(order) {
   const to = order.orderCustomer?.email;
   if (!to) return console.warn('Resend sendOrderCancelled: email cliente mancante');
   const num = order.orderNumber || order.id;
-  const firstName = order.orderCustomer?.firstName || 'Cliente';
+  const firstName = esc(order.orderCustomer?.firstName || 'Cliente');
 
   const content = `
-    <p style="margin:0 0 24px;font-size:15px;line-height:1.8;color:${C.mid};">
-      Ciao <strong style="color:${C.dark};">${firstName}</strong>,<br>
-      il tuo ordine è stato annullato come da tua richiesta (o a causa di un problema tecnico).
-    </p>
-
-    ${badge(num)}
-
-    ${warnBlock(`Il rimborso verrà accreditato sul tuo metodo di pagamento entro <strong>3-5 giorni lavorativi</strong>. I tempi dipendono dalla tua banca o circuito di pagamento.`)}
-
-    ${label('Prodotti dell\'ordine annullato')}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-      <thead>
-        <tr>
-          <th style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};text-align:left;padding-bottom:8px;border-bottom:1.5px solid ${C.border};">Prodotto</th>
-          <th style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};text-align:center;padding-bottom:8px;border-bottom:1.5px solid ${C.border};">Qtà</th>
-          <th style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};text-align:right;padding-bottom:8px;border-bottom:1.5px solid ${C.border};">Prezzo</th>
-        </tr>
-      </thead>
-      <tbody>${productRows(order.lineItems)}</tbody>
-    </table>
-
-    ${totalsBlock(order)}
-
-    ${cta('Torna allo shop', `${SITE_URL}/collections/all`)}
-
-    <p style="margin:24px 0 0;font-size:12px;line-height:1.7;color:${C.mid};text-align:center;">
-      Hai bisogno di assistenza? <a href="mailto:ordini@capperificiocaro.com" style="color:${C.green};">ordini@capperificiocaro.com</a>
-    </p>`;
+    ${warnBox('Il rimborso verrà accreditato sul tuo metodo di pagamento entro <strong>3-5 giorni lavorativi</strong>. I tempi dipendono dalla tua banca o dal circuito di pagamento.')}
+    ${section(`${label('Ordine annullato')}${itemsList(order.lineItems)}`, { top: 32 })}
+    ${section(`${label('Dettagli')}${orderTotals(order)}`, { top: 32 })}
+    ${noteBox('Ti aspettiamo',
+      'Se vuoi riprovare, i nostri capperi sono sempre qui. Per qualsiasi dubbio sull’annullamento rispondi pure a questa email.',
+      button('Torna allo shop', `${SITE_URL}/collections/all`))}
+    ${signature()}
+    ${helpLine('Hai bisogno di assistenza? Scrivi a')}`;
 
   await _send({
     to,
     subject: `Ordine #${num} annullato — Capperificio di Racale`,
-    html: layout('Ordine annullato', 'Cancellazione ordine', content, { tag: `#${num}` }),
+    html: layout({
+      eyebrow: 'Ordine annullato',
+      title: [`Ciao ${firstName},`, 'il tuo ordine è stato annullato.'],
+      intro: 'L’ordine è stato annullato su tua richiesta o per un problema tecnico. Qui sotto trovi il riepilogo.',
+      pills: [{ text: `Ordine #${num}` }],
+      preheader: `Ordine #${num} annullato: il rimborso arriverà in 3-5 giorni lavorativi.`,
+    }, content),
     tag: 'order-cancelled',
   });
 }
@@ -380,33 +395,26 @@ export async function sendRefundIssued(order, amount) {
   const to = order.orderCustomer?.email;
   if (!to) return console.warn('Resend sendRefundIssued: email cliente mancante');
   const num = order.orderNumber || order.id;
-  const firstName = order.orderCustomer?.firstName || 'Cliente';
+  const firstName = esc(order.orderCustomer?.firstName || 'Cliente');
 
   const content = `
-    <p style="margin:0 0 24px;font-size:15px;line-height:1.8;color:${C.mid};">
-      Ciao <strong style="color:${C.dark};">${firstName}</strong>,<br>
-      abbiamo elaborato un rimborso per il tuo ordine.
-    </p>
-
-    ${badge(num)}
-
-    ${infoBlock(`
-      <p style="margin:0 0 4px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};">Importo rimborsato</p>
-      <p style="margin:0;font-size:28px;font-weight:700;color:${C.dark};font-family:Georgia,'Times New Roman',serif;">${euro(amount)}</p>
-    `)}
-
-    ${warnBlock('Il rimborso sarà visibile sul tuo conto entro <strong>3-5 giorni lavorativi</strong>, in base ai tempi della tua banca.')}
-
-    ${cta('Torna allo shop', `${SITE_URL}/collections/all`)}
-
-    <p style="margin:24px 0 0;font-size:12px;line-height:1.7;color:${C.mid};text-align:center;">
-      Domande? <a href="mailto:ordini@capperificiocaro.com" style="color:${C.green};">ordini@capperificiocaro.com</a>
-    </p>`;
+    ${section(`${label('Rimborso')}${details([['Ordine', `#${esc(num)}`]])}${totalLine('Importo rimborsato', euro(amount))}`)}
+    ${warnBox('Il rimborso sarà visibile sul tuo conto entro <strong>3-5 giorni lavorativi</strong>, in base ai tempi della tua banca.')}
+    ${noteBox('Grazie per la pazienza', 'Se qualcosa non ti torna, rispondi a questa email: ti aiutiamo volentieri.',
+      button('Torna allo shop', `${SITE_URL}/collections/all`))}
+    ${signature()}
+    ${helpLine('Domande? Scrivi a')}`;
 
   await _send({
     to,
     subject: `Rimborso di ${euro(amount)} per l'ordine #${num}`,
-    html: layout(`Rimborso di ${euro(amount)} emesso`, 'Rimborso', content, { tag: `#${num}` }),
+    html: layout({
+      eyebrow: 'Rimborso',
+      title: [`Ciao ${firstName},`, 'abbiamo emesso un rimborso.'],
+      intro: `Abbiamo elaborato un rimborso di <strong style="font-weight:500;">${euro(amount)}</strong> per il tuo ordine.`,
+      pills: [{ text: `Ordine #${num}` }, { text: euro(amount), filled: true }],
+      preheader: `Rimborso di ${euro(amount)} emesso per l'ordine #${num}.`,
+    }, content),
     tag: 'refund-issued',
   });
 }
@@ -419,51 +427,30 @@ export async function sendWelcome(customer) {
   if (!client) return;
   const to = customer?.email;
   if (!to) return console.warn('Resend sendWelcome: email mancante');
-  const name = customer.firstName || 'Cliente';
+  const name = esc(customer.firstName || 'Cliente');
+  const link = (t, href) => `<a href="${SITE_URL}${href}" style="color:${C.dark};text-decoration:none;">${t}</a>`;
 
   const content = `
-    <p style="margin:0 0 24px;font-size:15px;line-height:1.8;color:${C.mid};">
-      Ciao <strong style="color:${C.dark};">${name}</strong>,<br>
-      benvenuto nel Capperificio di Racale. Siamo felici di averti con noi.
-    </p>
-
-    ${infoBlock(`
-      <p style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-weight:400;font-style:italic;color:${C.dark};line-height:1.5;">
-        "Tre generazioni di sapere artigianale tra le distese di Racale, in Puglia."
-      </p>
-      <p style="margin:0;font-size:13px;color:${C.mid};line-height:1.6;">
-        Coltiviamo e selezioniamo capperi con cura, rispettando la terra e i ritmi della natura — perché il gusto autentico non si improvvisa.
-      </p>
-    `)}
-
-    ${label('Cosa puoi fare ora')}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-      <tr>
-        <td style="padding:10px 0;border-bottom:1px solid ${C.mint};font-size:14px;color:${C.dark};">
-          <span style="color:${C.green};font-weight:700;margin-right:10px;">→</span>
-          Scopri la nostra selezione di capperi, cucunci e foglie
-        </td>
-      </tr>
-      <tr>
-        <td style="padding:10px 0;border-bottom:1px solid ${C.mint};font-size:14px;color:${C.dark};">
-          <span style="color:${C.green};font-weight:700;margin-right:10px;">→</span>
-          Leggi la storia del Capperificio sul nostro blog
-        </td>
-      </tr>
-      <tr>
-        <td style="padding:10px 0;font-size:14px;color:${C.dark};">
-          <span style="color:${C.green};font-weight:700;margin-right:10px;">→</span>
-          Sei un rivenditore? Scopri le condizioni B2B
-        </td>
-      </tr>
-    </table>
-
-    ${cta('Esplora i prodotti', `${SITE_URL}/collections/all`)}`;
+    ${section(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.mint};border-radius:20px;"><tr><td style="padding:28px;">
+      <p style="margin:0 0 12px;font-family:${SERIF};font-style:italic;font-size:22px;line-height:1.4;color:${C.dark};">“Tre generazioni di sapere artigianale tra le distese di Racale, in Puglia.”</p>
+      <p style="margin:0;font-family:${SANS};font-size:14px;line-height:1.7;color:${C.dark};">Coltiviamo e selezioniamo capperi con cura, rispettando la terra e i ritmi della natura — perché il gusto autentico non si improvvisa.</p>
+    </td></tr></table>`)}
+    ${section(`${label('Da dove iniziare')}${list([
+      { num: '01', left: link('Scopri capperi, cucunci e foglie', '/collections/all') },
+      { num: '02', left: link('Leggi la storia del Capperificio', '/storia') },
+      { num: '03', left: link('Sei un rivenditore? Le condizioni B2B', '/b2b') },
+    ])}${button('Esplora i prodotti', `${SITE_URL}/collections/all`)}`, { top: 32 })}
+    ${signature()}`;
 
   await _send({
     to,
     subject: 'Benvenuto nel Capperificio di Racale',
-    html: layout('Benvenuto', 'Nuovo account', content),
+    html: layout({
+      eyebrow: 'Nuovo account',
+      title: [`Benvenuto, ${name}.`, 'Siamo felici di averti con noi.'],
+      intro: 'Il tuo account è pronto: da ora puoi ordinare più in fretta e seguire i tuoi ordini.',
+      preheader: 'Il tuo account Capperificio di Racale è pronto.',
+    }, content),
     tag: 'welcome',
   });
 }
@@ -476,27 +463,24 @@ export async function sendPasswordReset(customer, resetUrl) {
   if (!client) return;
   const to = customer?.email;
   if (!to) return console.warn('Resend sendPasswordReset: email mancante');
-  const name = customer.firstName || 'Cliente';
+  const name = esc(customer.firstName || 'Cliente');
+  const url = esc(resetUrl);
 
   const content = `
-    <p style="margin:0 0 24px;font-size:15px;line-height:1.8;color:${C.mid};">
-      Ciao <strong style="color:${C.dark};">${name}</strong>,<br>
-      abbiamo ricevuto una richiesta di reset della password per il tuo account.
-    </p>
-
-    ${cta('Reimposta la password', resetUrl)}
-
-    ${warnBlock(`Questo link è valido per <strong>2 ore</strong>. Se non hai richiesto il reset, puoi ignorare questa email — il tuo account rimane al sicuro.`)}
-
-    <p style="margin:24px 0 0;font-size:12px;line-height:1.7;color:${C.mid};text-align:center;">
-      Se il pulsante non funziona, copia e incolla questo URL nel browser:<br>
-      <a href="${resetUrl}" style="color:${C.green};word-break:break-all;">${resetUrl}</a>
-    </p>`;
+    ${section(button('Reimposta la password', url), { top: 18 })}
+    ${warnBox('Il link è valido per <strong>2 ore</strong>. Se non hai richiesto tu il reset, ignora questa email: il tuo account resta al sicuro.')}
+    ${section(text(`Se il pulsante non funziona, copia e incolla questo indirizzo nel browser:<br><a href="${url}" style="color:${C.green};word-break:break-all;">${url}</a>`, { color: C.mid, size: 13 }), { top: 24 })}
+    ${signature()}`;
 
   await _send({
     to,
     subject: 'Reimposta la tua password — Capperificio di Racale',
-    html: layout('Reimposta la password', 'Sicurezza account', content),
+    html: layout({
+      eyebrow: 'Sicurezza account',
+      title: [`Ciao ${name},`, 'reimposta la tua password.'],
+      intro: 'Abbiamo ricevuto una richiesta di reset della password per il tuo account.',
+      preheader: 'Il link per reimpostare la password è valido per 2 ore.',
+    }, content),
     tag: 'password-reset',
   });
 }
@@ -509,43 +493,26 @@ export async function sendReviewRequest(order) {
   const to = order.orderCustomer?.email;
   if (!to) return console.warn('Resend sendReviewRequest: email cliente mancante');
   const num = order.orderNumber || order.id;
-  const firstName = order.orderCustomer?.firstName || 'Cliente';
+  const firstName = esc(order.orderCustomer?.firstName || 'Cliente');
   const items = (order.lineItems || []).filter(i => i.type === 'product' || !i.type);
 
-  const productList = items.map(i => `
-    <li style="padding:8px 0;border-bottom:1px solid ${C.mint};font-size:14px;color:${C.dark};">
-      ${i.label || '—'}
-    </li>`).join('');
-
   const content = `
-    <p style="margin:0 0 24px;font-size:15px;line-height:1.8;color:${C.mid};">
-      Ciao <strong style="color:${C.dark};">${firstName}</strong>,<br>
-      speriamo che i tuoi capperi siano arrivati in perfetta forma e che tu li stia gustando.
-    </p>
-
-    ${infoBlock(`
-      <p style="margin:0 0 8px;font-family:Georgia,'Times New Roman',serif;font-size:17px;font-style:italic;color:${C.dark};">
-        Cosa ne pensi del tuo acquisto?
-      </p>
-      <p style="margin:0;font-size:13px;color:${C.mid};line-height:1.6;">
-        La tua opinione è preziosa per noi e per chi non ci conosce ancora. Lasciare una recensione richiede solo un minuto.
-      </p>
-    `)}
-
-    ${label('Prodotti acquistati')}
-    <ul style="margin:0 0 28px;padding:0;list-style:none;">${productList}</ul>
-
-    ${cta('Lascia una recensione', `${SITE_URL}/collections/all`)}
-
-    <p style="margin:24px 0 0;font-size:12px;line-height:1.7;color:${C.mid};text-align:center;">
-      Hai avuto problemi con l'ordine #${num}? Scrivici a<br>
-      <a href="mailto:ordini@capperificiocaro.com" style="color:${C.green};">ordini@capperificiocaro.com</a>
-    </p>`;
+    ${section(`${label('Hai acquistato')}${list(items.map((i, n) => ({ num: String(n + 1).padStart(2, '0'), left: esc(i.label || '—') })))}`)}
+    ${noteBox('Cosa ne pensi?',
+      'La tua opinione è preziosa per noi e per chi non ci conosce ancora. Lasciare una recensione richiede solo un minuto.',
+      button('Lascia una recensione', `${SITE_URL}/collections/all`))}
+    ${signature()}
+    ${helpLine(`Problemi con l’ordine #${esc(num)}? Scrivi a`)}`;
 
   await _send({
     to,
     subject: 'Come sono stati i tuoi capperi? — Capperificio di Racale',
-    html: layout('Com\'è andata?', 'La tua opinione', content),
+    html: layout({
+      eyebrow: 'La tua opinione',
+      title: [`Ciao ${firstName},`, 'com’è andata?'],
+      intro: 'Speriamo che i tuoi capperi siano arrivati in perfetta forma e che tu li stia gustando.',
+      preheader: 'Un minuto per dirci com’erano i tuoi capperi?',
+    }, content),
     tag: 'review-request',
   });
 }
@@ -562,102 +529,201 @@ export async function sendMerchantAlert(order, packlinkRef = null) {
   const customer = order.orderCustomer || {};
   const delivery = order.deliveries?.[0]?.shippingOrderAddress;
   const total = order.price?.totalPrice;
-  const shippingMethod = order.deliveries?.[0]?.shippingMethod?.name || '—';
+  const shippingMethod = esc(order.deliveries?.[0]?.shippingMethod?.name || '—');
 
   const plBlock = packlinkRef
-    ? successBlock(`Draft Packlink creato: <strong>${packlinkRef}</strong><br>
-        <a href="https://pro.packlink.com/shipment/${packlinkRef}" style="color:${C.dark};font-weight:600;">
-          Seleziona corriere e stampa etichetta →
-        </a>`)
-    : warnBlock('Nessun draft Packlink creato automaticamente. Crea la spedizione manualmente su <a href="https://pro.packlink.com" style="color:#7A4800;">pro.packlink.com</a>');
+    ? noteBox('Spedizione Packlink pronta',
+        `Draft creato: <strong style="font-weight:500;">${esc(packlinkRef)}</strong>. Seleziona il corriere e stampa l’etichetta.`,
+        button('Apri su Packlink', `https://pro.packlink.com/shipment/${esc(packlinkRef)}`))
+    : warnBox('Nessun draft Packlink creato automaticamente. Crea la spedizione a mano su <a href="https://pro.packlink.com" style="color:#6B4A12;">pro.packlink.com</a>.');
 
   const content = `
-    <p style="margin:0 0 24px;font-size:15px;line-height:1.8;color:${C.mid};">
-      Nuovo ordine pagato e confermato.
-    </p>
-
-    <div style="display:flex;gap:12px;margin-bottom:24px;">
-      ${infoBlock(`
-        <p style="margin:0 0 3px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:${C.mid};">Ordine</p>
-        <p style="margin:0;font-size:24px;font-weight:700;color:${C.dark};font-family:Georgia,'Times New Roman',serif;">#${num}</p>
-        <p style="margin:4px 0 0;font-size:20px;font-weight:700;color:${C.green};">${euro(total)}</p>
-      `)}
-    </div>
-
-    ${label('Cliente')}
-    <p style="margin:0 0 24px;font-size:14px;line-height:1.8;color:${C.dark};">
-      ${customer.firstName || ''} ${customer.lastName || ''}<br>
-      <a href="mailto:${customer.email}" style="color:${C.green};">${customer.email || '—'}</a>
-    </p>
-
-    ${label('Prodotti')}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-      <thead>
-        <tr>
-          <th style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};text-align:left;padding-bottom:8px;border-bottom:1.5px solid ${C.border};">Prodotto</th>
-          <th style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};text-align:center;padding-bottom:8px;border-bottom:1.5px solid ${C.border};">Qtà</th>
-          <th style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${C.mid};text-align:right;padding-bottom:8px;border-bottom:1.5px solid ${C.border};">Prezzo</th>
-        </tr>
-      </thead>
-      <tbody>${productRows(order.lineItems)}</tbody>
-    </table>
-
-    ${totalsBlock(order)}
-
-    ${delivery ? `${label('Spedire a')}
-    <p style="margin:0 0 6px;font-size:14px;line-height:1.8;color:${C.dark};">${addr(delivery)}</p>
-    <p style="margin:0 0 24px;font-size:12px;color:${C.mid};">Metodo: ${shippingMethod}</p>` : ''}
-
-    ${divider()}
+    ${section(`${label('Cliente')}${details([
+      ['Nome', esc(`${customer.firstName || ''} ${customer.lastName || ''}`.trim() || '—')],
+      ['Email', customer.email ? `<a href="mailto:${esc(customer.email)}" style="color:${C.green};">${esc(customer.email)}</a>` : '—'],
+      delivery ? ['Spedire a', addr(delivery)] : null,
+      ['Metodo', shippingMethod],
+    ])}`)}
+    ${section(`${label('Prodotti')}${itemsList(order.lineItems)}`, { top: 32 })}
+    ${section(`${label('Totali')}${orderTotals(order)}`, { top: 32 })}
     ${plBlock}
-
-    ${cta('Apri in Shopware', `${SHOPWARE_URL}/admin#/sw/order/list`)}`;
+    ${section(button('Apri in Shopware', `${SHOPWARE_URL}/admin#/sw/order/list`), { top: 24 })}`;
 
   await _send({
     to: MERCHANT_TO,
     subject: `Nuovo ordine #${num} — ${euro(total)}`,
-    html: layout(`Nuovo ordine #${num}`, 'Alert merchant', content, { tag: euro(total) }),
+    html: layout({
+      eyebrow: 'Nuovo ordine',
+      title: [`Ordine #${num}`, euro(total)],
+      intro: 'Nuovo ordine pagato e confermato. Da preparare e spedire.',
+      pills: [{ text: 'Pagato', filled: true }, { text: shippingMethod }],
+      preheader: `Nuovo ordine #${num} da ${euro(total)}.`,
+    }, content),
     tag: 'merchant-alert',
   });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  9. SCORTE IN ESAURIMENTO → merchant
-//  product = { name, sku, stock, threshold }
+//  8b. BOX CAMPIONI PAGATO → merchant
+//  pi = PaymentIntent Stripe di /sample-box (nessun ordine Shopware): i dati
+//  del rivenditore stanno in metadata, l'indirizzo in pi.shipping.
 // ─────────────────────────────────────────────────────────────────────────────
-export async function sendMerchantLowStock(product) {
-  if (!client || !MERCHANT_TO) return;
+export async function sendSampleBoxAlert(pi) {
+  if (!client || !MERCHANT_TO) {
+    if (!MERCHANT_TO) console.warn('Resend sendSampleBoxAlert: RESEND_MERCHANT_TO non configurato');
+    return false;
+  }
+  const m = pi.metadata || {};
+  const s = pi.shipping || {};
+  const total = pi.amount / 100;
 
   const content = `
-    <p style="margin:0 0 24px;font-size:15px;line-height:1.8;color:${C.mid};">
-      Un prodotto sta esaurendo le scorte.
-    </p>
+    ${section(`${label('Rivenditore')}${details([
+      ['Azienda', esc(m.company)],
+      ['Contatto', esc(`${m.firstName || ''} ${m.lastName || ''}`.trim())],
+      ['Email', `<a href="mailto:${esc(m.email)}" style="color:${C.green};">${esc(m.email)}</a>`],
+      ['Telefono', esc(m.phone)],
+      m.vat ? ['P. IVA / VAT', esc(m.vat)] : null,
+    ])}`)}
+    ${section(`${label('Spedire a')}${text(`${esc(s.name)}<br>${esc(s.address?.line1)}<br>${esc(s.address?.postal_code)} ${esc(s.address?.city)} · ${esc(s.address?.country)}`, { color: C.green, size: 14 })}${totalLine('Spedizione pagata', euro(total))}`, { top: 32 })}
+    ${noteBox('Da fare',
+      'Prepara il box con le 6 specialità e spediscilo. Poi manda al cliente il numero di tracking: non parte in automatico.',
+      button('Apri su Stripe', `https://dashboard.stripe.com/payments/${pi.id}`))}`;
 
-    ${warnBlock(`
-      <strong>${product.name || 'Prodotto'}</strong>${product.sku ? ` (SKU: ${product.sku})` : ''}<br>
-      Scorte rimanenti: <strong>${product.stock ?? '—'} unità</strong><br>
-      ${product.threshold ? `Soglia di allerta: ${product.threshold} unità` : ''}
-    `)}
+  return _send({
+    to: MERCHANT_TO,
+    subject: `Box campioni pagato — ${m.company || 'rivenditore'} (${m.country || '—'})`,
+    html: layout({
+      eyebrow: 'Box campioni',
+      title: ['Box campioni da spedire', esc(m.company || 'Nuovo rivenditore')],
+      intro: 'Un rivenditore ha pagato la spedizione del box campioni (6 specialità).',
+      pills: [{ text: 'Pagato', filled: true }, { text: `${euro(total)} · ${esc(m.country || '—')}` }],
+      preheader: `${m.company || 'Un rivenditore'} ha pagato il box campioni.`,
+    }, content),
+    tag: 'merchant-sample-box',
+  });
+}
 
-    ${cta('Gestisci le scorte in Shopware', `${SHOPWARE_URL}/admin#/sw/product/list`)}`;
+// ─────────────────────────────────────────────────────────────────────────────
+//  8c. BOX CAMPIONI PAGATO → cliente (in inglese)
+//  Il tracking non parte in automatico (niente Packlink per il box): lo manda
+//  il merchant a mano, quindi qui si promette solo "appena spedito".
+// ─────────────────────────────────────────────────────────────────────────────
+const SAMPLE_BOX_ITEMS = [
+  'Small capers in vinegar',
+  'Lilliput capers in sea salt',
+  'Caper powder',
+  'Caper berries',
+  'Caper leaves',
+  'Caper shoots in vinegar',
+];
+const COUNTRY_EN = { BE: 'Belgium', IT: 'Italy', NL: 'Netherlands', LU: 'Luxembourg' };
+const SAMPLE_BOX_EMAIL = 'info@capperificiocaro.com';
+
+export function sampleBoxConfirmationHtml(pi) {
+  const m = pi.metadata || {};
+  const s = pi.shipping || {};
+  const ref = pi.id.slice(-8).toUpperCase();
+  const country = COUNTRY_EN[s.address?.country] || s.address?.country || '';
+  const amount = euroEn(pi.amount / 100);
+
+  const content = `
+    ${photo(`${SITE_URL}/images/email/sample-box.jpg`, 'Capperificio Caro jars on a stone table in Salento')}
+    ${section(`${label("What's inside your box")}${list(SAMPLE_BOX_ITEMS.map((name, i) => ({ num: `0${i + 1}`, left: name })))}`, { top: 40 })}
+    ${section(`${label('Details')}${details([
+      ['Samples', 'Complimentary'],
+      [`Shipping${country ? ` to ${esc(country)}` : ''}`, amount],
+      ['Deliver to', [m.company, `${m.firstName || ''} ${m.lastName || ''}`.trim(), s.address?.line1,
+        `${s.address?.postal_code || ''} ${s.address?.city || ''}${country ? ` · ${country}` : ''}`.trim()]
+        .filter(Boolean).map(esc).join('<br>')],
+    ])}${totalLine('Total paid', amount)}`, { top: 34 })}
+    ${noteBox('What happens next',
+      'We will email you the tracking number as soon as your box leaves Racale. Once you have tasted the products, we would be glad to plan a first trial order in retail or HoReCa formats.',
+      button('Write to us', `mailto:${SAMPLE_BOX_EMAIL}`))}
+    ${signature('en')}`;
+
+  return {
+    subject: `Your Capperificio Caro sample box — #${ref}`,
+    html: layout({
+      lang: 'en',
+      eyebrow: 'Trade samples',
+      title: [`Thank you, ${esc(m.firstName) || 'partner'}.`, 'Your sample box is confirmed.'],
+      intro: `We have received your payment. Our six specialities are being packed by hand in <span style="font-family:${SERIF};font-style:italic;font-size:17px;">Racale</span>, in the heart of Salento, and will be on their way to you shortly.`,
+      pills: [{ text: `Reference #${ref}` }, { text: 'Payment received', filled: true }],
+      preheader: 'Your six specialities from Racale are being packed by hand.',
+    }, content),
+  };
+}
+
+export async function sendSampleBoxConfirmation(pi, { to } = {}) {
+  const email = to || pi.metadata?.email;
+  if (!client || !email) return false;
+  const { subject, html } = sampleBoxConfirmationHtml(pi);
+  return _send({ to: email, subject, html, tag: 'sample-box-confirmation' });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  9. SCORTE IN ESAURIMENTO → merchant
+//  products = [{ name, sku, stock }]  — UNA sola email riepilogativa per tutti
+//  i prodotti sotto soglia (mai una email per prodotto: vedi server.js, che la
+//  invia solo quando l'elenco dei prodotti sotto soglia cambia davvero).
+// ─────────────────────────────────────────────────────────────────────────────
+export async function sendMerchantLowStock(products, threshold = null) {
+  if (!client || !MERCHANT_TO) return;
+
+  const items = (Array.isArray(products) ? products : [products]).filter(Boolean);
+  if (!items.length) return;
+
+  const titolo = items.length === 1
+    ? '1 prodotto in esaurimento'
+    : `${items.length} prodotti in esaurimento`;
+
+  const content = `
+    ${section(`${label('Sotto soglia')}${list(items.map(p => ({
+      left: esc(p.name || 'Prodotto'),
+      sub: p.sku ? `SKU ${esc(p.sku)}` : '',
+      right: `${p.stock ?? '—'} pz`,
+      rightColor: (p.stock ?? 0) <= 0 ? C.danger : C.warning,
+    })))}${button('Gestisci le scorte', `${SHOPWARE_URL}/admin#/sw/product/list`)}`)}
+    ${section(text('Riceverai una nuova email solo quando l’elenco dei prodotti sotto soglia cambia.', { color: C.mid, size: 12 }), { top: 22 })}`;
 
   await _send({
     to: MERCHANT_TO,
-    subject: `⚠ Scorte in esaurimento: ${product.name || 'Prodotto'}`,
-    html: layout('Scorte in esaurimento', 'Alert inventario', content),
+    subject: `⚠ Scorte in esaurimento — ${titolo}`,
+    html: layout({
+      eyebrow: 'Inventario',
+      title: ['Scorte in esaurimento', titolo],
+      intro: `${items.length === 1
+        ? 'Un prodotto è sceso sotto la soglia di scorta.'
+        : `${items.length} prodotti sono scesi sotto la soglia di scorta.`}${threshold ? ` Soglia di allerta: <strong style="font-weight:500;">${threshold} unità</strong>.` : ''}`,
+      preheader: titolo,
+    }, content),
     tag: 'low-stock',
   });
 }
 
 // ── Invio centralizzato — best-effort, non lancia mai ─────────────────────────
+//  Ritorna true solo se Resend ha accettato l'email. Il chiamante può quindi
+//  decidere se ritentare più tardi (vedi la rete di sicurezza in server.js):
+//  senza questo valore un errore Resend restava invisibile e l'email era persa.
+//  3 tentativi con backoff: copre i 429/5xx transitori di Resend.
+const SEND_RETRIES = 3;
+
 async function _send({ to, subject, html, tag }) {
-  try {
-    const { data, error } = await client.emails.send({ from: FROM, to, subject, html,
-      tags: tag ? [{ name: 'type', value: tag }] : [],
-    });
-    if (error) throw new Error(error.message);
-    console.log(`Resend ✓ [${tag || '—'}] → ${to} (id: ${data?.id})`);
-  } catch (e) {
-    console.error(`Resend ✗ [${tag || '—'}] → ${to}:`, e.message);
+  for (let attempt = 1; attempt <= SEND_RETRIES; attempt++) {
+    try {
+      const { data, error } = await client.emails.send({ from: FROM, to, subject, html,
+        tags: tag ? [{ name: 'type', value: tag }] : [],
+      });
+      if (error) throw new Error(error.message);
+      console.log(`Resend ✓ [${tag || '—'}] → ${to} (id: ${data?.id})`);
+      return true;
+    } catch (e) {
+      const last = attempt === SEND_RETRIES;
+      console.error(`Resend ✗ [${tag || '—'}] → ${to} (tentativo ${attempt}/${SEND_RETRIES}):`, e.message);
+      if (last) return false;
+      await new Promise(r => setTimeout(r, 2000 * attempt));
+    }
   }
+  return false;
 }

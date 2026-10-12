@@ -21,18 +21,23 @@
 #    Sito (PUBBLICO):  http://SERVER:3001
 #
 #  I pannelli di amministrazione NON sono esposti su internet: sono in ascolto
-#  solo su 127.0.0.1 del server. Per raggiungerli, apri un tunnel SSH dal tuo
-#  computer (vedi sotto) e poi usa gli URL localhost:
+#  solo su 127.0.0.1 del server. Si raggiungono dalla rete privata Tailscale,
+#  con il client Tailscale attivo sul proprio dispositivo (nessun tunnel SSH):
 #
-#    ssh -N -L 8090:localhost:8090 \
-#           -L 1337:localhost:1337 \
-#           -L 8891:localhost:8891 \
-#           -L 9998:localhost:9998 root@SERVER
+#    Admin Shopware:  http://vps-capperificio.taild6abcc.ts.net:8090/admin
+#    Strapi admin:    http://vps-capperificio.taild6abcc.ts.net:1337/admin
 #
-#    Admin Shopware:  http://localhost:8090/admin
-#    Strapi admin:    http://localhost:1337/admin
-#    Adminer DB:      http://localhost:8891
-#    Mailcatcher:     http://localhost:9998
+#  Il proxy dalla tailnet verso 127.0.0.1 è gestito da `tailscale serve`
+#  (persiste ai riavvii). Per ispezionarlo o modificarlo:
+#
+#    tailscale serve status
+#    tailscale serve --bg --http=PORTA http://127.0.0.1:PORTA
+#    tailscale serve --http=PORTA off
+#
+#  Gli URL rispondono solo sul nome MagicDNS, non sull'IP 100.x nudo.
+#
+#  Fallback se Tailscale non è disponibile (tunnel SSH manuale):
+#    ssh -N -L 8090:localhost:8090 -L 1337:localhost:1337 root@SERVER
 # ============================================================
 
 services:
@@ -41,14 +46,17 @@ services:
   shopware:
     image: dockware/dev:latest
     container_name: capperificio-shopware
-    # Tutte su 127.0.0.1: raggiungibili SOLO dal server stesso o via tunnel SSH.
+    # Tutte su 127.0.0.1: raggiungibili SOLO dal server stesso, o dalla rete
+    # privata Tailscale tramite `tailscale serve` (vedi intestazione).
     # Il browser non ha bisogno di queste porte — la store-api passa dal proxy
     # nginx del frontend (location /store-api → http://shopware:80).
     ports:
       - "127.0.0.1:8090:80"    # Shopware HTTP (admin panel)
       - "127.0.0.1:8453:443"   # Shopware HTTPS
-      - "127.0.0.1:8891:8888"  # Adminer — gestore DB visuale
-      - "127.0.0.1:9998:9999"  # Mailcatcher — email di test
+      # Adminer (8888) e Mailcatcher (9999) NON girano in questa immagine
+      # dockware: verificato, nulla è in ascolto su quelle porte dentro al
+      # container. Le mappature erano quindi morte e sono state rimosse.
+      # Per riattivarle vanno prima avviati i servizi dentro al container.
     environment:
       - SHOP_DOMAIN=${SHOPWARE_DOMAIN:-localhost:8090}
       - APP_ENV=dev
@@ -143,6 +151,13 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_FROM: ${RESEND_FROM:-Capperificio di Racale <ordini@capperificiocaro.com>}
       RESEND_MERCHANT_TO: ${RESEND_MERCHANT_TO:-digital@capperificiocaro.com}
+      # Soglia scorte per l'alert merchant (una sola email, solo quando cambia)
+      LOW_STOCK_THRESHOLD: ${LOW_STOCK_THRESHOLD:-5}
+      # Stato del poller su volume: sopravvive ai rebuild, così le email già
+      # inviate (conferme, spedizioni, alert scorte) non ripartono da zero.
+      POLLER_STATE_FILE: /app/state/poller-state.json
+    volumes:
+      - poller_state:/app/state
     deploy:
       resources:
         limits:
@@ -228,3 +243,4 @@ volumes:
   shopware_mysql:
   strapi_db_data:
   strapi_uploads:
+  poller_state:

@@ -8,6 +8,7 @@ import { formatPrice } from '../../lib/utils/price';
 import { getProductImage, getProductSlug, proxyUrl } from '../../lib/utils/image';
 import { getProductVariants } from '../../lib/api/products';
 import { getCatalogEntry } from '../../data/capperificioCatalog';
+import { matchCalibro, CALIBRO_EXPLAINER_HTML, buildCalibroCompareHtml } from '../../data/calibriGuide';
 import {
   resolveProductSoldOut,
   resolveListingSoldOut,
@@ -41,6 +42,11 @@ const BREW_CUSTOM_FIELDS = [
 ];
 
 const B2B_CATEGORY_ID = import.meta.env.VITE_B2B_CATEGORY_ID || null;
+
+// I bullet del catalogo usano **grassetto** in stile markdown.
+function mdBoldToHtml(text) {
+  return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+}
 
 function mapRelatedProduct(product) {
   const price = product.calculatedPrice || product.price?.[0];
@@ -97,6 +103,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const [size, setSize] = useState('250g');
   const [grind, setGrind] = useState('Beans');
   const [openBrew, setOpenBrew] = useState(null);
+  const [openCalibroSection, setOpenCalibroSection] = useState(null);
   const [cartQty, setCartQty] = useState(0);
   const [showControl, setShowControl] = useState(false);
   const [showTag, setShowTag] = useState(false);
@@ -227,12 +234,23 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
     ) || null;
   }, [variants, selectedOptions]);
 
+  // Torna alla prima immagine quando cambia la variante: lo slider mobile
+  // potrebbe restare su un indice fuori range se la nuova variante ha meno
+  // immagini della precedente.
+  useEffect(() => {
+    setImgIndex(0);
+  }, [activeVariant?.id]);
+
   // Se l'utente non ha chiesto una variante specifica (?variant=…) e quella di
-  // default risulta esaurita, spostiamo la selezione sulla prima acquistabile:
-  // atterrare su "Esaurito" quando altri formati sono disponibili è fuorviante.
+  // default risulta esaurita — o non corrisponde più a nessuna variante reale
+  // (configuratorSettings su Shopware può restare disallineato quando una
+  // variante viene cancellata: il default selezionato può "puntare" a un
+  // figlio che non esiste più) — spostiamo la selezione sulla prima
+  // acquistabile: atterrare su "Esaurito" o su un prodotto fantasma quando
+  // altri formati sono disponibili è fuorviante.
   useEffect(() => {
     if (!variantsLoaded || !hasConfigurator || searchParams.get('variant')) return;
-    if (!activeVariant || isProductAvailable(activeVariant)) return;
+    if (activeVariant && isProductAvailable(activeVariant)) return;
     const fallback = variants.find(isProductAvailable);
     if (!fallback) return;
     const next = {};
@@ -298,6 +316,13 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   // description / properties / customFields popolati per questo prodotto.
   const catalogEntry = useMemo(() => getCatalogEntry(shopwareProduct), [shopwareProduct]);
 
+  // Calibro attivo per la "Guida al calibro": segue la variante selezionata
+  // quando il prodotto ha un configuratore, altrimenti il prodotto stesso.
+  const calibroLabel = activeVariant?.customFields?.capperificio_calibro
+    || shopwareProduct?.customFields?.capperificio_calibro
+    || catalogEntry?.calibro;
+  const activeCalibro = matchCalibro(calibroLabel);
+
   const productName = hasApiProduct
     ? (shopwareProduct.translated?.name || shopwareProduct.name)
     : FALLBACK_PRODUCT.name;
@@ -313,23 +338,38 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         || 0)
     : FALLBACK_PRICES[size];
 
-  // Foto: solo i media presenti su Shopware, ordinati per `position` così la
-  // prima immagine mostrata è la prima caricata su Shopware (nessun fallback
-  // a catalogo locale o placeholder).
-  const productImages = (shopwareProduct?.media || [])
+  // Foto: se la variante selezionata ha una propria galleria la usiamo,
+  // altrimenti ricadiamo su quella del prodotto padre. Ordinate per
+  // `position` così la prima immagine mostrata è la prima caricata su
+  // Shopware (nessun fallback a catalogo locale o placeholder).
+  const mediaSource = (hasConfigurator && activeVariant?.media?.length)
+    ? activeVariant.media
+    : (shopwareProduct?.media || []);
+  const productImages = mediaSource
     .slice()
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
     .map((m) => proxyUrl(m.media?.url || m.url))
     .filter(Boolean);
 
   const PROPERTY_ORDER = ['Origine', 'Ingredienti', 'Calibro', 'Tipo', 'Formato', 'Peso netto', 'Note di gusto', 'Ideale per'];
-  const properties = hasApiProduct ? (shopwareProduct.properties || []) : [];
-  const groupedProperties = properties.reduce((acc, prop) => {
+  const parentProperties = hasApiProduct ? (shopwareProduct.properties || []) : [];
+  const variantProperties = (hasConfigurator && activeVariant?.properties) || [];
+  const groupedProperties = {};
+  for (const prop of parentProperties) {
     const groupName = prop.group?.translated?.name || prop.group?.name || 'Other';
-    if (!acc[groupName]) acc[groupName] = [];
-    acc[groupName].push(prop.translated?.name || prop.name);
-    return acc;
-  }, {});
+    (groupedProperties[groupName] ||= []).push(prop.translated?.name || prop.name);
+  }
+  // Le proprietà della variante selezionata (es. Calibro, Peso netto, Note di
+  // gusto) sostituiscono quelle del padre sullo stesso gruppo, non si sommano:
+  // cambiano da una variante all'altra, non sono cumulative.
+  const variantGroupNames = new Set(
+    variantProperties.map((prop) => prop.group?.translated?.name || prop.group?.name || 'Other')
+  );
+  variantGroupNames.forEach((g) => delete groupedProperties[g]);
+  for (const prop of variantProperties) {
+    const groupName = prop.group?.translated?.name || prop.group?.name || 'Other';
+    (groupedProperties[groupName] ||= []).push(prop.translated?.name || prop.name);
+  }
   const sortedProperties = [
     ...PROPERTY_ORDER.filter((g) => groupedProperties[g]),
     ...Object.keys(groupedProperties).filter((g) => !PROPERTY_ORDER.includes(g)),
@@ -390,10 +430,20 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
 
       {hasApiProduct && hasConfigurator && (
         <div className={styles.optionGroups}>
-          {Object.entries(configuratorGroups).map(([groupName, options]) => (
+          {Object.entries(configuratorGroups).map(([groupName, options]) => {
+            // Una volta caricate le varianti reali, nascondi le opzioni
+            // "configurate" su Shopware ma senza più un prodotto figlio
+            // corrispondente (variante cancellata, configuratorSettings non
+            // ripulito) — mostrarle come chip normali porta a un add-to-cart
+            // rotto e a un'immagine che non cambia mai.
+            const visibleOptions = variantsLoaded
+              ? options.filter((opt) => opt.id in optionAvailability)
+              : options;
+            if (!visibleOptions.length) return null;
+            return (
             <div key={groupName} className={styles.optionGroup}>
               <div className={styles.optionChips}>
-                {options.map((opt) => {
+                {visibleOptions.map((opt) => {
                   // Marcata esaurita solo quando le varianti sono caricate,
                   // così non lampeggia durante il fetch.
                   const optSoldOut = variantsLoaded && optionAvailability[opt.id] === false;
@@ -422,7 +472,8 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
                 })}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -460,12 +511,6 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         <p className={styles.stockNote}>Disponibilità massima raggiunta: {maxQty} pezzi.</p>
       )}
       {cartError && <p className={styles.cartError}>{cartError}</p>}
-
-      <ul className={styles.trustList}>
-        <li>Lavorato Artigianalmente</li>
-        <li>Spedizione Gratuita sopra €50</li>
-        <li>Consegna in 24–48h</li>
-      </ul>
     </>
   );
 
@@ -494,6 +539,14 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
         {/* LEFT COL */}
         <div className={styles.colLeft}>
           <p className={styles.description} dangerouslySetInnerHTML={{ __html: productDescription }} />
+
+          {catalogEntry?.bullets?.length > 0 && (
+            <ul className={styles.bullets}>
+              {catalogEntry.bullets.map((bullet, i) => (
+                <li key={i} dangerouslySetInnerHTML={{ __html: mdBoldToHtml(bullet) }} />
+              ))}
+            </ul>
+          )}
 
           {techRows.length > 0 ? (
             <table className={styles.infoTable}>
@@ -526,7 +579,32 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
             </table>
           )}
 
-          <div className={styles.sectionTitle}>Suggerimenti d'uso</div>
+          {activeCalibro && (
+            <>
+              <div className={styles.sectionTitle}>Guida al calibro</div>
+              <div className={styles.brewAccordion}>
+                {[
+                  { name: 'Cos’è il calibro', html: CALIBRO_EXPLAINER_HTML },
+                  { name: 'I calibri Capperificio Caro a confronto', html: buildCalibroCompareHtml(activeCalibro.key) },
+                ].map(({ name, html }) => {
+                  const isOpen = openCalibroSection === name;
+                  return (
+                    <div key={name} className={styles.brewItem}>
+                      <button className={styles.brewToggle} onClick={() => setOpenCalibroSection(isOpen ? null : name)}>
+                        <span>{name}</span>
+                        <span className={`${styles.brewIcon} ${isOpen ? styles.brewIconOpen : ''}`}>+</span>
+                      </button>
+                      {isOpen && (
+                        <div className={styles.brewContent} dangerouslySetInnerHTML={{ __html: html }} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          <div className={`${styles.sectionTitle} ${activeCalibro ? styles.sectionTitleSpaced : ''}`}>Suggerimenti d'uso</div>
 
           <div className={styles.brewAccordion}>
             {(() => {
@@ -587,7 +665,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
           <div className={styles.desktopImages}>
             {productImages.map((src, i) => (
               <div key={i} className={`${styles.productImage} ${anim.imgZoom}`}>
-                <img src={src} alt={`${productName} — ${i + 1}`} className={styles.pdpImg} />
+                <img src={src} alt={`${productName} — ${i + 1}`} className={styles.pdpImg} width="900" height="900" loading={i === 0 ? 'eager' : 'lazy'} fetchPriority={i === 0 ? 'high' : undefined} decoding="async" />
               </div>
             ))}
           </div>
@@ -604,7 +682,7 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
             >
               {productImages.map((src, i) => (
                 <div key={i} className={styles.mobileSlide}>
-                  <img src={src} alt={`${productName} — ${i + 1}`} className={styles.mobileSlideImg} />
+                  <img src={src} alt={`${productName} — ${i + 1}`} className={styles.mobileSlideImg} width="900" height="900" loading={i === 0 ? 'eager' : 'lazy'} decoding="async" />
                 </div>
               ))}
             </div>

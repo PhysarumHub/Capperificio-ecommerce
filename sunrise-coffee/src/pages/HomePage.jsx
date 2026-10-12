@@ -64,6 +64,8 @@ function mapShopwareProduct(product) {
     options: resolveVariantOptions(product),
     variantMap: product._variantMap || {},
     availabilityMap: product._availabilityMap || {},
+    variantImageMap: product._variantImageMap || {},
+    variantHoverImageMap: product._variantHoverImageMap || {},
     soldOut: resolveListingSoldOut(product),
   };
 }
@@ -162,7 +164,7 @@ export default function HomePage() {
         <RedMarquee />
       </AnimateIn>
 
-      <GuidesEditorial image="/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp" />
+      <GuidesEditorial image="/images/capperificio-caro-capperi-racale.webp" />
     </>
   );
 }

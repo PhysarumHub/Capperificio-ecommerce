@@ -6,7 +6,7 @@ import { getProductImage, proxyUrl } from '../../lib/utils/image';
 import { useDrawerDrag } from '../../hooks/useDrawerDrag';
 import CartStockNotices from '../CartStockNotices/CartStockNotices';
 import { getLineItemMaxQty } from '../../lib/utils/availability';
-import { gtmViewCart, gtmRemoveFromCart } from '../../lib/utils/gtm';
+import { gtmViewCart, gtmRemoveFromCart, gtmBeginCheckout } from '../../lib/utils/gtm';
 import { FREE_SHIPPING_THRESHOLD } from '../../lib/utils/shipping';
 import styles from './CartDrawer.module.css';
 
@@ -214,7 +214,11 @@ export default function CartDrawer({ open, onClose }) {
               </div>
             )}
             <p className={styles.taxNote}>Spedizione calcolata al checkout</p>
-            <Link to="/checkout" className={styles.checkoutBtn} onClick={onClose}>
+            <Link
+              to="/checkout"
+              className={styles.checkoutBtn}
+              onClick={() => { gtmBeginCheckout(lineItems, positionPrice); onClose(); }}
+            >
               Checkout →
             </Link>
             <Link to="/cart" className={styles.viewCartLink} onClick={onClose}>

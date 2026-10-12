@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { gtmPageView } from '../lib/utils/gtm';
 
 export default function ScrollToTop() {
   const { pathname, search } = useLocation();
@@ -14,12 +15,10 @@ export default function ScrollToTop() {
   // document.title), cosi' page_title arriva corretto.
   useEffect(() => {
     const id = setTimeout(() => {
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({
-        event: 'page_view',
-        page_location: window.location.href,
-        page_path: pathname + search,
-        page_title: document.title,
+      gtmPageView({
+        location: window.location.href,
+        path: pathname + search,
+        title: document.title,
       });
     }, 0);
     return () => clearTimeout(id);

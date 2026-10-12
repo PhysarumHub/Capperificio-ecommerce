@@ -1,4 +1,5 @@
 import { storeApiPost } from '../shopware-client';
+import { slugify } from '../utils/slug.js';
 
 /**
  * Fetch a paginated list of products.
@@ -29,6 +30,19 @@ export async function getProducts({ page = 1, limit = 24, filters = [], sort = [
       properties: { associations: { group: {} } },
       configuratorSettings: {
         associations: { option: { associations: { group: {} } } },
+      },
+      // Varianti figlie REALMENTE esistenti del prodotto padre. A differenza
+      // di `configuratorSettings` (che elenca le opzioni configurate e può
+      // restare disallineato se una variante viene cancellata da Shopware
+      // senza pulire la configurazione) e della scansione della lista flat
+      // (limitata dal `limit` della query), questa associazione torna sempre
+      // i figli correnti del prodotto — vedi lib/utils/variants.js.
+      children: {
+        associations: {
+          options: { associations: { group: {} } },
+          cover: { associations: { media: { associations: { thumbnails: {} } } } },
+          media: { associations: { media: { associations: { thumbnails: {} } } } },
+        },
       },
     },
   };
@@ -88,14 +102,14 @@ const PRODUCT_DETAIL_INCLUDES = {
 
 /**
  * Fetch a single product by its ID or SEO slug.
- * Priority: ID (UUID) → seoUrl → productNumber
+ * Priority: ID (UUID) → slug leggibile (nome) → seoUrl → productNumber
  */
 export async function getProductBySlug(slug) {
   if (!slug) return null;
 
   const isUuid = /^[0-9a-f]{32}$/.test(slug.replace(/-/g, ''));
 
-  // 1. Fetch by ID if slug looks like a UUID (most common case when no seoUrls)
+  // 1. Fetch by ID if slug looks like a UUID (link vecchi /product/:id, o interni)
   if (isUuid) {
     const byId = await storeApiPost('/product', {
       limit: 1,
@@ -106,7 +120,28 @@ export async function getProductBySlug(slug) {
     if (byId?.elements?.length) return byId.elements[0];
   }
 
-  // 2. Try by seoUrl path
+  // 2. Try matching the human-readable slug (getProductSlug) against i prodotti
+  // principali (parentId null): il catalogo è piccolo, non serve Shopware seoUrls
+  // (qui sempre vuoto — negozio headless, non usa il router Storefront).
+  const roots = await storeApiPost('/product', {
+    limit: 100, // MAX_LIMIT della Store API — il catalogo (root products) ci sta comodamente
+    filter: [{ type: 'equals', field: 'parentId', value: null }],
+    includes: { product: ['id', 'name', 'translated'] },
+  });
+  const nameMatch = (roots?.elements || []).find(
+    (p) => slugify(p.translated?.name || p.name) === slug
+  );
+  if (nameMatch) {
+    const byId = await storeApiPost('/product', {
+      limit: 1,
+      filter: [{ type: 'equals', field: 'id', value: nameMatch.id }],
+      associations: PRODUCT_DETAIL_ASSOCIATIONS,
+      includes: PRODUCT_DETAIL_INCLUDES,
+    });
+    if (byId?.elements?.length) return byId.elements[0];
+  }
+
+  // 3. Try by seoUrl path (in caso venga configurato in futuro lato Shopware admin)
   const bySeo = await storeApiPost('/product', {
     limit: 1,
     filter: [{ type: 'contains', field: 'seoUrls.seoPathInfo', value: slug }],
@@ -115,7 +150,7 @@ export async function getProductBySlug(slug) {
   });
   if (bySeo?.elements?.length) return bySeo.elements[0];
 
-  // 3. Try by productNumber
+  // 4. Try by productNumber
   const byNumber = await storeApiPost('/product', {
     limit: 1,
     filter: [{ type: 'equals', field: 'productNumber', value: slug }],
@@ -159,10 +194,14 @@ export async function getProductVariants(parentId) {
     filter: [{ type: 'equals', field: 'parentId', value: parentId }],
     associations: {
       options: { associations: { group: {} } },
+      properties: { associations: { group: {} } },
+      cover: { associations: { media: {} } },
+      media: { associations: { media: {} } },
     },
     includes: {
       product: [
-        'id', 'parentId', 'productNumber', 'options', 'calculatedPrice', 'customFields',
+        'id', 'parentId', 'productNumber', 'options', 'properties', 'calculatedPrice', 'customFields',
+        'cover', 'media',
         ...STOCK_FIELDS,
       ],
     },

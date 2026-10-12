@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -25,6 +25,8 @@ const TerminiCondizioniPage  = lazy(() => import('./pages/TerminiCondizioniPage'
 const NewsletterConfirmPage  = lazy(() => import('./pages/NewsletterConfirmPage'));
 const ContattiPage           = lazy(() => import('./pages/ContattiPage'));
 const FAQPage                = lazy(() => import('./pages/FAQPage'));
+const SampleBoxPage          = lazy(() => import('./pages/SampleBoxPage'));
+const SampleBoxCheckoutPage  = lazy(() => import('./pages/SampleBoxCheckoutPage'));
 const TestPageA              = lazy(() => import('./pages/TestPageA'));
 const TestPageB              = lazy(() => import('./pages/TestPageB'));
 const CylinderCarousel       = lazy(() => import('./components/CylinderCarousel'));
@@ -35,6 +37,12 @@ function RouteFallback() {
   return <div style={{ minHeight: '60vh' }} aria-busy="true" />;
 }
 
+function ProductLegacyRedirect() {
+  const { slug } = useParams();
+  const { search } = useLocation();
+  return <Navigate to={`/prodotti/${slug}${search}`} replace />;
+}
+
 export default function App() {
   return (
     <>
@@ -43,10 +51,11 @@ export default function App() {
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
-            {/* Splat: gli seoPathInfo di Shopware sono multi-segmento
-                (es. "Capperi-al-Sale/CAPRACALE-SALE-01"), quindi ":slug"
-                non li intercettava e la PDP cadeva sulla 404. */}
-            <Route path="/product/*" element={<ProductPage />} />
+            <Route path="/prodotti/:slug" element={<ProductPage />} />
+            {/* Vecchio URL /product/:slug (spesso un UUID, poco SEO): redirect
+                lato client verso /prodotti/:slug così i link già in giro
+                continuano a funzionare invece di rompersi in un 404. */}
+            <Route path="/product/:slug" element={<ProductLegacyRedirect />} />
             <Route path="/collections/:slug" element={<CollectionPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
@@ -59,6 +68,10 @@ export default function App() {
 
             <Route path="/contatti" element={<ContattiPage />} />
             <Route path="/faq" element={<FAQPage />} />
+
+            {/* Landing B2B (EN, noindex): box campioni, si paga solo la spedizione */}
+            <Route path="/sample-box" element={<SampleBoxPage />} />
+            <Route path="/sample-box/checkout" element={<SampleBoxCheckoutPage />} />
 
             {/* ── Pagine legali ── */}
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />

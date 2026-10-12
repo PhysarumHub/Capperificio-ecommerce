@@ -2,17 +2,33 @@ import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { readFileSync, writeFileSync } from 'fs';
+import { slugify } from './src/lib/utils/slug.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: join(__dirname, '.env'), override: true });
 
 // ── Stato poller persistito su disco ─────────────────────────────────────────
-const POLLER_STATE_FILE = join(__dirname, '.poller-state.json');
+// Di default vive accanto al codice, ma in produzione punta a un volume Docker
+// (POLLER_STATE_FILE=/app/state/poller-state.json): senza volume ogni rebuild
+// azzerava lo stato e le email già inviate ripartivano da capo.
+const POLLER_STATE_FILE = process.env.POLLER_STATE_FILE || join(__dirname, '.poller-state.json');
+
+// `confirmed`  → id degli ordini per cui la conferma cliente è già partita.
+// `lowStockKey`→ firma dell'ultimo elenco di prodotti sotto soglia notificato.
+const pollerState = { confirmed: new Set(), lowStockKey: null, seeded: false };
 
 function loadPollerState() {
   try {
     const raw = readFileSync(POLLER_STATE_FILE, 'utf8');
-    const { shipped = [], cancelled = [] } = JSON.parse(raw);
-    return { shipped: new Set(shipped), cancelled: new Set(cancelled) };
+    const { shipped = [], cancelled = [], confirmed = [], lowStockKey = null, seeded = false } = JSON.parse(raw);
+    pollerState.confirmed = new Set(confirmed);
+    pollerState.lowStockKey = lowStockKey;
+    pollerState.seeded = seeded;
+    // Le vecchie chiavi orarie `lowstock_*` finivano nel set `cancelled` e lo
+    // facevano crescere all'infinito: si scartano al primo avvio.
+    return {
+      shipped: new Set(shipped),
+      cancelled: new Set(cancelled.filter(k => !String(k).startsWith('lowstock_'))),
+    };
   } catch {
     return { shipped: new Set(), cancelled: new Set() };
   }
@@ -23,12 +39,32 @@ function savePollerState(shipped, cancelled) {
     writeFileSync(POLLER_STATE_FILE, JSON.stringify({
       shipped: [...shipped],
       cancelled: [...cancelled],
+      confirmed: [...pollerState.confirmed],
+      lowStockKey: pollerState.lowStockKey,
+      seeded: pollerState.seeded,
       savedAt: new Date().toISOString(),
     }));
   } catch (e) {
     console.warn('Poller: impossibile salvare lo stato su disco:', e.message);
   }
 }
+
+/** Registra l'ordine come "conferma già inviata" (idempotente, persistito). */
+function markOrderConfirmed(orderId) {
+  if (!orderId || pollerState.confirmed.has(orderId)) return;
+  pollerState.confirmed.add(orderId);
+  // Tiene la lista limitata: bastano gli ordini recenti, la rete di sicurezza
+  // guarda solo le ultime 48h.
+  if (pollerState.confirmed.size > 500) {
+    pollerState.confirmed = new Set([...pollerState.confirmed].slice(-500));
+  }
+  savePollerState(lastShipped, lastCancelled);
+}
+
+// Riferimenti agli insiemi vivi del poller, per poter persistere lo stato anche
+// dai percorsi di checkout (che girano fuori dal ciclo di polling).
+let lastShipped = new Set();
+let lastCancelled = new Set();
 
 import express from 'express';
 import cors from 'cors';
@@ -39,7 +75,7 @@ import {
   getCartTotal, placeOrder, registerGuestIfNeeded, syncCheckoutAddress,
   setShippingMethod, markTransactionPaid, adminConfigured,
   fetchOrderDetails, savePacklinkReference,
-  fetchOrdersInDeliveryState, fetchOrdersInOrderState,
+  fetchOrdersInDeliveryState, fetchOrdersInOrderState, fetchRecentPaidOrders,
   fetchLowStockProducts, findOrderByPaymentIntentId, markTransactionRefunded,
   swFetch,
 } from './api/_shopware.js';
@@ -47,6 +83,7 @@ import { createShipmentForOrder, packlinkConfigured } from './api/_packlink.js';
 import {
   sendOrderConfirmation, sendOrderShipped, sendOrderCancelled,
   sendMerchantAlert, sendReviewRequest, sendMerchantLowStock, sendRefundIssued, resendConfigured,
+  sendSampleBoxAlert, sendSampleBoxConfirmation,
 } from './api/_resend.js';
 
 // ── Validazione env vars obbligatorie ────────────────────────────────────────
@@ -81,7 +118,10 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
     console.error('Firma webhook non valida:', err.message);
     return res.status(400).json({ error: 'Webhook signature error' });
   }
-  if (event.type === 'payment_intent.succeeded') {
+  if (event.type === 'payment_intent.succeeded' && event.data.object.metadata?.kind === 'sample-box') {
+    // Box campioni: nessun ordine Shopware, solo l'avviso al merchant (idempotente).
+    await notifySampleBoxPaid(event.data.object).catch(e => console.warn('Webhook sample-box:', e.message));
+  } else if (event.type === 'payment_intent.succeeded') {
     const pi = event.data.object;
     const token = pi.metadata?.contextToken;
     if (token) {
@@ -178,18 +218,27 @@ function withOrderLock(token, fn) {
 function fulfillOrderInBackground(orderId, { label = 'order' } = {}) {
   if (!orderId || (!packlinkConfigured() && !resendConfigured())) return;
   fetchOrderDetails(orderId).then(async (fullOrder) => {
-    if (!fullOrder) return;
+    if (!fullOrder) {
+      // Senza dati ordine non si può inviare nulla: NON si marca come confermato,
+      // così la rete di sicurezza del poller ci riprova entro 2 minuti.
+      console.warn(`${label}: dettagli ordine ${orderId} non recuperati — conferma rimandata al poller`);
+      return;
+    }
+
+    // L'email di conferma parte PRIMA della spedizione: un errore Packlink non
+    // deve più impedire al cliente di ricevere la conferma.
+    if (resendConfigured()) {
+      const ok = await sendOrderConfirmation(fullOrder);
+      if (ok) markOrderConfirmed(orderId);
+      else console.warn(`${label}: conferma ordine ${orderId} NON inviata — ritenta il poller`);
+    }
+
     let packlinkRef = null;
     if (packlinkConfigured()) {
       packlinkRef = await createShipmentForOrder(fullOrder);
       if (packlinkRef) await savePacklinkReference(orderId, packlinkRef);
     }
-    if (resendConfigured()) {
-      await Promise.all([
-        sendOrderConfirmation(fullOrder),
-        sendMerchantAlert(fullOrder, packlinkRef),
-      ]);
-    }
+    if (resendConfigured()) await sendMerchantAlert(fullOrder, packlinkRef);
   }).catch(e => console.warn(`${label} background:`, e.message));
 }
 
@@ -387,6 +436,117 @@ app.post('/api/admin/refund', paymentLimiter, requireAdminKey, async (req, res) 
   }
 });
 
+// ── Sample box B2B: pagamento della sola spedizione ──────────────────────────
+// Landing /sample-box per i rivenditori: i campioni sono omaggio, il cliente
+// paga solo il trasporto. Fuori da Shopware: niente carrello né ordine, un
+// PaymentIntent con importo deciso qui (mai dal client) in base al paese.
+// Niente metadata.contextToken: il ramo ordini del webhook non li tocca.
+// `postcode`: formato del CAP del paese. Il checkout ricava il paese dal CAP
+// (niente menu a tendina) e qui lo si ricontrolla, così un indirizzo non può
+// finire con la tariffa di un altro paese.
+const SAMPLE_BOX_SHIPPING = {
+  BE: { label: 'Belgium', cents: 2500, postcode: '^\\d{4}$' },
+  IT: { label: 'Italy',   cents: 1000, postcode: '^\\d{5}$' },
+};
+
+app.get('/api/sample-box', (_req, res) => {
+  res.json({
+    currency: 'EUR',
+    options: Object.entries(SAMPLE_BOX_SHIPPING)
+      .map(([country, { label, cents, postcode }]) => ({ country, label, amount: cents / 100, postcode })),
+  });
+});
+
+// Testo libero dal form → metadata/shipping Stripe (max 500 caratteri per valore).
+function cleanText(v, max = 200) {
+  return typeof v === 'string' ? v.trim().slice(0, max) : '';
+}
+
+// Email al pagamento (avviso merchant + conferma cliente) una sola volta per
+// tipo: le chiamano sia il confirm lato client sia il webhook (rete di
+// sicurezza), in qualunque ordine. Se un invio fallisce, il successivo ritenta
+// solo quello.
+const sampleBoxNotified = new Set();
+async function sendOnce(key, send) {
+  if (sampleBoxNotified.has(key)) return;
+  sampleBoxNotified.add(key);
+  const ok = await send();
+  if (!ok) sampleBoxNotified.delete(key);
+}
+async function notifySampleBoxPaid(pi) {
+  if (!resendConfigured()) return;
+  await Promise.all([
+    sendOnce(`${pi.id}:merchant`, () => sendSampleBoxAlert(pi)),
+    sendOnce(`${pi.id}:customer`, () => sendSampleBoxConfirmation(pi)),
+  ]);
+}
+
+// Crea il PaymentIntent dal checkout /sample-box/checkout (stesso Payment
+// Element del checkout principale). Importo e paese li decide il server.
+app.post('/api/sample-box/create-intent', paymentLimiter, async (req, res) => {
+  const { country, contact = {}, address = {} } = req.body || {};
+  const option = Object.hasOwn(SAMPLE_BOX_SHIPPING, country) ? SAMPLE_BOX_SHIPPING[country] : null;
+  if (!option) return res.status(400).json({ error: 'Please select a destination country' });
+
+  const c = {
+    company: cleanText(contact.company),
+    vat: cleanText(contact.vat, 40),
+    firstName: cleanText(contact.firstName, 80),
+    lastName: cleanText(contact.lastName, 80),
+    email: cleanText(contact.email, 120),
+    phone: cleanText(contact.phone, 40),
+  };
+  const a = {
+    line1: cleanText(address.line1),
+    postalCode: cleanText(address.postalCode, 20),
+    city: cleanText(address.city, 80),
+  };
+  if (!c.company || !c.firstName || !c.lastName || !c.phone || !a.line1 || !a.postalCode || !a.city
+      || !EMAIL_RE.test(c.email))
+    return res.status(400).json({ error: 'Please fill in all the required fields' });
+  if (!new RegExp(option.postcode).test(a.postalCode.replace(/\s/g, '')))
+    return res.status(400).json({ error: `The postcode does not match ${option.label}` });
+
+  try {
+    const pi = await stripe.paymentIntents.create({
+      amount: option.cents,
+      currency: 'eur',
+      automatic_payment_methods: { enabled: true },
+      description: `Sample box shipping to ${option.label} — ${c.company}`,
+      receipt_email: c.email,
+      shipping: {
+        name: `${c.firstName} ${c.lastName} — ${c.company}`,
+        phone: c.phone,
+        address: { line1: a.line1, postal_code: a.postalCode, city: a.city, country },
+      },
+      metadata: { kind: 'sample-box', country, ...c },
+    });
+    res.json({ clientSecret: pi.client_secret, amount: option.cents / 100 });
+  } catch (err) {
+    console.error('sample-box create-intent:', err.message);
+    res.status(502).json({ error: 'Unable to start the payment' });
+  }
+});
+
+// Verifica lato server il pagamento appena confermato dal browser.
+app.post('/api/sample-box/confirm', paymentLimiter, async (req, res) => {
+  const { paymentIntentId } = req.body || {};
+  if (typeof paymentIntentId !== 'string' || !paymentIntentId.startsWith('pi_'))
+    return res.status(400).json({ error: 'Missing payment reference' });
+  try {
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if (pi.metadata?.kind !== 'sample-box') return res.status(400).json({ error: 'Invalid payment' });
+    if (pi.status === 'processing') return res.json({ processing: true });
+    if (pi.status !== 'succeeded') return res.status(402).json({ error: 'Payment not completed' });
+    notifySampleBoxPaid(pi).catch(e => console.warn('sample-box alert:', e.message));
+    res.json({ ok: true, reference: pi.id.slice(-8).toUpperCase() });
+  } catch (err) {
+    if (err.code === 'resource_missing') return res.status(400).json({ error: 'Invalid payment' });
+    console.error('sample-box confirm:', err.message);
+    res.status(502).json({ error: 'Unable to verify the payment' });
+  }
+});
+
 // ── Newsletter: iscrizione + conferma double opt-in ───────────────────────────
 // Il form in Newsletter.jsx chiama /subscribe; Shopware invia una email con un
 // link a {SITE_URL}/newsletter-subscribe?em=...&hash=... (o iscrive subito, in
@@ -503,9 +663,13 @@ app.get('/sitemap.xml', async (_req, res) => {
           body: JSON.stringify({
             limit: SW_PAGE_SIZE,
             page,
-            filter: [{ type: 'equals', field: 'active', value: true }],
-            associations: { seoUrls: {} },
-            includes: { product: ['id', 'updatedAt', 'createdAt', 'seoUrls', 'productNumber'] },
+            // Solo prodotti principali: le varianti figlie condividono lo slug
+            // (derivato dal nome) del genitore e finirebbero duplicate in sitemap.
+            filter: [
+              { type: 'equals', field: 'active', value: true },
+              { type: 'equals', field: 'parentId', value: null },
+            ],
+            includes: { product: ['id', 'name', 'translated', 'updatedAt', 'createdAt'] },
           }),
           signal: AbortSignal.timeout(8_000),
         });
@@ -543,9 +707,8 @@ app.get('/sitemap.xml', async (_req, res) => {
     const products = await fetchShopwareProducts();
 
     const productUrls = products.map(p => {
-      // Usa la SEO URL se disponibile, altrimenti l'ID
-      const seo = p.seoUrls?.find(s => s.isCanonical)?.seoPathInfo || p.seoUrls?.[0]?.seoPathInfo;
-      const path = seo ? `/product/${seo.replace(/\/$/, '')}` : `/product/${p.id}`;
+      const slug = slugify(p.translated?.name || p.name) || p.id;
+      const path = `/prodotti/${slug}`;
       const lastmod = (p.updatedAt || p.createdAt || '').split('T')[0] || now;
       return xmlUrl({ loc: `${SITE}${path}`, lastmod, changefreq: 'monthly', priority: '0.7' });
     });
@@ -595,6 +758,11 @@ app.listen(PORT, '0.0.0.0', () => {
 //  Per evitare duplicati usa due Set in memoria, inizializzati al boot con gli
 //  ordini già in quello stato (così non si inviano email retroattive per ordini
 //  esistenti prima del deploy).
+//
+//  Nello stesso ciclo girano anche la rete di sicurezza sulla conferma ordine e
+//  l'alert scorte (una sola email, solo quando l'elenco cambia).
+
+const LOW_STOCK_THRESHOLD = Number(process.env.LOW_STOCK_THRESHOLD || 5);
 
 function extractTracking(order) {
   const delivery = order.deliveries?.[0];
@@ -607,6 +775,8 @@ function extractTracking(order) {
 async function startOrderPoller() {
   // Carica stato persistito da disco (sopravvive ai riavvii del processo).
   const { shipped: sentShipped, cancelled: sentCancelled } = loadPollerState();
+  lastShipped = sentShipped;
+  lastCancelled = sentCancelled;
 
   console.log('Order poller: inizializzazione...');
   try {
@@ -616,6 +786,17 @@ async function startOrderPoller() {
     ]);
     alreadyShipped.forEach(o => sentShipped.add(o.id));
     alreadyCancelled.forEach(o => sentCancelled.add(o.id));
+
+    // Primo avvio in assoluto: gli ordini già esistenti vengono considerati
+    // "conferma già gestita", altrimenti la rete di sicurezza spedirebbe
+    // conferme retroattive a clienti che hanno ordinato prima di questo deploy.
+    if (!pollerState.seeded) {
+      const paid = await fetchRecentPaidOrders(48);
+      paid.forEach(o => pollerState.confirmed.add(o.id));
+      pollerState.seeded = true;
+      console.log(`Order poller: seed conferme — ${paid.length} ordini pagati esistenti marcati come già gestiti.`);
+    }
+    savePollerState(sentShipped, sentCancelled);
     console.log(`Order poller: seed ${sentShipped.size} shipped, ${sentCancelled.size} cancelled — pronto.`);
   } catch (e) {
     console.warn('Order poller: seed fallito (continuo comunque):', e.message);
@@ -659,20 +840,34 @@ async function startOrderPoller() {
         savePollerState(sentShipped, sentCancelled);
       }
 
-      // ── Low stock alert — ogni ora (throttle via Set) ──────────
-      const LOW_STOCK_KEY = `lowstock_${new Date().toISOString().slice(0, 13)}`; // hourly bucket
-      if (!sentCancelled.has(LOW_STOCK_KEY)) {
-        sentCancelled.add(LOW_STOCK_KEY);
-        const lowStock = await fetchLowStockProducts(5);
-        for (const p of lowStock) {
-          await sendMerchantLowStock({
-            name: p.name,
-            sku: p.productNumber,
-            stock: p.availableStock,
-            threshold: 5,
-          });
+      // ── Rete di sicurezza conferma ordine ─────────────────────
+      // Se il checkout non è riuscito a inviare la conferma (crash, riavvio,
+      // Resend giù, dettagli ordine non leggibili), la si recupera qui.
+      // Solo ordini PAGATI delle ultime 48h e mai confermati: niente invii
+      // retroattivi e niente doppioni.
+      if (resendConfigured()) {
+        for (const order of await fetchRecentPaidOrders(48)) {
+          if (pollerState.confirmed.has(order.id)) continue;
+          console.warn(`Poller: conferma mancante per l'ordine ${order.orderNumber} — invio di recupero`);
+          if (await sendOrderConfirmation(order)) markOrderConfirmed(order.id);
         }
-        if (lowStock.length > 0) savePollerState(sentShipped, sentCancelled);
+      }
+
+      // ── Low stock alert ────────────────────────────────────────
+      // UNA sola email riepilogativa, inviata solo quando l'elenco dei prodotti
+      // sotto soglia cambia. (Prima: una email per prodotto, ripetuta ogni ora —
+      // 4 prodotti diventavano ~96 email al giorno.)
+      const lowStock = await fetchLowStockProducts(LOW_STOCK_THRESHOLD);
+      const lowStockKey = lowStock.map(p => p.productNumber || p.id).sort().join('|');
+      if (lowStockKey !== pollerState.lowStockKey) {
+        if (lowStock.length > 0) {
+          await sendMerchantLowStock(
+            lowStock.map(p => ({ name: p.name, sku: p.productNumber, stock: p.availableStock })),
+            LOW_STOCK_THRESHOLD,
+          );
+        }
+        pollerState.lowStockKey = lowStockKey;
+        savePollerState(sentShipped, sentCancelled);
       }
     } catch (e) {
       console.warn('Order poller: errore nel ciclo:', e.message);

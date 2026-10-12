@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCartContext } from '../../context/ShopwareContext';
 import { getCartQuantity } from '../../lib/utils/availability';
+import { gtmAddToCart, gtmRemoveFromCart } from '../../lib/utils/gtm';
 import styles from './ProductCard.module.css';
 
 function CartIcon() {
@@ -28,6 +29,8 @@ export default function ProductCard({
   sizes,
   variantMap = {},
   availabilityMap = {},
+  variantImageMap = {},
+  variantHoverImageMap = {},
   variant = 'default',
   soldOut = false,
   children,
@@ -48,6 +51,11 @@ export default function ProductCard({
     ? (variantList.find((v) => availabilityMap[v] !== false) ?? variantList[0])
     : null;
   const [selectedVariant, setSelectedVariant] = useState(defaultVariant);
+
+  // La foto segue la variante scelta (chip) quando la abbiamo per quel
+  // formato/calibro; altrimenti resta quella del prodotto padre.
+  const activeImage = (selectedVariant && variantImageMap[selectedVariant]) || image;
+  const activeHoverImage = (selectedVariant && variantHoverImageMap[selectedVariant]) || hoverImage;
 
   // Sold-out for the currently selected state:
   // 1. Whole product sold-out (soldOut prop from parent)
@@ -83,7 +91,7 @@ export default function ProductCard({
     }
   }, [cart, directCartId]);
 
-  const base = `/product/${slug || name.toLowerCase().replace(/\s+/g, '-')}`;
+  const base = `/prodotti/${slug || name.toLowerCase().replace(/\s+/g, '-')}`;
   const href = selectedVariant ? `${base}?variant=${encodeURIComponent(selectedVariant)}` : base;
 
   const handleVariantClick = (e, v) => {
@@ -114,6 +122,7 @@ export default function ProductCard({
     setQty(next);
     setShowControl(true);
     setShowTag(false);
+    gtmAddToCart({ id: directCartId, name, price }, 1);
     try {
       await addItem(directCartId, 1);
       scheduleCollapse(next);
@@ -134,7 +143,10 @@ export default function ProductCard({
       if (debounceRef.current) clearTimeout(debounceRef.current);
       if (directCartId && cart) {
         const lineItem = cart.lineItems?.find((li) => li.referencedId === directCartId);
-        try { if (lineItem) await removeItem(lineItem.id); } catch {}
+        if (lineItem) {
+          gtmRemoveFromCart({ id: directCartId, name, price }, lineItem.quantity ?? 1);
+          try { await removeItem(lineItem.id); } catch {}
+        }
       }
     } else {
       scheduleCollapse(next);
@@ -194,7 +206,7 @@ export default function ProductCard({
     return (
       <div className={styles.card}>
         <div className={`${styles.imgWrap} ${styles.imgSquare}`}>
-          {image ? <img src={image} alt={name} className={styles.productImg} loading="lazy" decoding="async" /> : children}
+          {activeImage ? <img src={activeImage} alt={name} className={styles.productImg} width="600" height="600" loading="lazy" decoding="async" /> : children}
           {control}
         </div>
         <div className={styles.merchFooter}>
@@ -213,13 +225,13 @@ export default function ProductCard({
             {badge}
           </span>
         )}
-        {image ? (
-          <img src={image} alt={name} className={styles.productImg} loading="lazy" decoding="async" />
+        {activeImage ? (
+          <img src={activeImage} alt={name} className={styles.productImg} width="300" height="360" loading="lazy" decoding="async" />
         ) : (
           <div className={styles.imgPlaceholder} />
         )}
-        {hoverImage && (
-          <img src={hoverImage} alt="" aria-hidden="true" className={styles.hoverImg} loading="lazy" decoding="async" />
+        {activeHoverImage && (
+          <img src={activeHoverImage} alt="" aria-hidden="true" className={styles.hoverImg} loading="lazy" decoding="async" />
         )}
         {control}
       </div>
