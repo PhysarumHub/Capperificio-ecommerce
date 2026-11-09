@@ -37,13 +37,6 @@ function ArrowLeft() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>;
 }
 
-const FAQ = [
-  ['Cosa sono i gettoni?', `La Box a Gettoni ne ha ${TOKENS_TOTAL}. Ogni prodotto vale uno o due gettoni: quando li hai spesi tutti, la scatola è completa e la chiudiamo noi con il nastro.`],
-  ['Devo per forza scegliere il vino o l’olio?', 'Sì, uno dei due fa parte della box. Il vino (1 gettone) arriva nel suo portabottiglia accanto alla scatola; l’olio (2 gettoni) prende un posto dentro.'],
-  ['Perché almeno tre specialità del Capperificio?', 'La fila davanti della scatola è riservata ai nostri vasetti: è il cuore della box. Oltre le tre puoi aggiungerne quante vuoi, finché hai gettoni.'],
-  ['Da dove arrivano gli altri prodotti?', 'Da aziende agricole, frantoi, cantine e pasticcerie del Salento che conosciamo di persona. Mettiamo tutto insieme e spediamo da Racale.'],
-];
-
 export default function NatalBoxPage() {
   const { addItem } = useCartContext();
   const [params, setParams] = useSearchParams();
@@ -55,7 +48,6 @@ export default function NatalBoxPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);       // { text, undo }
-  const [openFaq, setOpenFaq] = useState(0);
   const panelRef = useRef(null);
   const configRef = useRef(null);
   const toastTimer = useRef(null);
@@ -199,7 +191,7 @@ export default function NatalBoxPage() {
         ? sum.vo ? (sum.vo.id === 't-vino' ? 'Vino nel portabottiglia: 9 posti in scatola' : 'Olio in scatola: 8 posti per il resto') : 'Il vino lascia 9 posti, l’olio 8'
         : step === 2
           ? sum.complete ? 'Gettoni finiti: la scatola è piena' : `Ti ${sum.left === 1 ? 'resta' : 'restano'} ${tokens(sum.left)} per i dolci`
-          : `${BOXES.tokens.name} · ${eur(BOXES.tokens.price)}`;
+          : 'Scatola completa';
     let label; let onClick; let disabled = false;
     if (step === 0) {
       if (sum.missing > 0) { label = `Scegli ancora ${plural(sum.missing, 'specialità', 'specialità')}`; disabled = true; }
@@ -212,13 +204,22 @@ export default function NatalBoxPage() {
       if (!sum.complete) { label = `Scegli ancora ${plural(sum.left, 'dolce', 'dolci')}`; disabled = true; }
       else { label = 'Chiudi la scatola'; onClick = () => goStep(3); }
     } else {
-      label = busy ? 'Aggiungo…' : `Aggiungi al carrello · ${eur(BOXES.tokens.price)}`;
+      label = busy ? 'Aggiungo…' : <>Aggiungi<span className={styles.hideSm}> al carrello</span> · {eur(BOXES.tokens.price)}</>;
       onClick = () => addBoxToCart('tokens');
       disabled = busy;
     }
     bar = {
-      info: <><span className={styles.barCount}><strong>{sum.used}</strong>/{TOKENS_TOTAL} gettoni</span><span className={styles.barSub}>{helper}</span></>,
+      info: (
+        <>
+          <span className={styles.barMeter}>
+            <TokenMeter used={sum.used} compact />
+            <span className={styles.barCount}><strong>{sum.used}</strong>/{TOKENS_TOTAL}<span className={styles.barCountUnit}> gettoni</span></span>
+          </span>
+          <span className={styles.barSub}>{helper}</span>
+        </>
+      ),
       label, onClick, disabled, arrow: step < 3,
+      back: step > 0 ? () => goStep(step - 1) : null,
     };
   }
 
@@ -245,9 +246,6 @@ export default function NatalBoxPage() {
               <span className={styles.stageTag}>
                 {view === 'racale' || added?.type === 'racale' ? BOXES.racale.name : view === 'intro' ? 'Natale da Racale' : BOXES.tokens.name}
               </span>
-              {(view === 'tokens' || added?.type === 'tokens') && (
-                <span className={styles.stageMeter}><TokenMeter used={sum.used} compact /></span>
-              )}
             </div>
             {view === 'tokens' && step < 3 && (
               <p className={styles.stageHint} data-busy={sum.items > 0}>
@@ -266,39 +264,45 @@ export default function NatalBoxPage() {
                 <p className={styles.kicker}>Natale · Racale, Salento</p>
                 <h1 className={styles.title}>Il Salento, <em>a casa tua</em></h1>
                 <p className={styles.lead}>
-                  I capperi che raccogliamo a mano a Racale, insieme al vino, all’olio e ai dolci delle aziende
-                  vicine a noi. Scegli la box già pronta o componila gettone dopo gettone.
+                  Regala i capperi che raccogliamo a mano a Racale: nella box già pronta, oppure in quella che
+                  componi tu con il vino, l’olio e i dolci delle aziende vicine a noi.
                 </p>
 
                 <div className={styles.choices}>
-                  <button type="button" className={styles.choice} onClick={openTokens}>
+                  <article className={`${styles.choice} ${styles.choiceMain}`}>
                     <span className={styles.choiceKicker}>{BOXES.tokens.kicker}</span>
-                    <span className={styles.choiceName}>{BOXES.tokens.name}</span>
-                    <span className={styles.choiceLead}>{BOXES.tokens.lead}</span>
-                    <ul className={styles.choiceList}>
-                      <li><Coins n={1} /> 3+ specialità del Capperificio</li>
-                      <li><Coins n={1} /> vino <span aria-hidden="true">·</span> <Coins n={2} /> olio</li>
-                      <li><Coins n={1} /> dolci delle pasticcerie salentine</li>
-                    </ul>
-                    <span className={styles.choiceFoot}>
+                    <h2 className={styles.choiceName}>{BOXES.tokens.name}</h2>
+                    <p className={styles.choiceLead}>{TOKENS_TOTAL} gettoni da spendere in tre scelte:</p>
+                    <ol className={styles.how}>
+                      <li><span className={styles.howNum}>1</span><span>Almeno 3 specialità del Capperificio</span><span className={styles.howCost}><Coins n={1} /> l’una</span></li>
+                      <li><span className={styles.howNum}>2</span><span>Un vino o un olio del Salento</span><span className={styles.howCost}><Coins n={1} /> / <Coins n={2} /></span></li>
+                      <li><span className={styles.howNum}>3</span><span>Dolci delle pasticcerie salentine</span><span className={styles.howCost}><Coins n={1} /> l’uno</span></li>
+                    </ol>
+                    <div className={styles.choiceFoot}>
                       <span className={styles.choicePrice}>{eur(BOXES.tokens.price)}</span>
-                      <span className={styles.choiceCta}>Componi <span aria-hidden="true">→</span></span>
-                    </span>
-                  </button>
+                      <button type="button" className={styles.btnPrimary} onClick={openTokens}>
+                        Componi la tua box <span aria-hidden="true">→</span>
+                      </button>
+                    </div>
+                  </article>
 
-                  <button type="button" className={styles.choice} onClick={openRacale}>
+                  <article className={styles.choice}>
                     <span className={styles.choiceKicker}>{BOXES.racale.kicker}</span>
-                    <span className={styles.choiceName}>{BOXES.racale.name}</span>
-                    <span className={styles.choiceLead}>{BOXES.racale.lead}</span>
-                    <ul className={styles.choiceList}>
-                      <li>Germogli, polvere di cappero e Lilliput</li>
-                      <li>Anche nel formato da 2 vasetti</li>
-                    </ul>
-                    <span className={styles.choiceFoot}>
-                      <span className={styles.choicePrice}>da {eur(Math.min(...BOXES.racale.sizes.map((s) => s.price)))}</span>
-                      <span className={styles.choiceCta}>Scopri <span aria-hidden="true">→</span></span>
-                    </span>
-                  </button>
+                    <h2 className={styles.choiceName}>{BOXES.racale.name}</h2>
+                    <p className={styles.choiceLead}>{BOXES.racale.lead}</p>
+                    <div className={styles.choiceJars} aria-hidden="true">
+                      {BOXES.racale.sizes[0].items.map((id) => (
+                        <img key={id} src={PRODUCT_BY_ID[id].image} alt="" width="120" height="144" loading="lazy" decoding="async" />
+                      ))}
+                    </div>
+                    <p className={styles.choiceSmall}>3 o 2 vasetti, nella confezione in lino con il fiocco.</p>
+                    <div className={styles.choiceFoot}>
+                      <span className={styles.choicePrice}><small>da</small> {eur(Math.min(...BOXES.racale.sizes.map((s) => s.price)))}</span>
+                      <button type="button" className={styles.btnOutline} onClick={openRacale}>
+                        Scegli il formato <span aria-hidden="true">→</span>
+                      </button>
+                    </div>
+                  </article>
                 </div>
 
                 <ul className={styles.trust}>
@@ -326,7 +330,9 @@ export default function NatalBoxPage() {
                       className={`${styles.size} ${s.n === giftSize ? styles.sizeOn : ''}`}
                       onClick={() => changeSize(s.n)}
                     >
-                      <span>{s.label}</span>
+                      <span className={styles.sizeRadio} aria-hidden="true" />
+                      <span className={styles.sizeLabel}>{s.label}</span>
+                      <span className={styles.sizeItems}>{s.items.map((id) => PRODUCT_BY_ID[id].name).join(' · ')}</span>
                       <span className={styles.sizePrice}>{eur(s.price)}</span>
                     </button>
                   ))}
@@ -372,10 +378,8 @@ export default function NatalBoxPage() {
                   })}
                 </ol>
 
-                <p className={styles.kicker}>Passo {step + 1} di 4</p>
                 <h1 className={styles.titleSm}>{STEPS[step].title}</h1>
-                <p className={styles.lead}>{STEPS[step].lead}</p>
-                <div className={styles.meterRow}><TokenMeter used={sum.used} /></div>
+                <p className={styles.leadSm}>{STEPS[step].lead}</p>
 
                 {step < 3 && STEP_GROUPS[STEPS[step].key].map((g, gi) => (
                   <div key={gi} className={styles.group}>
@@ -385,7 +389,7 @@ export default function NatalBoxPage() {
                         <span>{g.sub}</span>
                       </div>
                     )}
-                    <div className={styles.grid} role={step === 1 ? 'radiogroup' : undefined} aria-label={step === 1 ? 'Vino o olio' : undefined}>
+                    <ul className={styles.list} role={step === 1 ? 'radiogroup' : 'list'} aria-label={step === 1 ? 'Vino o olio' : g.title || undefined}>
                       {PRODUCTS.filter(g.filter).map((p) => (
                         <BoxItemCard
                           key={p.id}
@@ -396,7 +400,7 @@ export default function NatalBoxPage() {
                           onRemove={() => remove(p.id)}
                         />
                       ))}
-                    </div>
+                    </ul>
                   </div>
                 ))}
 
@@ -415,7 +419,7 @@ export default function NatalBoxPage() {
                             <button type="button" className={styles.edit} onClick={() => goStep(si)}>Modifica</button>
                           </div>
                           {rows.length === 0 && <p className={styles.small}>Nessuno: hai usato i gettoni per il resto.</p>}
-                          <ul className={styles.contents}>
+                          <ul className={`${styles.contents} ${styles.contentsSm}`}>
                             {rows.map(({ p, qty }) => (
                               <li key={p.id} className={styles.contentRow}>
                                 <img src={p.image} alt="" width="120" height="144" loading="lazy" decoding="async" />
@@ -474,38 +478,14 @@ export default function NatalBoxPage() {
           {bar && (
             <div className={styles.bar}>
               <div className={styles.barInfo}>{bar.info}</div>
+              {bar.back && (
+                <button type="button" className={styles.barBack} onClick={bar.back} aria-label="Passo precedente"><ArrowLeft /></button>
+              )}
               <button type="button" className={styles.barBtn} onClick={bar.onClick} disabled={bar.disabled} aria-disabled={bar.disabled}>
                 {bar.label}{bar.arrow && !bar.disabled && <span aria-hidden="true"> →</span>}
               </button>
             </div>
           )}
-        </div>
-      </section>
-
-      {/* ── racconto e domande ── */}
-      <section className={styles.story}>
-        <figure className={styles.storyImg}>
-          <img src="/images/territorio/capperificio-caro-raccolta.webp" alt="Raccolta dei capperi a mano nei campi di Racale" width="900" height="1100" loading="lazy" decoding="async" />
-        </figure>
-        <div className={styles.storyText}>
-          <p className={styles.kicker}>Da Racale, con le mani</p>
-          <h2 className={styles.storyTitle}>Un pezzo di Salento <em>sotto l’albero</em></h2>
-          <p>
-            Ogni cappero è raccolto all’alba, selezionato per calibro e messo sotto sale come si fa in famiglia
-            da generazioni. Accanto ai nostri vasetti mettiamo quello che i vicini fanno meglio: il vino, l’olio,
-            i dolci delle feste.
-          </p>
-          <div className={styles.faq}>
-            {FAQ.map(([q, a], i) => (
-              <div key={q} className={styles.faqItem}>
-                <button type="button" className={styles.faqQ} aria-expanded={openFaq === i} onClick={() => setOpenFaq(openFaq === i ? -1 : i)}>
-                  <span>{q}</span>
-                  <span className={`${styles.faqIcon} ${openFaq === i ? styles.faqIconOpen : ''}`} aria-hidden="true">+</span>
-                </button>
-                {openFaq === i && <p className={styles.faqA}>{a}</p>}
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 

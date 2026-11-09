@@ -115,7 +115,8 @@ export const STEPS = [
 
 export const STEP_GROUPS = {
   caro: [
-    { title: 'Capperi di Racale', sub: 'Sotto sale marino o all’aceto di vino', filter: (p) => p.sect === 'capperi' },
+    { title: 'Capperi al sale marino', sub: 'Da sciacquare prima dell’uso', filter: (p) => p.sect === 'capperi' && p.id.startsWith('sale-') },
+    { title: 'Capperi all’aceto di vino', sub: 'Pronti da usare', filter: (p) => p.sect === 'capperi' && p.id.startsWith('aceto-') },
     { title: 'Altre specialità', sub: 'Cucunci, germogli, polvere e foglie', filter: (p) => p.sect === 'caro' },
   ],
   vo: [{ title: null, sub: null, filter: (p) => p.sect === 'vo' }],
