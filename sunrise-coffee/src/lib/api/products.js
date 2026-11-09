@@ -1,6 +1,18 @@
 import { storeApiPost } from '../shopware-client';
 import { slugify } from '../utils/slug.js';
 
+/* Prodotti venduti solo da una pagina dedicata (es. le Box di Natale, che si
+   compongono su /box-di-natale): fuori da catalogo, categorie e ricerca, così
+   non si possono comprare "vuoti" dalla scheda prodotto. */
+export const HIDDEN_PRODUCT_PREFIXES = ['XMAS-'];
+const HIDDEN_FILTER = {
+  type: 'not',
+  operator: 'and',
+  queries: HIDDEN_PRODUCT_PREFIXES.map((value) => ({ type: 'prefix', field: 'productNumber', value })),
+};
+export const isHiddenProduct = (p) =>
+  HIDDEN_PRODUCT_PREFIXES.some((x) => String(p?.productNumber || '').startsWith(x));
+
 /**
  * Fetch a paginated list of products.
  */
@@ -47,7 +59,7 @@ export async function getProducts({ page = 1, limit = 24, filters = [], sort = [
     },
   };
 
-  if (filters.length) body.filter = filters;
+  body.filter = [...filters, HIDDEN_FILTER];
   if (sort.length) body.sort = sort;
 
   return storeApiPost('/product', body);
@@ -173,6 +185,7 @@ export async function getProductsByCategory(categoryId, { page = 1, limit = 24, 
         field: 'categoryTree',
         value: categoryId,
       },
+      HIDDEN_FILTER,
     ],
     associations: {
       cover: { associations: { media: {} } },
@@ -216,6 +229,7 @@ export async function searchProducts(term, { page = 1, limit = 24 } = {}) {
     search: term,
     page,
     limit,
+    filter: [HIDDEN_FILTER],
     associations: {
       cover: { associations: { media: {} } },
       seoUrls: {},

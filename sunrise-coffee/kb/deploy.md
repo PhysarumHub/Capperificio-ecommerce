@@ -123,3 +123,20 @@ docker compose --env-file .env.production up -d --build frontend   # sono VITE_*
 Senza gli ID la pagina resta in anteprima e il pulsante finale non scrive nel
 carrello. La pagina è `noindex` e fuori dal menu finché prezzi e produttori
 non sono confermati.
+
+## Feed Google Merchant Center (`/feeds/google-merchant.xml`)
+
+Generato da Express (`api/_merchantFeed.js`) a ogni richiesta, dai dati live
+di Shopware: un articolo per prodotto acquistabile (le varianti, legate da
+`item_group_id`; i "genitori" no), link che apre la variante giusta
+(`?variant=`), titolo con calibro e peso netto (proprietà "Peso netto"),
+prezzo al kg, immagini convertite in https. Nessun EAN in Shopware →
+`identifier_exists=no`.
+
+Esclusi i codici prodotto con prefisso `XMAS-` (Box di Natale), che sono
+tolti anche da catalogo, ricerca e sitemap (`src/lib/api/products.js`) e la
+cui scheda prodotto rimanda a `/box-di-natale`. Per renderle visibili:
+togliere il prefisso da `EXCLUDE_PREFIXES` / `HIDDEN_PRODUCT_PREFIXES`.
+
+Il runtime Docker copia `src/data/company.js` (brand e URL usati dal feed):
+se il feed importa altri file di `src/`, vanno aggiunti al `Dockerfile`.

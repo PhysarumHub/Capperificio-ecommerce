@@ -1,5 +1,5 @@
 import { useMemo, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import ProductDetail from '../components/ProductDetail/ProductDetail';
 import { ProductsMarquee } from '../components/Marquee/Marquee';
 import { useProduct } from '../hooks/useProducts';
@@ -8,6 +8,7 @@ import { getProductImage } from '../lib/utils/image';
 import { gtmViewItem } from '../lib/utils/gtm';
 import { isProductAvailable } from '../lib/utils/availability';
 import { COMPANY } from '../data/company';
+import { isHiddenProduct } from '../lib/api/products';
 
 /* Soglia di spedizione gratuita: deve restare allineata a CheckoutPage. */
 const FREE_SHIPPING_MIN = 50;
@@ -138,6 +139,10 @@ export default function ProductPage() {
       { name: productName || 'Prodotto', path: `/prodotti/${slug}` },
     ],
   });
+
+  // Le Box di Natale si compongono su /box-di-natale: la scheda "nuda"
+  // permetterebbe di comprarle senza contenuto.
+  if (product && isHiddenProduct(product)) return <Navigate to="/box-di-natale" replace />;
 
   return (
     <>

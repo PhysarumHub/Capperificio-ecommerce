@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { readFileSync, writeFileSync } from 'fs';
 import { slugify } from './src/lib/utils/slug.js';
+import { generateMerchantFeed } from './api/_merchantFeed.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: join(__dirname, '.env'), override: true });
 
@@ -669,7 +670,7 @@ app.get('/sitemap.xml', async (_req, res) => {
               { type: 'equals', field: 'active', value: true },
               { type: 'equals', field: 'parentId', value: null },
             ],
-            includes: { product: ['id', 'name', 'translated', 'updatedAt', 'createdAt'] },
+            includes: { product: ['id', 'name', 'translated', 'productNumber', 'updatedAt', 'createdAt'] },
           }),
           signal: AbortSignal.timeout(8_000),
         });
@@ -706,7 +707,8 @@ app.get('/sitemap.xml', async (_req, res) => {
   try {
     const products = await fetchShopwareProducts();
 
-    const productUrls = products.map(p => {
+    // Le Box di Natale si comprano solo da /box-di-natale (nascosta): niente schede in sitemap
+    const productUrls = products.filter(p => !String(p.productNumber || '').startsWith('XMAS-')).map(p => {
       const slug = slugify(p.translated?.name || p.name) || p.id;
       const path = `/prodotti/${slug}`;
       const lastmod = (p.updatedAt || p.createdAt || '').split('T')[0] || now;
@@ -730,6 +732,22 @@ app.get('/sitemap.xml', async (_req, res) => {
   } catch (e) {
     console.error('Sitemap: errore generazione:', e.message);
     res.status(500).send('<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>');
+  }
+});
+
+// ── Feed Google Merchant Center ──────────────────────────────────────────────
+// Google lo scarica a intervalli (impostati nel Merchant Center): prezzi,
+// disponibilità e immagini sono sempre quelli live di Shopware.
+app.get('/feeds/google-merchant.xml', async (_req, res) => {
+  try {
+    const { xml, count } = await generateMerchantFeed();
+    if (!count) console.warn('Feed Merchant: nessun prodotto idoneo');
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.send(xml);
+  } catch (e) {
+    console.error('Feed Merchant: errore generazione:', e.message);
+    // 503: Google riprova più tardi invece di svuotare il catalogo
+    res.status(503).set('Retry-After', '600').send('Feed temporaneamente non disponibile');
   }
 });
 

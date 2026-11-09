@@ -50,6 +50,8 @@ COPY api/ ./api/
 # Utility condivisa frontend/backend per lo slug SEO dei prodotti
 # (server.js la importa per generare /prodotti/:slug nella sitemap.xml)
 COPY src/lib/utils/slug.js ./src/lib/utils/slug.js
+# Dati aziendali (brand, URL del sito) letti dal feed Google Merchant
+COPY src/data/company.js ./src/data/company.js
 
 # Frontend buildato
 COPY --from=builder /app/dist ./dist
