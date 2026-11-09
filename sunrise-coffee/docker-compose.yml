@@ -88,6 +88,10 @@ services:
         - VITE_B2B_GROUP_NAME=${VITE_B2B_GROUP_NAME:-B2B}
         - VITE_STRAPI_URL=${VITE_STRAPI_URL}
         - VITE_GTM_ID=${VITE_GTM_ID}
+        # Box di Natale: ID dei prodotti-box Shopware (scripts/setup-box-natale.py)
+        - VITE_XMAS_BOX_FIXED_ID=${VITE_XMAS_BOX_FIXED_ID}
+        - VITE_XMAS_BOX_FIXED2_ID=${VITE_XMAS_BOX_FIXED2_ID}
+        - VITE_XMAS_BOX_TOKENS_ID=${VITE_XMAS_BOX_TOKENS_ID}
     container_name: capperificio-frontend
     ports:
       # Solo 127.0.0.1: il traffico pubblico deve passare da Traefik (che forza

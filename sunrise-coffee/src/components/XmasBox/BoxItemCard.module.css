@@ -1,0 +1,242 @@
+/* Allineata a components/ProductCard: bordi a griglia, riquadro bianco 10px,
+   nome PP Editorial corsivo, comando tondo verde in basso a destra. */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  background: var(--color-light);
+  border-right: 1px solid var(--color-card-border);
+  border-bottom: 1px solid var(--color-card-border);
+  min-width: 0;
+}
+
+.imgWrap {
+  position: relative;
+  aspect-ratio: 5 / 5.6;
+  background: var(--color-white);
+  border-radius: var(--radius-card-lg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 0 var(--color-red);
+  transition: box-shadow 260ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.selected .imgWrap { box-shadow: inset 0 0 0 2px var(--color-red); }
+.locked .imgWrap { cursor: default; }
+
+.img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  transition: transform 350ms cubic-bezier(0.23, 1, 0.32, 1), opacity 260ms;
+}
+.locked .img { opacity: .45; filter: saturate(.6); }
+
+@media (hover: hover) and (pointer: fine) {
+  .card:not(.locked) .imgWrap:hover .img { transform: scale(1.05); }
+}
+
+/* costo in gettoni — in alto a sinistra, come il badge della ProductCard */
+.cost {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 6px;
+  border-radius: var(--radius-pill);
+  background: rgba(252, 243, 223, .92);
+  border: 1px solid var(--color-card-border);
+  color: var(--color-dark);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.costTwo { background: var(--color-red); border-color: var(--color-red); color: var(--color-light); }
+
+.coins { display: inline-flex; }
+.coin {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e9cf8f, #b8892e 70%);
+  box-shadow: inset 0 0 0 1.5px rgba(122, 86, 20, .45);
+}
+.coin + .coin { margin-left: -5px; }
+
+/* spunta "nella scatola" */
+.inBox {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-red);
+  color: var(--color-white);
+  display: grid;
+  place-items: center;
+  z-index: 1;
+  animation: pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.inBox svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
+/* + tondo (come .addToCart) */
+.add {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-red);
+  color: var(--color-white);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1), transform 120ms cubic-bezier(0.23, 1, 0.32, 1), background 160ms;
+}
+.add svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.add:hover { background: var(--color-red-hover); }
+.add:active { transform: scale(.92); }
+.add:disabled { opacity: .3; cursor: not-allowed; transform: none; background: var(--color-red); }
+
+/* − n + (come .qtyControl) */
+.qty {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  background: var(--color-red);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  animation: grow 260ms cubic-bezier(0.23, 1, 0.32, 1);
+  transform-origin: right center;
+}
+.qtyBtn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  color: var(--color-white);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 150ms, transform 100ms, opacity 150ms;
+}
+.qtyBtn:hover { background: rgba(0, 0, 0, .15); }
+.qtyBtn:active { transform: scale(.88); }
+.qtyBtn:disabled { opacity: .35; cursor: not-allowed; background: none; transform: none; }
+.qtyNum {
+  min-width: 18px;
+  text-align: center;
+  color: var(--color-white);
+  font-size: var(--text-md);
+  font-weight: 600;
+  animation: pop 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* scelta esclusiva (vino / olio) */
+.pick {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2;
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-red);
+  background: var(--color-light);
+  color: var(--color-red);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 160ms, color 160ms, transform 120ms;
+}
+.pick svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.pick:hover { background: var(--color-red); color: var(--color-white); }
+.pick:active { transform: scale(.96); }
+.pickOn { background: var(--color-red); color: var(--color-white); }
+.pick:disabled { opacity: .35; cursor: not-allowed; background: var(--color-light); color: var(--color-red); }
+
+.add:focus-visible, .qtyBtn:focus-visible, .pick:focus-visible {
+  outline: 2px solid var(--color-dark);
+  outline-offset: 2px;
+}
+
+/* testo */
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 4px 6px;
+  min-width: 0;
+}
+.name {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--text-xl);
+  line-height: 1.15;
+  color: var(--color-dark);
+}
+.detail {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .02em;
+  line-height: 1.35;
+  color: var(--color-red);
+}
+.producer {
+  font-size: var(--text-xs);
+  color: var(--color-mid);
+}
+.note {
+  margin-top: 4px;
+  font-size: var(--text-sm);
+  line-height: 1.35;
+  color: var(--color-mid);
+  min-height: 2.7em;
+}
+.noteWarn { color: #8a5a1c; }
+
+@keyframes pop {
+  from { transform: scale(.6); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+@keyframes grow {
+  from { transform: scaleX(.4); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .card { padding: 6px; }
+  .cost { top: 7px; left: 7px; padding: 3px 8px 3px 5px; font-size: 10px; }
+  .inBox { top: 7px; right: 7px; width: 22px; height: 22px; }
+  .add, .qty, .pick { right: 7px; bottom: 7px; }
+  .add, .qtyBtn { width: 38px; height: 38px; }
+  .pick { min-height: 38px; padding: 0 14px; }
+  .name { font-size: var(--text-lg); }
+  .note { font-size: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inBox, .qty, .qtyNum { animation: none; }
+}

@@ -27,6 +27,7 @@ const ContattiPage           = lazy(() => import('./pages/ContattiPage'));
 const FAQPage                = lazy(() => import('./pages/FAQPage'));
 const SampleBoxPage          = lazy(() => import('./pages/SampleBoxPage'));
 const SampleBoxCheckoutPage  = lazy(() => import('./pages/SampleBoxCheckoutPage'));
+const NatalBoxPage           = lazy(() => import('./pages/NatalBoxPage'));
 const TestPageA              = lazy(() => import('./pages/TestPageA'));
 const TestPageB              = lazy(() => import('./pages/TestPageB'));
 const CylinderCarousel       = lazy(() => import('./components/CylinderCarousel'));
@@ -68,6 +69,9 @@ export default function App() {
 
             <Route path="/contatti" element={<ContattiPage />} />
             <Route path="/faq" element={<FAQPage />} />
+
+            {/* Configuratore box di Natale (Box Racale + Box a Gettoni) */}
+            <Route path="/box-di-natale" element={<NatalBoxPage />} />
 
             {/* Landing B2B (EN, noindex): box campioni, si paga solo la spedizione */}
             <Route path="/sample-box" element={<SampleBoxPage />} />

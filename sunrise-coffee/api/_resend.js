@@ -202,9 +202,20 @@ function itemsList(lineItems = []) {
     .filter(i => i.type === 'product' || !i.type)
     .map(i => ({
       left: esc(i.label || '—'),
-      sub: `Quantità ${i.quantity || 1}`,
+      sub: [`Quantità ${i.quantity || 1}`, natalBoxContents(i)].filter(Boolean).join('<br>'),
       right: euro(i.price?.totalPrice),
     })));
+}
+
+// Box di Natale: la composizione scelta viaggia nel payload della riga
+// (vedi src/pages/NatalBoxPage.jsx). Senza questo elenco chi prepara il pacco
+// vedrebbe solo "Box di Natale a Gettoni".
+function natalBoxContents(lineItem) {
+  const items = lineItem?.payload?.natalBox?.items;
+  if (!Array.isArray(items) || !items.length) return '';
+  return 'Contenuto: ' + items
+    .map(it => `${Number(it.qty) || 1}× ${esc(it.name || it.id || '')}${it.detail ? ` (${esc(it.detail)})` : ''}`)
+    .join(', ');
 }
 
 // Tabella dettagli a due colonne, come la scheda prodotto. rows = [[chiave, valore]]

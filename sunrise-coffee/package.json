@@ -36,7 +36,8 @@
     "react-router-dom": "^7.13.1",
     "resend": "^6.16.0",
     "stripe": "^20.4.1",
-    "tailwindcss": "^4.3.2"
+    "tailwindcss": "^4.3.2",
+    "three": "^0.160.0"
   },
   "devDependencies": {
     "@google-cloud/local-auth": "^3.0.1",

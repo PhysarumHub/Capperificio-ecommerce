@@ -52,8 +52,8 @@ export function useCart() {
     }
   }, [configured]);
 
-  const addItem = useCallback((productId, quantity = 1) =>
-    mutateCart(() => cartApi.addToCart(productId, quantity)),
+  const addItem = useCallback((productId, quantity = 1, extra) =>
+    mutateCart(() => cartApi.addToCart(productId, quantity, extra)),
   [mutateCart]);
 
   const updateQuantity = useCallback((lineItemId, quantity) =>

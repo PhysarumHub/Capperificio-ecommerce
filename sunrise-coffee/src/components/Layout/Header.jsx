@@ -33,6 +33,13 @@ export default function Header() {
 
   const closeCart = useCallback(() => setCartOpen(false), []);
 
+  // Le pagine possono aprire il carrello senza passare dall'header
+  // (es. /box-di-natale dopo l'aggiunta della box).
+  useEffect(() => {
+    window.addEventListener('caro:open-cart', openCart);
+    return () => window.removeEventListener('caro:open-cart', openCart);
+  }, [openCart]);
+
   const openAuth = useCallback(() => {
     setAuthOpen(true);
     setMenuOpen(false);

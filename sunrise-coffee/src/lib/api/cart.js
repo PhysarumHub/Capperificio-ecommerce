@@ -10,13 +10,17 @@ export async function getCart() {
 /**
  * Add a product to the cart.
  */
-export async function addToCart(productId, quantity = 1) {
+export async function addToCart(productId, quantity = 1, extra = {}) {
+  // `extra.id` / `extra.payload`: usati dalle box di Natale per tenere
+  // la composizione scelta su una riga carrello propria (vedi NatalBoxPage).
   return storeApiPost('/checkout/cart/line-item', {
     items: [
       {
         type: 'product',
         referencedId: productId,
         quantity,
+        ...(extra.id ? { id: extra.id } : {}),
+        ...(extra.payload ? { payload: extra.payload } : {}),
       },
     ],
   });

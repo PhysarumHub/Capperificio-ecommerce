@@ -103,3 +103,23 @@ Il frontend dipende da `shopware` **healthy** e da `strapi` almeno
 
 Il servizio `frontend` ha un limite deploy di 512MB RAM / 1 CPU
 (`docker-compose.yml`, sezione `deploy.resources.limits`).
+
+## Box di Natale (`/box-di-natale`)
+
+La pagina aggiunge al carrello tre prodotti-box Shopware; la composizione
+scelta dal cliente viaggia nel `payload.natalBox` della riga d'ordine ed è
+riportata nelle email (conferma cliente e avviso al negozio).
+
+Prima messa online (o dopo un cambio di prezzo):
+
+```bash
+# sul server, con il tunnel o l'URL interno di Shopware in scripts/.env
+python3 scripts/setup-box-natale.py          # crea/aggiorna i 3 prodotti, stampa gli ID
+# incolla in .env.production le tre righe stampate:
+#   VITE_XMAS_BOX_FIXED_ID / VITE_XMAS_BOX_FIXED2_ID / VITE_XMAS_BOX_TOKENS_ID
+docker compose --env-file .env.production up -d --build frontend   # sono VITE_*: serve il build
+```
+
+Senza gli ID la pagina resta in anteprima e il pulsante finale non scrive nel
+carrello. La pagina è `noindex` e fuori dal menu finché prezzi e produttori
+non sono confermati.
