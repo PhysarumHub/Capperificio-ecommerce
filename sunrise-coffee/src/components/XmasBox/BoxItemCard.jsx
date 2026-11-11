@@ -1,14 +1,15 @@
+import ui from './xmasUi.module.css';
 import styles from './BoxItemCard.module.css';
 
-/* Riga prodotto del configuratore: miniatura, nome in Editorial corsivo,
-   costo in gettoni e comando a destra. Compatta di proposito: su mobile
-   devono stare più prodotti per schermata.
+/* Card prodotto del configuratore: vasetto su tessera crema, nome, costo in
+   gettoni e comandi − n + a destra. In griglia a due colonne su desktop,
+   una sotto l'altra su mobile.
    variant 'radio' → scelta esclusiva (vino o olio). */
 
 export function Coins({ n, className = '' }) {
   return (
-    <span className={`${styles.coins} ${className}`} aria-hidden="true">
-      {Array.from({ length: n }, (_, i) => <span key={i} className={styles.coin} />)}
+    <span className={`${ui.coins} ${className}`} aria-hidden="true">
+      {Array.from({ length: n }, (_, i) => <span key={i} className={ui.coin} />)}
     </span>
   );
 }
@@ -31,8 +32,8 @@ export default function BoxItemCard({ product: p, state, onAdd, onRemove, varian
   const locked = !selected && !canAdd;
   const radio = variant === 'radio';
 
-  // tocco su miniatura o testo = aggiungi (o scegli, per vino/olio)
-  const tapRow = (e) => {
+  // tocco su vasetto o testo = aggiungi (o scegli, per vino/olio)
+  const tapCard = (e) => {
     if (e.target.closest('button')) return;
     if (radio) { if (!selected && canAdd) onAdd(); return; }
     if (canAdd) onAdd();
@@ -53,45 +54,46 @@ export default function BoxItemCard({ product: p, state, onAdd, onRemove, varian
         {selected ? <><CheckIcon /> Scelto</> : swap ? 'Cambia' : 'Scegli'}
       </button>
     );
-  } else if (selected) {
-    control = (
-      <div className={styles.qty}>
-        <button type="button" className={styles.qtyBtn} onClick={onRemove} aria-label={`Togli ${fullName}`}><MinusIcon /></button>
-        <span className={styles.qtyNum} key={qty} aria-live="polite">{qty}</span>
-        <button type="button" className={styles.qtyBtn} onClick={onAdd} disabled={!canAdd} aria-label={`Aggiungi un altro ${fullName}`}><PlusIcon /></button>
-      </div>
-    );
   } else {
     control = (
-      <button type="button" className={styles.add} onClick={onAdd} disabled={!canAdd} aria-label={`Aggiungi ${fullName}, ${costLabel}`}>
-        <PlusIcon />
-      </button>
+      <span className={styles.qty}>
+        {selected && (
+          <>
+            <button type="button" className={styles.qtyBtn} onClick={onRemove} aria-label={`Togli ${fullName}`}><MinusIcon /></button>
+            <span className={styles.qtyNum} key={qty} aria-live="polite">{qty}</span>
+          </>
+        )}
+        <button
+          type="button"
+          className={`${styles.qtyBtn} ${styles.qtyAdd}`}
+          onClick={onAdd}
+          disabled={!canAdd}
+          aria-label={`${selected ? 'Aggiungi un altro' : 'Aggiungi'} ${fullName}, ${costLabel}`}
+        >
+          <PlusIcon />
+        </button>
+      </span>
     );
   }
 
-  const note = !selected && reason ? reason : p.note;
+  const warn = !selected && reason;
 
   return (
     <li
-      className={[styles.row, selected && styles.selected, locked && styles.locked].filter(Boolean).join(' ')}
-      onClick={tapRow}
+      className={[styles.card, selected && styles.selected, locked && styles.locked].filter(Boolean).join(' ')}
+      onClick={tapCard}
     >
       <span className={styles.thumb}>
         <img src={p.image} alt="" width="600" height="720" loading="lazy" decoding="async" />
-        {selected && !radio && <span className={styles.badge} aria-hidden="true">{qty}</span>}
       </span>
       <span className={styles.info}>
         <span className={styles.name}>{p.name}</span>
         <span className={styles.detail}>{p.detail}</span>
-        {p.producer && <span className={styles.producer}>{p.producer}</span>}
-        {note && <span className={`${styles.note} ${!selected && reason ? styles.noteWarn : ''}`}>{note}</span>}
+        {p.producer && <span className={styles.detail}>{p.producer}</span>}
+        <span className={styles.cost}><Coins n={p.cost} /> {costLabel}</span>
+        {warn && <span className={styles.warn}>{reason}</span>}
       </span>
-      <span className={styles.side}>
-        <span className={styles.cost} title={costLabel}>
-          <Coins n={p.cost} /><span className="sr-only">{costLabel}</span>
-        </span>
-        {control}
-      </span>
+      {control}
     </li>
   );
 }

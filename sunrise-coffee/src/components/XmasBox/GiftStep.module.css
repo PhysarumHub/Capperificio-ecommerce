@@ -1,0 +1,117 @@
+.gift { display: flex; flex-direction: column; gap: 32px; }
+
+.block { border: 0; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.legend {
+  padding: 0;
+  margin-bottom: 4px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--color-red);
+}
+.legend::before { content: '• '; }
+.hint { font-size: var(--text-base); color: var(--color-mid); line-height: 1.5; }
+.muted { color: var(--color-mid); }
+.error { font-size: var(--text-sm); color: #8A3A12; }
+
+/* scelta a chi spedire */
+.seg { display: flex; flex-wrap: wrap; gap: 10px; }
+.segBtn {
+  flex: 1 1 220px;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-card-border);
+  background: var(--color-white);
+  color: var(--color-dark);
+  font-size: var(--text-md);
+  text-align: left;
+  transition: border-color 200ms, box-shadow 200ms;
+}
+.dot { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--color-red); flex: none; transition: border-width 200ms; }
+.on { border-color: var(--color-dark); box-shadow: inset 0 0 0 1px var(--color-dark); }
+.on .dot { border: 6px solid var(--color-red); }
+
+/* settimane */
+.weeks { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.week {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 16px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-card-border);
+  background: var(--color-white);
+  color: var(--color-dark);
+  text-align: left;
+  transition: border-color 200ms, box-shadow 200ms;
+}
+.week:disabled { opacity: .5; cursor: not-allowed; }
+.weekDay { font-size: var(--text-sm); font-weight: 300; color: var(--color-mid); }
+.weekDate { font-family: var(--font-serif); font-weight: 400; font-size: 26px; line-height: 1; }
+.weekNote { font-size: var(--text-sm); color: var(--color-mid); }
+.week[data-status='low'] .weekNote { color: #8A3A12; }
+.segBtn:focus-visible, .week:focus-visible { outline: 2px solid var(--color-dark); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .segBtn:not(.on):hover, .week:not(.on):not(:disabled):hover { border-color: var(--color-red); }
+}
+
+/* biglietto e indirizzo: campi del checkout */
+.textarea {
+  width: 100%;
+  min-height: 112px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-white);
+  font-size: var(--text-lg);
+  font-weight: 300;
+  line-height: 1.5;
+  resize: vertical;
+}
+.textarea:focus { border-color: var(--color-dark); }
+.count { margin-top: -8px; font-size: 12px; color: var(--color-mid); text-align: right; font-variant-numeric: tabular-nums; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid6 { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px 14px; }
+.span2 { grid-column: span 2; }
+.span3 { grid-column: span 3; }
+.span4 { grid-column: span 4; }
+.span6 { grid-column: span 6; }
+
+.checks { display: flex; flex-direction: column; gap: 8px; }
+.check { display: flex; gap: 12px; align-items: flex-start; min-height: 44px; font-size: var(--text-md); font-weight: 300; line-height: 1.45; cursor: pointer; }
+.check input { width: 20px; height: 20px; margin-top: 1px; padding: 0; flex: none; accent-color: var(--color-red); }
+.check strong { font-weight: var(--font-weight-ui); }
+.inlineLink { background: none; border: 0; padding: 0; color: var(--color-red); font: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+/* biglietto sopra la scatola */
+.note {
+  width: 250px;
+  min-height: 140px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #FCF8EE;
+  border-radius: 2px;
+  box-shadow: 0 16px 34px rgba(31, 58, 36, .22);
+  transform: rotate(3deg);
+}
+.noteTo { font-size: var(--text-xs); letter-spacing: .14em; text-transform: uppercase; color: #6A5A3A; }
+.noteText { font-family: var(--font-serif); font-style: italic; font-size: 19px; line-height: 1.3; white-space: pre-line; overflow-wrap: anywhere; }
+.noteSign { margin-top: auto; font-family: var(--font-serif); font-style: italic; font-size: var(--text-md); color: #6A5A3A; text-align: right; }
+
+@media (max-width: 600px) {
+  .grid6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .span3, .span6 { grid-column: 1 / -1; }
+  .span2 { grid-column: span 1; }
+  .span4 { grid-column: span 2; }
+  .weeks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .note { width: 190px; min-height: 0; padding: 12px 14px; }
+  .noteText { font-size: 15px; }
+}

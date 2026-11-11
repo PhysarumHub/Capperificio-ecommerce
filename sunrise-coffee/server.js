@@ -82,7 +82,7 @@ import {
 } from './api/_shopware.js';
 import { createShipmentForOrder, packlinkConfigured } from './api/_packlink.js';
 import {
-  sendOrderConfirmation, sendOrderShipped, sendOrderCancelled,
+  sendOrderConfirmation, sendOrderShipped, sendOrderCancelled, scheduledNatalBoxes,
   sendMerchantAlert, sendReviewRequest, sendMerchantLowStock, sendRefundIssued, resendConfigured,
   sendSampleBoxAlert, sendSampleBoxConfirmation,
 } from './api/_resend.js';
@@ -234,8 +234,11 @@ function fulfillOrderInBackground(orderId, { label = 'order' } = {}) {
       else console.warn(`${label}: conferma ordine ${orderId} NON inviata — ritenta il poller`);
     }
 
+    // Le Box di Natale prenotate partono nella settimana scelta (e spesso a un
+    // destinatario diverso dal cliente): niente draft Packlink immediato,
+    // l'avviso al negozio spiega cosa fare.
     let packlinkRef = null;
-    if (packlinkConfigured()) {
+    if (packlinkConfigured() && !scheduledNatalBoxes(fullOrder).length) {
       packlinkRef = await createShipmentForOrder(fullOrder);
       if (packlinkRef) await savePacklinkReference(orderId, packlinkRef);
     }

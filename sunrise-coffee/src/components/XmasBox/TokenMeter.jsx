@@ -1,7 +1,7 @@
 import { TOKENS_TOTAL } from '../../data/natalBox';
 import styles from './TokenMeter.module.css';
 
-/* Dieci gettoni: quelli spesi si "coniano" in oro, gli altri restano incisi. */
+/* Dieci gettoni d'ottone: quelli spesi si accendono, gli altri restano incisi. */
 export default function TokenMeter({ used, compact = false }) {
   const left = TOKENS_TOTAL - used;
   return (
@@ -19,10 +19,10 @@ export default function TokenMeter({ used, compact = false }) {
         ))}
       </div>
       {!compact && (
-        <span className={styles.label} aria-hidden="true">
-          <strong>{used}</strong>/{TOKENS_TOTAL} gettoni
-          <span className={styles.left}>{left === 0 ? ' · completa' : ` · ne restano ${left}`}</span>
-        </span>
+        <p className={styles.label} aria-live="polite">
+          <strong>{used} di {TOKENS_TOTAL} gettoni</strong>
+          {' · '}{left === 0 ? 'scatola piena' : left === 1 ? 'ne resta 1' : `ne restano ${left}`}
+        </p>
       )}
     </div>
   );

@@ -207,15 +207,35 @@ function itemsList(lineItems = []) {
     })));
 }
 
-// Box di Natale: la composizione scelta viaggia nel payload della riga
-// (vedi src/pages/NatalBoxPage.jsx). Senza questo elenco chi prepara il pacco
-// vedrebbe solo "Box di Natale a Gettoni".
+// Box di Natale: composizione, settimana di spedizione e regalo viaggiano nel
+// payload della riga (vedi src/pages/NatalBoxPage.jsx). Senza questo elenco chi
+// prepara il pacco vedrebbe solo "Box di Natale a Gettoni".
 function natalBoxContents(lineItem) {
-  const items = lineItem?.payload?.natalBox?.items;
-  if (!Array.isArray(items) || !items.length) return '';
-  return 'Contenuto: ' + items
-    .map(it => `${Number(it.qty) || 1}× ${esc(it.name || it.id || '')}${it.detail ? ` (${esc(it.detail)})` : ''}`)
-    .join(', ');
+  const nb = lineItem?.payload?.natalBox;
+  if (!nb) return '';
+  const out = [];
+  if (Array.isArray(nb.items) && nb.items.length) {
+    out.push('Contenuto: ' + nb.items
+      .map(it => `${Number(it.qty) || 1}× ${esc(it.name || it.id || '')}${it.detail ? ` (${esc(it.detail)})` : ''}`)
+      .join(', '));
+  }
+  if (nb.ship?.label) out.push(`Spedizione: <strong style="font-weight:500;">${esc(nb.ship.label)}</strong>`);
+  const g = nb.gift;
+  if (g?.recipient) {
+    const r = g.recipient;
+    out.push(`Regalo per: ${esc(r.name)}, ${esc(r.street)}, ${esc(r.zip)} ${esc(r.city)}${r.phone ? ` · tel. ${esc(r.phone)}` : ''}`);
+    if (g.message || g.to || g.sign) {
+      out.push(`Biglietto: ${g.to ? `<em>Per ${esc(g.to)}</em> — ` : ''}«${esc(g.message || '')}»${g.sign ? ` — ${esc(g.sign)}` : ''}`);
+    }
+    if (g.hidePrices) out.push('Nessun prezzo nel pacco');
+    if (g.notify && r.email) out.push(`Avvisare il destinatario alla partenza: ${esc(r.email)}`);
+  }
+  return out.join('<br>');
+}
+
+// Righe Box di Natale con una settimana di spedizione prenotata.
+export function scheduledNatalBoxes(order) {
+  return (order?.lineItems || []).filter(i => i?.payload?.natalBox?.ship?.id);
 }
 
 // Tabella dettagli a due colonne, come la scheda prodotto. rows = [[chiave, valore]]
@@ -542,7 +562,10 @@ export async function sendMerchantAlert(order, packlinkRef = null) {
   const total = order.price?.totalPrice;
   const shippingMethod = esc(order.deliveries?.[0]?.shippingMethod?.name || '—');
 
-  const plBlock = packlinkRef
+  const natal = scheduledNatalBoxes(order);
+  const plBlock = natal.length
+    ? warnBox(`<strong>Box di Natale prenotata.</strong> Nessuna spedizione Packlink creata in automatico: va preparata e spedita nella data scelta${natal.some(i => i.payload.natalBox.gift?.recipient) ? ', all’indirizzo del destinatario indicato nella riga (non a quello del cliente)' : ''}. ${natal.map(i => `${esc(i.label || 'Box')}: ${esc(i.payload.natalBox.ship.label)}`).join(' · ')}`)
+    : packlinkRef
     ? noteBox('Spedizione Packlink pronta',
         `Draft creato: <strong style="font-weight:500;">${esc(packlinkRef)}</strong>. Seleziona il corriere e stampa l’etichetta.`,
         button('Apri su Packlink', `https://pro.packlink.com/shipment/${esc(packlinkRef)}`))

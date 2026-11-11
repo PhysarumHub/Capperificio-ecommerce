@@ -122,3 +122,35 @@ export const STEP_GROUPS = {
   vo: [{ title: null, sub: null, filter: (p) => p.sect === 'vo' }],
   dolci: [{ title: null, sub: null, filter: (p) => p.sect === 'dolci' }],
 };
+
+/* ── Prenotazione regalo ───────────────────────────────────────
+   Si paga subito, la box parte il lunedì scelto. Ogni settimana ha un numero
+   limitato di box (le prepariamo a mano): quando una settimana è piena va
+   segnata `status: 'full'` qui. 'low' mostra "Ultimi posti".
+   `orderBy` = ultimo giorno utile per prenotare quella spedizione: dopo
+   quella data la settimana sparisce dalla scelta.
+   [DATE E STATI DA CONFERMARE] */
+export const ORDER_DEADLINE = { label: '16 dicembre', iso: '2026-12-16' };
+
+export const SHIP_WEEKS = [
+  { id: '2026-11-30', day: 'Lunedì', date: '30 nov', label: 'lunedì 30 novembre', orderBy: '2026-11-27', status: 'low' },
+  { id: '2026-12-07', day: 'Lunedì', date: '7 dic', label: 'lunedì 7 dicembre', orderBy: '2026-12-04', status: 'open' },
+  { id: '2026-12-14', day: 'Lunedì', date: '14 dic', label: 'lunedì 14 dicembre', orderBy: '2026-12-11', status: 'open' },
+];
+export const SHIP_ASAP = { id: 'asap', day: 'Il prima possibile', date: 'Subito', label: 'appena pronta', status: 'open', note: 'Entro 3 giorni lavorativi' };
+
+export const SHIP_STATUS_NOTE = { full: 'Completo', low: 'Ultimi posti', open: 'Disponibile' };
+
+/* Settimane ancora prenotabili oggi (confronto per giorno, ora locale). */
+export function openShipWeeks(now = new Date()) {
+  const pad = (n) => String(n).padStart(2, '0');
+  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const weeks = SHIP_WEEKS.filter((w) => w.orderBy >= today);
+  return today <= ORDER_DEADLINE.iso ? [...weeks, SHIP_ASAP] : weeks;
+}
+
+export const GIFT_MESSAGE_MAX = 200;
+
+/* "Regala i gettoni" (chi riceve compone la box): non ancora attivo. Finché è
+   false la card resta visibile con "In arrivo" e rimanda ai contatti. */
+export const EGIFT_ENABLED = false;
