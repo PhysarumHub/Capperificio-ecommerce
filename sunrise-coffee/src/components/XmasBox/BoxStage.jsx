@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { reloadOnceForNewBuild } from '../../lib/reloadOnceForNewBuild';
 import styles from './BoxStage.module.css';
 
 /* Palcoscenico 3D delle box di Natale.
@@ -65,7 +66,12 @@ export default function BoxStage({ scene, giftNonce, onPick, label, children }) 
 
         requestAnimationFrame(() => requestAnimationFrame(() => { if (!disposed) setStatus('ready'); }));
       })
-      .catch(() => { if (!disposed) setStatus('fallback'); });
+      .catch(() => {
+        // la scheda era aperta prima di un deploy: il file della scena non
+        // esiste più. Si ricarica una volta per prendere la versione nuova.
+        if (reloadOnceForNewBuild()) return;
+        if (!disposed) setStatus('fallback');
+      });
 
     return () => {
       disposed = true;
