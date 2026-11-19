@@ -631,6 +631,7 @@ app.get('/sitemap.xml', async (_req, res) => {
   const STATIC_PAGES = [
     { path: '/',                      priority: '1.0', changefreq: 'weekly'  },
     { path: '/collections/all',       priority: '0.9', changefreq: 'weekly'  },
+    { path: '/box-di-natale',         priority: '0.9', changefreq: 'weekly'  },
     { path: '/storia',                priority: '0.7', changefreq: 'monthly' },
     { path: '/territorio',            priority: '0.6', changefreq: 'monthly' },
     { path: '/processo-produttivo',   priority: '0.6', changefreq: 'monthly' },
@@ -710,7 +711,7 @@ app.get('/sitemap.xml', async (_req, res) => {
   try {
     const products = await fetchShopwareProducts();
 
-    // Le Box di Natale si comprano solo da /box-di-natale (nascosta): niente schede in sitemap
+    // Le Box di Natale si comprano solo da /box-di-natale: niente schede prodotto in sitemap
     const productUrls = products.filter(p => !String(p.productNumber || '').startsWith('XMAS-')).map(p => {
       const slug = slugify(p.translated?.name || p.name) || p.id;
       const path = `/prodotti/${slug}`;

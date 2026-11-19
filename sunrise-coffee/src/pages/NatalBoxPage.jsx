@@ -69,9 +69,6 @@ export default function NatalBoxPage() {
     description: 'Regala il Salento: la Box a Gettoni da comporre con capperi di Racale, vino o olio e dolci salentini, o la Box Racale pronta. Scegli il lunedì di spedizione e aggiungi il biglietto scritto a mano.',
     path: '/box-di-natale',
     image: '/images/box-natale/box-poster.webp',
-    // Nascosta finché prezzi, produttori e dolci non sono confermati:
-    // raggiungibile solo col link, fuori da menu e sitemap.
-    noindex: true,
   });
 
   useEffect(() => {

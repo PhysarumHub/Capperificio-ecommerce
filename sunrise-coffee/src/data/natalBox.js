@@ -12,9 +12,8 @@
  *      La scatola è una griglia 3×3: col vino ci stanno 9 prodotti, con
  *      l'olio 8 + la bottiglia.
  *
- * I valori tra [parentesi quadre] sono SEGNAPOSTO da confermare (produttori,
- * prezzi, dolci). I prezzi mostrati sono informativi: il totale vero lo
- * calcola Shopware dal prodotto-box nel carrello.
+ * I prezzi mostrati sono informativi: il totale vero lo calcola Shopware dal
+ * prodotto-box nel carrello.
  */
 
 const IMG = '/images/box-natale';
@@ -39,8 +38,7 @@ export const BOXES = {
     lead: 'Le specialità firmate Capperificio Caro nella confezione in lino a finestre, chiusa con il fiocco.',
     sizes: [
       { n: 3, label: '3 vasetti', price: 20, productKey: 'racale3', items: ['shoots', 'powder', 'sale-lilliput'] },
-      // [PREZZO e contenuto da confermare]
-      { n: 2, label: '2 vasetti', price: 14, priceTbc: true, productKey: 'racale2', items: ['sale-lilliput', 'powder'] },
+      { n: 2, label: '2 vasetti', price: 14, productKey: 'racale2', items: ['sale-lilliput', 'powder'] },
     ],
   },
   tokens: {
@@ -48,8 +46,7 @@ export const BOXES = {
     name: 'Box a Gettoni',
     kicker: 'Componila tu',
     lead: 'Dieci gettoni da spendere tra le nostre specialità, un vino o un olio e i dolci delle pasticcerie salentine.',
-    price: 45, // [PREZZO da confermare] — vale quello del prodotto Shopware
-    priceTbc: true,
+    price: 45, // informativo: vale quello del prodotto Shopware
     productKey: 'tokens',
   },
 };
@@ -88,18 +85,18 @@ export const PRODUCTS = [
   { id: 'leaves', sect: 'caro', cost: 1, name: 'Foglie di cappero', detail: 'Al sale marino · 50 g', note: 'Fresche e minerali', image: `${IMG}/leaves.webp`,
     m3: ['squat', 'leaves', 'Foglie di cappero', 'Al sale marino', '', '50g'] },
   // Vino o olio (uno dei due, obbligatorio)
-  { id: 't-vino', sect: 'vo', cost: 1, max: 1, name: 'Vino rosso del Salento', detail: '75 cl · nel portabottiglia', producer: '[Cantina da confermare]', note: 'Viaggia accanto alla scatola: lascia 9 posti liberi', image: `${IMG}/vino.webp`,
+  { id: 't-vino', sect: 'vo', cost: 1, max: 1, name: 'Vino rosso del Salento', detail: '75 cl · nel portabottiglia', producer: 'Cantina salentina', note: 'Viaggia accanto alla scatola: lascia 9 posti liberi', image: `${IMG}/vino.webp`,
     m3: ['bottle', '', 'Vino rosso', 'Salento', 'Cantina', '75cl', 0x2e1014] },
-  { id: 't-olio', sect: 'vo', cost: 2, max: 1, name: 'Olio extravergine', detail: '500 ml', producer: '[Frantoio da confermare]', note: 'Sta nella scatola: lascia 8 posti liberi', image: `${IMG}/olio.webp`,
+  { id: 't-olio', sect: 'vo', cost: 2, max: 1, name: 'Olio extravergine', detail: '500 ml', producer: 'Frantoio salentino', note: 'Sta nella scatola: lascia 8 posti liberi', image: `${IMG}/olio.webp`,
     m3: ['bottle', '', 'Olio extravergine', 'Salento', 'Frantoio', '500ml', 0x4a5a22] },
-  // Dolci del Salento [nomi, pasticcerie e gettoni da confermare]
-  { id: 'd-most', sect: 'dolci', cost: 1, name: 'Mostaccioli', detail: '200 g', producer: '[Pasticceria da confermare]', note: 'Mandorle, cacao e vincotto', image: `${IMG}/mostaccioli.webp`,
+  // Dolci del Salento
+  { id: 'd-most', sect: 'dolci', cost: 1, name: 'Mostaccioli', detail: '200 g', producer: 'Pasticceria salentina', note: 'Mandorle, cacao e vincotto', image: `${IMG}/mostaccioli.webp`,
     m3: ['tin', '', 'Mostaccioli salentini', '', '', '', 0, 0x6b2a1c] },
-  { id: 'd-fichi', sect: 'dolci', cost: 1, name: 'Fichi mandorlati', detail: '200 g', producer: '[Azienda agricola da confermare]', note: 'Fichi secchi al forno con mandorla', image: `${IMG}/fichi.webp`,
+  { id: 'd-fichi', sect: 'dolci', cost: 1, name: 'Fichi mandorlati', detail: '200 g', producer: 'Azienda agricola salentina', note: 'Fichi secchi al forno con mandorla', image: `${IMG}/fichi.webp`,
     m3: ['tin', '', 'Fichi mandorlati', '', '', '', 0, 0x2f5a3e] },
-  { id: 'd-coto', sect: 'dolci', cost: 1, name: 'Cotognata leccese', detail: '150 g', producer: '[Pasticceria da confermare]', note: 'Mela cotogna, ricetta di famiglia', image: `${IMG}/cotognata.webp`,
+  { id: 'd-coto', sect: 'dolci', cost: 1, name: 'Cotognata leccese', detail: '150 g', producer: 'Pasticceria salentina', note: 'Mela cotogna, ricetta di famiglia', image: `${IMG}/cotognata.webp`,
     m3: ['tin', '', 'Cotognata leccese', '', '', '', 0, 0xb8892e] },
-  { id: 'd-purc', sect: 'dolci', cost: 1, name: 'Purceddhruzzi', detail: '200 g', producer: '[Pasticceria da confermare]', note: 'Fritti, al miele e confettini', image: `${IMG}/purceddhruzzi.webp`,
+  { id: 'd-purc', sect: 'dolci', cost: 1, name: 'Purceddhruzzi', detail: '200 g', producer: 'Pasticceria salentina', note: 'Fritti, al miele e confettini', image: `${IMG}/purceddhruzzi.webp`,
     m3: ['tin', '', 'Purceddhruzzi al miele', '', '', '', 0, 0x8c1c24] },
 ];
 
@@ -128,8 +125,7 @@ export const STEP_GROUPS = {
    limitato di box (le prepariamo a mano): quando una settimana è piena va
    segnata `status: 'full'` qui. 'low' mostra "Ultimi posti".
    `orderBy` = ultimo giorno utile per prenotare quella spedizione: dopo
-   quella data la settimana sparisce dalla scelta.
-   [DATE E STATI DA CONFERMARE] */
+   quella data la settimana sparisce dalla scelta. */
 export const ORDER_DEADLINE = { label: '16 dicembre', iso: '2026-12-16' };
 
 export const SHIP_WEEKS = [

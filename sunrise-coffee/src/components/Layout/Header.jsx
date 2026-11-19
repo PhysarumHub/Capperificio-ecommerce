@@ -10,6 +10,7 @@ import styles from './Header.module.css';
 const MEGA_LINKS = [
   { label: 'Home',                href: '/' },
   { label: 'I nostri prodotti',   href: '/collections/all' },
+  { label: 'Box di Natale',       href: '/box-di-natale' },
   { label: 'Storia',              href: '/storia' },
   { label: 'Territorio',          href: '/territorio' },
   { label: 'Processo produttivo', href: '/processo-produttivo' },
