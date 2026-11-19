@@ -1,4 +1,4 @@
-/* Processo produttivo — stessa grammatica della pagina Storia (righe 50/50,
+/* Pagine racconto (Processo produttivo, Territorio) — stessa grammatica della pagina Storia (righe 50/50,
    eyebrow numerato, titoli corsivi) e della Home (colonne con divisori,
    testo mono, fascia verde scorrevole). */
 
@@ -245,6 +245,18 @@
 }
 
 .ctaBtn:hover { opacity: 0.85; }
+
+.ctaBtns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.ctaBtnGhost {
+  background: transparent;
+  color: var(--color-light);
+}
 
 /* ── Responsive ──────────────────────────────── */
 @media (max-width: 900px) {

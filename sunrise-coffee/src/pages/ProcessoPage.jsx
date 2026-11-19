@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
-import styles from './ProcessoPage.module.css';
+import styles from './EditorialPage.module.css';
 
 const IMG = '/images/processo';
 

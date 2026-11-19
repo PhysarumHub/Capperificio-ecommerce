@@ -20,6 +20,7 @@ const AccountPage            = lazy(() => import('./pages/AccountPage'));
 const B2BPage                = lazy(() => import('./pages/B2BPage'));
 const AboutPage              = lazy(() => import('./pages/AboutPage'));
 const ProcessoPage           = lazy(() => import('./pages/ProcessoPage'));
+const TerritorioPage         = lazy(() => import('./pages/TerritorioPage'));
 const PrivacyPolicyPage      = lazy(() => import('./pages/PrivacyPolicyPage'));
 const CookiePolicyPage       = lazy(() => import('./pages/CookiePolicyPage'));
 const TerminiCondizioniPage  = lazy(() => import('./pages/TerminiCondizioniPage'));
@@ -31,7 +32,6 @@ const SampleBoxCheckoutPage  = lazy(() => import('./pages/SampleBoxCheckoutPage'
 const NatalBoxPage           = lazy(() => import('./pages/NatalBoxPage'));
 const TestPageA              = lazy(() => import('./pages/TestPageA'));
 const TestPageB              = lazy(() => import('./pages/TestPageB'));
-const Carousel3D             = lazy(() => import('./components/Carousel3D/Carousel3D'));
 
 /* Fallback neutro: evita il flash di layout mentre arriva il chunk. */
 function RouteFallback() {
@@ -66,6 +66,7 @@ export default function App() {
             <Route path="/b2b" element={<B2BPage />} />
             <Route path="/storia" element={<AboutPage />} />
             <Route path="/processo-produttivo" element={<ProcessoPage />} />
+            <Route path="/territorio" element={<TerritorioPage />} />
             <Route path="/newsletter-subscribe" element={<NewsletterConfirmPage />} />
 
             <Route path="/contatti" element={<ContattiPage />} />
@@ -85,7 +86,6 @@ export default function App() {
           </Route>
 
           {/* ── Fullscreen experiences (no header/footer) ── */}
-          <Route path="/territorio" element={<Carousel3D />} />
           <Route path="/test-a" element={<TestPageA />} />
           <Route path="/test-b" element={<TestPageB />} />
 
