@@ -1,11 +1,10 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import ProductDetail from '../components/ProductDetail/ProductDetail';
 import { ProductsMarquee } from '../components/Marquee/Marquee';
 import { useProduct } from '../hooks/useProducts';
 import { useSEO } from '../hooks/useSEO';
 import { getProductImage } from '../lib/utils/image';
-import { gtmViewItem } from '../lib/utils/gtm';
 import { isProductAvailable } from '../lib/utils/availability';
 import { COMPANY } from '../data/company';
 import { isHiddenProduct } from '../lib/api/products';
@@ -121,10 +120,6 @@ export default function ProductPage() {
     };
   }, [product, productName, plainDesc, productImage, price, slug]);
 
-  useEffect(() => {
-    if (!product) return;
-    gtmViewItem({ id: product.id, name: productName, price: price ?? 0 });
-  }, [product?.id]);
 
   useSEO({
     title: productName || 'Prodotto',

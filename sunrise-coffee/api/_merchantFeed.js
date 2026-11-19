@@ -118,8 +118,12 @@ async function fetchAll(swUrl, swKey) {
   return all;
 }
 
-/* Prodotti Shopware → righe del feed (oggetti semplici, testabili). */
-export function buildItems(products) {
+/* Prodotti Shopware → righe del feed (oggetti semplici, testabili).
+ * idType 'number' (Google): id = codice prodotto, come in Merchant Center.
+ * idType 'uuid' (Meta): id = UUID Shopware, cioè lo stesso item_id che il
+ * pixel manda negli eventi (content_ids): senza questa corrispondenza Meta non
+ * abbina ViewContent/AddToCart/Purchase ai prodotti del catalogo. */
+export function buildItems(products, { idType = 'number' } = {}) {
   const byId = Object.fromEntries(products.map((p) => [p.id, p]));
   const items = [];
 
@@ -154,9 +158,10 @@ export function buildItems(products) {
     const { gpc, type } = classify(baseName);
     const desc = plain(p.translated?.description || p.description || parent?.translated?.description || '') || baseName;
 
+    const useUuid = idType === 'uuid';
     items.push({
-      id: number,
-      groupId: parent ? (parent.productNumber || parent.id) : null,
+      id: useUuid ? p.id : number,
+      groupId: parent ? (useUuid ? parent.id : (parent.productNumber || parent.id)) : null,
       title: title.slice(0, 150),
       description: desc.slice(0, 5000),
       link,
@@ -214,11 +219,11 @@ export function renderFeed(items) {
   return lines.filter(Boolean).join('\n');
 }
 
-export async function generateMerchantFeed() {
+export async function generateMerchantFeed({ idType = 'number' } = {}) {
   const swUrl = (process.env.SHOPWARE_API_URL || '').replace(/\/$/, '');
   const swKey = process.env.SHOPWARE_ACCESS_KEY || '';
   if (!swUrl || !swKey) throw new Error('SHOPWARE_API_URL o SHOPWARE_ACCESS_KEY mancanti');
   const products = await fetchAll(swUrl, swKey);
-  const items = buildItems(products);
+  const items = buildItems(products, { idType });
   return { xml: renderFeed(items), count: items.length };
 }

@@ -283,6 +283,24 @@ export default function ProductDetail({ product: shopwareProduct, loading, error
   const stockSource = hasConfigurator ? activeVariant : shopwareProduct;
   const maxQty = hasApiProduct ? getMaxPurchasable(stockSource) : Infinity;
 
+  // view_item (→ ViewContent Meta) sulla variante effettivamente mostrata, non
+  // sul padre: il catalogo Meta contiene solo articoli acquistabili, quindi
+  // l'ID deve essere quello che finirebbe nel carrello. Il ritardo assorbe il
+  // salto automatico dalla variante di default esaurita alla prima disponibile.
+  useEffect(() => {
+    if (!cartItemId) return;
+    const t = setTimeout(() => {
+      const src = (hasConfigurator ? activeVariant : shopwareProduct) || shopwareProduct;
+      gtmViewItem({
+        id: cartItemId,
+        name: shopwareProduct?.translated?.name || shopwareProduct?.name || '',
+        price: src?.calculatedPrice?.unitPrice ?? shopwareProduct?.calculatedPrice?.unitPrice ?? 0,
+      });
+    }, 800);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartItemId]);
+
   const cartLineItem = useMemo(
     () => cart?.lineItems?.find((li) => li.referencedId === cartItemId) || null,
     [cart, cartItemId],
