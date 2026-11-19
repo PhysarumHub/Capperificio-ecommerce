@@ -1,13 +1,13 @@
 /* ══════════════════════════════════════════════════════════════════════
    WHATSAPP — pulsante fisso + pannello
-   Verde WhatsApp solo sul pulsante (riconoscibilità immediata); il
-   pannello usa i colori del sito. Sotto cookie banner (9999) e drawer
+   Pulsante e pannello nel verde del brand (stesso del sito); l'icona
+   WhatsApp garantisce la riconoscibilità. Sotto cookie banner (9999) e drawer
    carrello (290+), sopra la barra d'acquisto mobile (280).
 ══════════════════════════════════════════════════════════════════════ */
 
 .root {
-  --wa-green: #25D366;
-  --wa-green-dark: #128C4B;
+  --wa-green: var(--color-red);
+  --wa-green-dark: var(--color-red-hover);
   --wa-bottom: max(20px, env(safe-area-inset-bottom));
   position: fixed;
   right: max(20px, env(safe-area-inset-right));
@@ -38,7 +38,7 @@
   font-weight: var(--font-weight-ui);
   letter-spacing: .02em;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(18, 140, 75, .35), 0 2px 6px rgba(0, 0, 0, .12);
+  box-shadow: 0 6px 20px rgba(44, 74, 44, .30), 0 2px 6px rgba(0, 0, 0, .12);
   transition: background var(--duration-base) var(--ease-default), transform var(--duration-base) var(--ease-default);
 }
 
