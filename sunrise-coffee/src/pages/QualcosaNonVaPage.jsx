@@ -2,9 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 import { COMPANY } from '../data/company';
-import RichText from '../components/Assistenza/RichText';
-import { HelpCta, HelpHero, HelpTabs } from '../components/Assistenza/HelpParts';
-import styles from '../components/Assistenza/Assistenza.module.css';
+import s, { ContactSplit, Crumbs, HelpRich, pad } from '../components/Help/Help';
 
 /*
  * Percorso guidato: una o due domande, poi una risposta con l'azione giusta.
@@ -155,61 +153,68 @@ export default function QualcosaNonVaPage() {
   const go = (next) => setPath([...path, next]);
   const back = () => setPath(path.slice(0, -1));
 
-  return (
-    <div className={styles.page}>
-      <HelpHero
-        kicker="Percorso guidato"
-        title="Qualcosa non va"
-        intro="Rispondi a una o due domande: ti diciamo cosa fare, e se serve ti mettiamo in contatto con noi."
-        crumbs={[
-          { name: 'Centro assistenza', path: '/assistenza' },
-          { name: 'Qualcosa non va', path: '/assistenza/qualcosa-non-va' },
-        ]}
-      />
-      <HelpTabs />
+  const stepNow = node.q ? Math.min(path.length - 1, 1) : 2;
+  const labels = ['01 · Cosa è successo', '02 · Un dettaglio', '03 · Cosa fare'];
 
-      <div className={styles.narrow}>
-        <section className={styles.section} aria-live="polite">
+  return (
+    <div className={s.page}>
+      <Crumbs items={[{ name: 'Centro assistenza', path: '/assistenza' }, { name: 'Qualcosa non va', path: '/assistenza/qualcosa-non-va' }]} />
+
+      <section className={s.heroCenter} style={{ borderBottom: 'none', paddingBottom: 40 }}>
+        <span className={s.mono}>02 — C’È UN PROBLEMA</span>
+        <h1 className={s.h1}>Qualcosa non va con il tuo ordine?</h1>
+        <p className={s.lead}>Rispondi a una o due domande e ti diciamo subito cosa fare. Se preferisci, scrivici direttamente.</p>
+      </section>
+
+      <section className={s.wizard} aria-live="polite">
+        <div className={s.wizBar} aria-hidden="true">
+          {labels.map((l, i) => (
+            <span key={l} className={i === stepNow ? s.wizNow : i < stepNow ? s.wizDone : undefined}>{l.toUpperCase()}</span>
+          ))}
+        </div>
+        <div className={s.wizBody}>
           {node.q ? (
             <>
-              <p className={styles.label}><span className={styles.dot} />Domanda {path.length}</p>
-              <h2 className={styles.h2}>{node.q}</h2>
-              <div className={styles.options}>
-                {node.options.map((o) => (
-                  <button key={o.next} type="button" className={styles.option} onClick={() => go(o.next)}>
-                    {o.label}
+              <h2 className={s.h3} style={{ fontSize: 'clamp(30px, 3.4vw, 44px)' }}>{node.q}</h2>
+              <div style={{ borderTop: '1px solid var(--color-border)' }}>
+                {node.options.map((o, i) => (
+                  <button key={o.next} type="button" className={s.option} onClick={() => go(o.next)}>
+                    <span className={s.accNum}>{pad(i + 1)}</span>
+                    <span className={s.accQ}>{o.label}</span>
+                    <span style={{ fontSize: 20, color: 'var(--color-red)' }} aria-hidden="true">→</span>
                   </button>
                 ))}
               </div>
             </>
           ) : (
-            <div className={styles.answerCard}>
-              <p className={styles.label}><span className={styles.dot} />Cosa fare</p>
-              <h2>{node.answer.title}</h2>
-              <RichText body={node.answer.body} />
-              <div className={styles.actions}>
-                {node.answer.actions?.map((a) => (
-                  <Link key={a.to} to={a.to} className={styles.btn}>{a.label}</Link>
-                ))}
+            <>
+              <span className={s.kicker}>Ecco cosa fare</span>
+              <h2 className={s.h3} style={{ fontSize: 'clamp(30px, 3.4vw, 46px)' }}>{node.answer.title}</h2>
+              <HelpRich body={node.answer.body} />
+              <div className={s.actions}>
                 {node.answer.whatsapp && (
-                  <a href={COMPANY.whatsappLink} target="_blank" rel="noopener noreferrer" className={node.answer.actions ? styles.btnGhost : styles.btn}>
-                    Scrivici su WhatsApp
-                  </a>
+                  <a href={COMPANY.whatsappLink} target="_blank" rel="noopener noreferrer" className={s.btn}>Scrivici su WhatsApp →</a>
                 )}
+                {node.answer.actions?.map((a) => (
+                  <Link key={a.to} to={a.to} className={node.answer.whatsapp ? s.btnGhost : s.btn}>{a.label} →</Link>
+                ))}
               </div>
-            </div>
+            </>
           )}
-
           {path.length > 1 && (
-            <div className={styles.actions}>
-              <button type="button" className={styles.btnGhost} onClick={back}>← Indietro</button>
-              <button type="button" className={styles.btnGhost} onClick={() => setPath(['start'])}>Ricomincia</button>
+            <div style={{ display: 'flex', gap: 20 }}>
+              <button type="button" className={s.textBtn} onClick={back}>← Indietro</button>
+              <button type="button" className={s.textBtn} style={{ color: '#5F7D5F', fontWeight: 300 }} onClick={() => setPath(['start'])}>Ricomincia</button>
             </div>
           )}
-        </section>
-      </div>
+        </div>
+      </section>
 
-      <HelpCta />
+      <ContactSplit
+        kicker="• PREFERISCI SCRIVERCI SUBITO?"
+        title="Tieni a portata di mano il numero d’ordine"
+        jars={['foglie', 'occhio', 'polvere']}
+      />
     </div>
   );
 }

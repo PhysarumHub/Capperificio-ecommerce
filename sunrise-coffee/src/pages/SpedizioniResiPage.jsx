@@ -2,8 +2,7 @@ import { Link } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 import { COMPANY } from '../data/company';
 import { HELP_FACTS as F } from '../data/assistenza';
-import { HelpCta, HelpHero, HelpTabs } from '../components/Assistenza/HelpParts';
-import styles from '../components/Assistenza/Assistenza.module.css';
+import s, { Crumbs, pad } from '../components/Help/Help';
 
 const UPDATED = '19 novembre 2026';
 
@@ -20,6 +19,15 @@ const SECTIONS = [
 
 const Mail = ({ to = COMPANY.email }) => <a href={`mailto:${to}`}>{to}</a>;
 
+function Head({ i }) {
+  return (
+    <>
+      <span className={s.mono}>{pad(i + 1)}</span>
+      <h2 className={s.h3} style={{ fontSize: 40 }}>{SECTIONS[i].title}</h2>
+    </>
+  );
+}
+
 export default function SpedizioniResiPage() {
   useSEO({
     title: 'Spedizioni e resi',
@@ -32,137 +40,180 @@ export default function SpedizioniResiPage() {
     ],
   });
 
-  const h2 = (i) => (
-    <h2 id={SECTIONS[i].id}>{i + 1}. {SECTIONS[i].title}</h2>
-  );
+  const stats = [
+    { k: 'GRATUITA IN ITALIA', v: `da €${F.freeShippingFrom}` },
+    { k: 'CONSEGNA IN ITALIA', v: '2–5 gg' },
+    { k: 'RECESSO', v: `${F.withdrawalDays} gg` },
+    { k: 'GARANZIA LEGALE', v: `${F.warrantyYears} anni` },
+  ];
 
   return (
-    <div className={styles.page}>
-      <HelpHero
-        kicker={`Aggiornamento: ${UPDATED}`}
-        title="Spedizioni e resi"
-        intro="Come spediamo, quanto costa, quando arriva e cosa fare se qualcosa non va. Le regole complete sono nelle Condizioni di vendita: qui le trovi spiegate in breve."
-        crumbs={[
-          { name: 'Centro assistenza', path: '/assistenza' },
-          { name: 'Spedizioni e resi', path: '/spedizioni-e-resi' },
-        ]}
-      />
-      <HelpTabs />
+    <div className={s.page}>
+      <Crumbs items={[{ name: 'Centro assistenza', path: '/assistenza' }, { name: 'Spedizioni e resi', path: '/spedizioni-e-resi' }]} />
 
-      <div className={styles.narrow}>
-        <section className={styles.section}>
-          <nav className={styles.toc} aria-label="In questa pagina">
-            <p className={styles.label}><span className={styles.dot} />In questa pagina</p>
-            <ol>
-              {SECTIONS.map((s) => <li key={s.id}><a href={`#${s.id}`}>{s.title}</a></li>)}
+      <section className={s.section} style={{ paddingTop: 64, paddingBottom: 0 }}>
+        <div className={s.head} style={{ maxWidth: 820 }}>
+          <span className={s.kicker}>Aggiornamento: {UPDATED}</span>
+          <h1 className={s.h1} style={{ fontSize: 'clamp(52px, 7vw, 92px)' }}>Spedizioni e resi</h1>
+          <p className={s.lead} style={{ fontSize: 19, maxWidth: 760 }}>
+            Dove spediamo, quanto costa, quanto ci mette e come funzionano resi e garanzia. Le regole complete sono nelle{' '}
+            <Link to="/termini-e-condizioni" className={s.link} style={{ fontSize: 'inherit' }}>Condizioni generali di vendita</Link>.
+          </p>
+        </div>
+        <div className={s.ruleGrid} style={{ '--cols': 4 }}>
+          {stats.map((st) => (
+            <div key={st.k} className={s.ruleCell}>
+              <span className={s.mono}>{st.k}</span>
+              <span className={s.bigNum}>{st.v}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className={s.shell} style={{ alignItems: 'flex-start' }}>
+        <aside className={s.left} style={{ borderRight: 'none', paddingLeft: 40 }}>
+          <span className={s.kicker}>In questa pagina</span>
+          <ol className={s.nav}>
+            {SECTIONS.map((sec, i) => (
+              <li key={sec.id}><a href={`#${sec.id}`}><span>{pad(i + 1)}</span>{sec.title}</a></li>
+            ))}
+          </ol>
+        </aside>
+
+        <article className={s.center} style={{ maxWidth: 900, gap: 52 }}>
+          <section id="dove" className={s.policy}>
+            <Head i={0} />
+            <p>
+              Spediamo in tutta Italia e in gran parte dei Paesi dell’Unione Europea. Al checkout, inserendo l’indirizzo,
+              vedi subito se la destinazione è servita. Per altri Paesi scrivici prima di ordinare a <Mail />.
+            </p>
+          </section>
+
+          <section id="costi" className={s.policy}>
+            <Head i={1} />
+            <div className={`${s.ruleGrid} ${s.stack}`}>
+              <div className={s.ruleCell}>
+                <span className={s.cellTitle}>Italia</span>
+                <span className={s.monoMuted}>Gratuita per ordini da €{F.freeShippingFrom}. Sotto, il costo dipende da peso e destinazione e lo vedi nel carrello prima di pagare.</span>
+              </div>
+              <div className={s.ruleCell}>
+                <span className={s.cellTitle}>Estero</span>
+                <span className={s.monoMuted}>Calcolato al checkout in base al Paese e al peso del pacco.</span>
+              </div>
+              <div className={s.ruleCell}>
+                <span className={s.cellTitle}>Box di Natale</span>
+                <span className={s.monoMuted}>
+                  Costo e date disponibili nel <Link to="/box-di-natale" className={s.link} style={{ fontSize: 'inherit' }}>configuratore</Link>. Puoi spedirla direttamente a chi la riceve.
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <section id="tempi" className={s.policy}>
+            <Head i={2} />
+            <div className={s.timebar}>
+              <span>PREPARAZIONE · {F.prepDays}</span>
+              <span>CORRIERE · {F.deliveryIT} in Italia · {F.deliveryEU} all’estero</span>
+            </div>
+            <p>
+              I tempi sono indicativi: possono allungarsi nei periodi di picco, per cause del corriere o per maltempo.
+              In ogni caso la consegna avviene entro 30 giorni dalla conclusione del contratto.
+            </p>
+            <div className={s.softBox}>
+              <span className={s.mono}>PER NATALE</span>
+              <span>Per le Box di Natale fa fede la data di spedizione scelta nel configuratore. Per gli altri prodotti consigliamo di ordinare entro metà dicembre.</span>
+            </div>
+          </section>
+
+          <section id="tracciamento" className={s.policy}>
+            <Head i={3} />
+            <p>
+              Quando il pacco parte ricevi un’email con corriere e codice di tracciamento. Puoi controllare lo stato anche da{' '}
+              <Link to="/assistenza/dove-e-il-mio-ordine">Dov’è il mio ordine</Link>, con numero d’ordine ed email, senza account.
+            </p>
+          </section>
+
+          <section id="problemi" className={s.policy}>
+            <Head i={4} />
+            <div className={`${s.ruleGrid} ${s.stack}`} style={{ '--cols': 2, borderBottom: 'none' }}>
+              <div className={s.ruleCell}>
+                <span className={s.cellTitle}>Se non sei in casa</span>
+                <span style={{ fontSize: 16, lineHeight: 1.7, color: '#4E6B4E' }}>
+                  Il corriere lascia un avviso e ritenta la consegna o deposita il pacco in un punto di ritiro. Se non viene ritirato
+                  entro i termini di giacenza torna a noi: le spese di rientro e di nuova spedizione restano a carico del cliente.
+                </span>
+              </div>
+              <div className={s.ruleCell}>
+                <span className={s.cellTitle}>Pacco danneggiato</span>
+                <span style={{ fontSize: 16, lineHeight: 1.7, color: '#4E6B4E' }}>
+                  Se l’imballo è danneggiato firma con la dicitura “accetto con riserva di controllo”, fotografa pacco e prodotti e
+                  scrivici entro {F.damageReportDays} giorni su WhatsApp ({COMPANY.whatsapp}) o a <Mail to={COMPANY.emailOrders} />.
+                  Rispediamo o rimborsiamo, senza costi per te.
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <section id="recesso" className={s.policy}>
+            <Head i={5} />
+            <p>Se sei un consumatore puoi recedere entro <strong>{F.withdrawalDays} giorni dalla consegna</strong>, senza indicare il motivo.</p>
+            <ol className={`${s.ruleGrid} ${s.stack}`}>
+              {[
+                <>Scrivi a <Mail /> entro {F.withdrawalDays} giorni dalla consegna con nome, numero d’ordine e prodotti da restituire: ti confermiamo la ricezione e l’indirizzo per il reso.</>,
+                <>Entro {F.withdrawalDays} giorni dalla comunicazione rispedisci i prodotti, integri e con la confezione originale sigillata.</>,
+                <>Rimborsiamo entro {F.withdrawalDays} giorni con lo stesso metodo di pagamento, anche le spese di consegna standard, appena riceviamo i prodotti o la prova della spedizione.</>,
+              ].map((t, i) => (
+                <li key={i} className={s.ruleCell}>
+                  <span className={s.bigNum} style={{ fontSize: 40, color: 'var(--color-red)' }}>{pad(i + 1)}</span>
+                  <span className={s.monoMuted}>{t}</span>
+                </li>
+              ))}
             </ol>
-          </nav>
+            <p>Le spese dirette di restituzione sono a carico del cliente. Se il prodotto è difettoso, danneggiato o diverso da quello ordinato, le paghiamo noi.</p>
+            <div className={s.greenBox}>
+              <span className={s.kicker}>Prodotti alimentari</span>
+              <span>Il recesso è escluso per le confezioni aperte o con il sigillo compromesso, e per i prodotti che rischiano di deteriorarsi rapidamente (art. 59 del Codice del Consumo).</span>
+            </div>
+          </section>
 
-          <div className={`${styles.rich} ${styles.policy}`}>
-            {h2(0)}
+          <section id="difetti" className={s.policy}>
+            <Head i={6} />
             <p>
-              Spediamo in tutta Italia e in gran parte dei Paesi dell’Unione Europea. Al checkout,
-              inserendo l’indirizzo, vedi subito se la destinazione è servita. Per altri Paesi scrivici
-              prima di ordinare a <Mail />.
-            </p>
-
-            {h2(1)}
-            <h3>2.1 Italia</h3>
-            <p>
-              Spedizione <strong>gratuita per ordini da € {F.freeShippingFrom}</strong>. Sotto questa soglia
-              il costo dipende da peso e destinazione e lo vedi nel carrello prima di pagare.
-            </p>
-            <h3>2.2 Estero</h3>
-            <p>Il costo è calcolato al checkout in base al Paese e al peso del pacco.</p>
-            <h3>2.3 Box di Natale</h3>
-            <p>
-              Il costo della spedizione e le date disponibili sono indicati nel{' '}
-              <Link to="/box-di-natale">configuratore</Link>. Puoi spedire la box direttamente a chi la riceve.
-            </p>
-
-            {h2(2)}
-            <ul>
-              <li><strong>Preparazione</strong>: {F.prepDays} dalla conferma del pagamento.</li>
-              <li><strong>Italia</strong>: {F.deliveryIT} con corriere espresso.</li>
-              <li><strong>Estero</strong>: {F.deliveryEU}, secondo il Paese.</li>
-            </ul>
-            <p>
-              I tempi sono indicativi: possono allungarsi nei periodi di picco, per cause del corriere o
-              per maltempo. In ogni caso la consegna avviene entro 30 giorni dalla conclusione del contratto.
-            </p>
-            <h3>3.1 Per Natale</h3>
-            <p>
-              Per le Box di Natale fa fede la data di spedizione scelta nel configuratore. Per gli altri
-              prodotti consigliamo di ordinare entro metà dicembre.
-            </p>
-
-            {h2(3)}
-            <p>
-              Quando il pacco parte ricevi un’email con corriere e codice di tracciamento. Puoi controllare
-              lo stato anche da <Link to="/assistenza/dove-e-il-mio-ordine">Dov’è il mio ordine</Link>, con
-              numero d’ordine ed email, senza account.
-            </p>
-
-            {h2(4)}
-            <h3>5.1 Se non sei in casa</h3>
-            <p>
-              Il corriere lascia un avviso e ritenta la consegna o deposita il pacco in un punto di ritiro.
-              Se il pacco non viene ritirato entro i termini di giacenza torna a noi: le spese di rientro e
-              di nuova spedizione restano a carico del cliente.
-            </p>
-            <h3>5.2 Pacco danneggiato</h3>
-            <p>
-              Se l’imballo è danneggiato firma con la dicitura <strong>“accetto con riserva di
-              controllo”</strong>, fotografa pacco e prodotti e scrivici entro {F.damageReportDays} giorni
-              su WhatsApp ({COMPANY.whatsapp}) o a <Mail to={COMPANY.emailOrders} />. Rispediamo o
-              rimborsiamo, senza costi per te.
-            </p>
-
-            {h2(5)}
-            <p>
-              Se sei un consumatore puoi recedere entro <strong>{F.withdrawalDays} giorni dalla
-              consegna</strong>, senza indicare il motivo.
-            </p>
-            <h3>6.1 I passaggi</h3>
-            <ol className={styles.steps}>
-              <li>Scrivi a <Mail /> entro {F.withdrawalDays} giorni dalla consegna con nome, numero d’ordine e prodotti da restituire: ti confermiamo la ricezione e l’indirizzo per il reso.</li>
-              <li>Entro {F.withdrawalDays} giorni dalla comunicazione rispedisci i prodotti, integri e con la confezione originale sigillata, all’indirizzo che ti indichiamo.</li>
-              <li>Rimborsiamo entro {F.withdrawalDays} giorni con lo stesso metodo di pagamento, anche le spese di consegna standard, appena riceviamo i prodotti o la prova della spedizione.</li>
-            </ol>
-            <h3>6.2 Chi paga il reso</h3>
-            <p>
-              Le spese dirette di restituzione sono a carico del cliente. Se il prodotto è difettoso,
-              danneggiato o diverso da quello ordinato, le paghiamo noi.
-            </p>
-            <h3>6.3 Prodotti alimentari</h3>
-            <p className={styles.note}>
-              Il recesso è escluso per le confezioni aperte o con il sigillo compromesso, e per i prodotti
-              che rischiano di deteriorarsi rapidamente (art. 59 del Codice del Consumo).
-            </p>
-
-            {h2(6)}
-            <p>
-              Tutti i prodotti hanno la garanzia legale di conformità di {F.warrantyYears} anni dalla
-              consegna. Segnala il difetto entro {F.defectReportMonths} mesi dalla scoperta a{' '}
-              <Mail />, con numero d’ordine e foto del prodotto e del lotto in etichetta: sostituiamo o
-              rimborsiamo. La garanzia non copre i difetti dovuti a conservazione diversa da quella
+              Tutti i prodotti hanno la garanzia legale di conformità di {F.warrantyYears} anni dalla consegna. Segnala il difetto
+              entro {F.defectReportMonths} mesi dalla scoperta a <Mail />, con numero d’ordine e foto del prodotto e del lotto in
+              etichetta: sostituiamo o rimborsiamo. La garanzia non copre i difetti dovuti a conservazione diversa da quella
               indicata in etichetta o al superamento del termine minimo di conservazione.
             </p>
+          </section>
 
-            {h2(7)}
-            <p>
-              WhatsApp: <a href={COMPANY.whatsappLink} target="_blank" rel="noopener noreferrer">{COMPANY.whatsapp}</a>
-              {' '}· Ordini: <Mail to={COMPANY.emailOrders} /> · Informazioni: <Mail />
-            </p>
-            <p>
-              {COMPANY.legalNameShort} — {COMPANY.addressLine} — P.IVA {COMPANY.vat}. Regole complete
-              nelle <Link to="/termini-e-condizioni">Condizioni generali di vendita</Link>.
-            </p>
-          </div>
-        </section>
+          <section id="contatti" className={s.policy}>
+            <Head i={7} />
+            <div className={`${s.ruleGrid} ${s.stack}`}>
+              <a href={COMPANY.whatsappLink} target="_blank" rel="noopener noreferrer" className={s.ruleCell}>
+                <span className={s.mono}>WHATSAPP</span><span className={s.cellTitle} style={{ fontSize: 20 }}>{COMPANY.whatsapp}</span>
+              </a>
+              <a href={`mailto:${COMPANY.emailOrders}`} className={s.ruleCell}>
+                <span className={s.mono}>ORDINI</span><span className={s.cellTitle} style={{ fontSize: 20 }}>{COMPANY.emailOrders}</span>
+              </a>
+              <a href={`mailto:${COMPANY.email}`} className={s.ruleCell}>
+                <span className={s.mono}>INFORMAZIONI</span><span className={s.cellTitle} style={{ fontSize: 20 }}>{COMPANY.email}</span>
+              </a>
+            </div>
+            <span className={s.monoMuted} style={{ fontSize: 12 }}>
+              {COMPANY.legalNameShort} — {COMPANY.addressLine} — P.IVA {COMPANY.vat}. Regole complete nelle{' '}
+              <Link to="/termini-e-condizioni">Condizioni generali di vendita</Link>.
+            </span>
+          </section>
+        </article>
       </div>
 
-      <HelpCta />
+      <section className={s.cta}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span className={s.kicker}>Hai un problema con un ordine?</span>
+          <span className={s.ctaTitle}>Ti diciamo cosa fare in due domande.</span>
+        </div>
+        <Link to="/assistenza/qualcosa-non-va" className={s.btnLight}>Qualcosa non va →</Link>
+      </section>
     </div>
   );
 }
