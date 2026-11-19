@@ -33,6 +33,17 @@ ENV VITE_SHOPWARE_API_URL=$VITE_SHOPWARE_API_URL \
 COPY . .
 RUN npx vite build
 
+# ── Stage 1b: pre-render delle pagine di contenuto ───────────────────
+# Chromium apre ogni pagina (guide, assistenza, storia…) e ne salva l'HTML
+# già renderizzato in dist/: i crawler che non eseguono JavaScript (motori
+# AI, anteprime social) vedono testo, meta e JSON-LD. L'immagine Playwright
+# serve solo qui, non finisce nel container finale. La versione deve
+# coincidere con quella di "playwright" in package-lock.json.
+FROM mcr.microsoft.com/playwright:v1.61.1-noble AS prerender
+WORKDIR /app
+COPY --from=builder /app /app
+RUN node scripts/prerender.mjs
+
 # ── Stage 2: runtime (nginx + node Express) ───────────────────────────
 FROM node:20-alpine
 WORKDIR /app
@@ -54,11 +65,15 @@ COPY src/lib/utils/slug.js ./src/lib/utils/slug.js
 COPY src/data/company.js ./src/data/company.js
 # Contenuti del centro assistenza (server.js li legge per la sitemap.xml)
 COPY src/data/assistenza.js ./src/data/assistenza.js
-# Guide (sitemap.xml)
+# Guide (sitemap.xml, llms.txt)
 COPY src/data/guide.js ./src/data/guide.js
+# HTML lato server di schede prodotto e collezioni (api/_ssr.js)
+COPY src/data/collections.js ./src/data/collections.js
+COPY src/lib/utils/availability.js ./src/lib/utils/availability.js
+COPY src/lib/utils/shipping.js ./src/lib/utils/shipping.js
 
 # Frontend buildato
-COPY --from=builder /app/dist ./dist
+COPY --from=prerender /app/dist ./dist
 
 # Configurazione nginx
 COPY nginx.conf /etc/nginx/http.d/default.conf

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams, useLocation, matchPath } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -11,35 +11,80 @@ import ProductPage from './pages/ProductPage';
 import CollectionPage from './pages/CollectionPage';
 import NotFoundPage from './pages/NotFoundPage';
 
+/**
+ * lazy() con precaricamento. Quando il modulo è già arrivato (preloadRoute),
+ * la factory restituisce un thenable che si risolve in modo sincrono: React lo
+ * legge subito e la rotta non sospende. Serve alle pagine pre-renderizzate:
+ * l'HTML statico resta a schermo finché il chunk non c'è, poi React lo
+ * sostituisce nello stesso frame, senza passare dal fallback vuoto.
+ */
+function lazyRoute(load) {
+  let mod = null;
+  const get = () => load().then((m) => (mod = m));
+  const Comp = lazy(() => (mod ? { then: (resolve) => resolve(mod) } : get()));
+  Comp.preload = () => (mod ? Promise.resolve(mod) : get());
+  return Comp;
+}
+
 /* ── Lazy: tutto il resto ───────────────────────────────────────────────
    Checkout (Stripe) ed esperienze GSAP pesano molto e non servono al primo
    render: escono dal bundle iniziale. */
-const CartPage               = lazy(() => import('./pages/CartPage'));
-const CheckoutPage           = lazy(() => import('./pages/CheckoutPage'));
-const AccountPage            = lazy(() => import('./pages/AccountPage'));
-const B2BPage                = lazy(() => import('./pages/B2BPage'));
-const AboutPage              = lazy(() => import('./pages/AboutPage'));
-const ProcessoPage           = lazy(() => import('./pages/ProcessoPage'));
-const TerritorioPage         = lazy(() => import('./pages/TerritorioPage'));
-const PrivacyPolicyPage      = lazy(() => import('./pages/PrivacyPolicyPage'));
-const CookiePolicyPage       = lazy(() => import('./pages/CookiePolicyPage'));
-const TerminiCondizioniPage  = lazy(() => import('./pages/TerminiCondizioniPage'));
-const NewsletterConfirmPage  = lazy(() => import('./pages/NewsletterConfirmPage'));
-const ContattiPage           = lazy(() => import('./pages/ContattiPage'));
-const FAQPage                = lazy(() => import('./pages/FAQPage'));
-const AssistenzaPage         = lazy(() => import('./pages/AssistenzaPage'));
-const GuideHubPage           = lazy(() => import('./pages/GuideHubPage'));
-const GuidePage              = lazy(() => import('./pages/GuidePage'));
-const AssistenzaTopicPage    = lazy(() => import('./pages/AssistenzaTopicPage'));
-const OrderStatusPage        = lazy(() => import('./pages/OrderStatusPage'));
-const QualcosaNonVaPage      = lazy(() => import('./pages/QualcosaNonVaPage'));
-const PrimoOrdinePage        = lazy(() => import('./pages/PrimoOrdinePage'));
-const SpedizioniResiPage     = lazy(() => import('./pages/SpedizioniResiPage'));
-const SampleBoxPage          = lazy(() => import('./pages/SampleBoxPage'));
-const SampleBoxCheckoutPage  = lazy(() => import('./pages/SampleBoxCheckoutPage'));
-const NatalBoxPage           = lazy(() => import('./pages/NatalBoxPage'));
-const TestPageA              = lazy(() => import('./pages/TestPageA'));
-const TestPageB              = lazy(() => import('./pages/TestPageB'));
+const CartPage               = lazyRoute(() => import('./pages/CartPage'));
+const CheckoutPage           = lazyRoute(() => import('./pages/CheckoutPage'));
+const AccountPage            = lazyRoute(() => import('./pages/AccountPage'));
+const B2BPage                = lazyRoute(() => import('./pages/B2BPage'));
+const AboutPage              = lazyRoute(() => import('./pages/AboutPage'));
+const ProcessoPage           = lazyRoute(() => import('./pages/ProcessoPage'));
+const TerritorioPage         = lazyRoute(() => import('./pages/TerritorioPage'));
+const PrivacyPolicyPage      = lazyRoute(() => import('./pages/PrivacyPolicyPage'));
+const CookiePolicyPage       = lazyRoute(() => import('./pages/CookiePolicyPage'));
+const TerminiCondizioniPage  = lazyRoute(() => import('./pages/TerminiCondizioniPage'));
+const NewsletterConfirmPage  = lazyRoute(() => import('./pages/NewsletterConfirmPage'));
+const ContattiPage           = lazyRoute(() => import('./pages/ContattiPage'));
+const FAQPage                = lazyRoute(() => import('./pages/FAQPage'));
+const AssistenzaPage         = lazyRoute(() => import('./pages/AssistenzaPage'));
+const GuideHubPage           = lazyRoute(() => import('./pages/GuideHubPage'));
+const GuidePage              = lazyRoute(() => import('./pages/GuidePage'));
+const AssistenzaTopicPage    = lazyRoute(() => import('./pages/AssistenzaTopicPage'));
+const OrderStatusPage        = lazyRoute(() => import('./pages/OrderStatusPage'));
+const QualcosaNonVaPage      = lazyRoute(() => import('./pages/QualcosaNonVaPage'));
+const PrimoOrdinePage        = lazyRoute(() => import('./pages/PrimoOrdinePage'));
+const SpedizioniResiPage     = lazyRoute(() => import('./pages/SpedizioniResiPage'));
+const SampleBoxPage          = lazyRoute(() => import('./pages/SampleBoxPage'));
+const SampleBoxCheckoutPage  = lazyRoute(() => import('./pages/SampleBoxCheckoutPage'));
+const NatalBoxPage           = lazyRoute(() => import('./pages/NatalBoxPage'));
+const TestPageA              = lazyRoute(() => import('./pages/TestPageA'));
+const TestPageB              = lazyRoute(() => import('./pages/TestPageB'));
+
+/* Rotte lazy → componente, per precaricare il chunk della pagina d'ingresso
+   prima del primo render (vedi main.jsx). Le rotte eager non servono. */
+const LAZY_ROUTES = [
+  ['/cart', CartPage], ['/checkout', CheckoutPage],
+  ['/account/*', AccountPage], ['/account', AccountPage],
+  ['/b2b', B2BPage], ['/storia', AboutPage], ['/processo-produttivo', ProcessoPage],
+  ['/territorio', TerritorioPage], ['/newsletter-subscribe', NewsletterConfirmPage],
+  ['/contatti', ContattiPage], ['/faq', FAQPage],
+  ['/assistenza', AssistenzaPage],
+  ['/assistenza/dove-e-il-mio-ordine', OrderStatusPage],
+  ['/assistenza/qualcosa-non-va', QualcosaNonVaPage],
+  ['/assistenza/primo-ordine', PrimoOrdinePage],
+  ['/assistenza/:cat', AssistenzaTopicPage], ['/assistenza/:cat/:slug', AssistenzaTopicPage],
+  ['/spedizioni-e-resi', SpedizioniResiPage],
+  ['/guide', GuideHubPage], ['/guide/:slug', GuidePage],
+  ['/box-di-natale', NatalBoxPage],
+  ['/sample-box', SampleBoxPage], ['/sample-box/checkout', SampleBoxCheckoutPage],
+  ['/privacy-policy', PrivacyPolicyPage], ['/cookie-policy', CookiePolicyPage],
+  ['/termini-e-condizioni', TerminiCondizioniPage],
+  ['/test-a', TestPageA], ['/test-b', TestPageB],
+];
+
+/** Scarica il chunk della rotta lazy che corrisponde a `pathname` (se c'è). */
+export function preloadRoute(pathname) {
+  // Le rotte specifiche (es. /assistenza/primo-ordine) vengono prima di quelle
+  // con parametri: matchPath le prova nell'ordine della tabella.
+  const hit = LAZY_ROUTES.find(([pattern]) => matchPath({ path: pattern, end: true }, pathname));
+  return hit ? hit[1].preload().catch(() => {}) : Promise.resolve();
+}
 
 /* Fallback neutro: evita il flash di layout mentre arriva il chunk. */
 function RouteFallback() {

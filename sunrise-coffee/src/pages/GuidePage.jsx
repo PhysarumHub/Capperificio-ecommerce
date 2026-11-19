@@ -25,29 +25,52 @@ function GuideView({ guide }) {
   ];
 
   const jsonLd = useMemo(() => {
+    const url = `${SITE}${guidePath(guide)}`;
+    const org = { '@id': `${SITE}/#organization` };
     const faq = guide.blocks.find((b) => b.type === 'faq');
-    const article = {
+    const steps = guide.blocks.find((b) => b.type === 'steps');
+    const graph = [{
       '@type': 'Article',
+      '@id': `${url}#article`,
       headline: guide.title,
-      description: guide.short,
+      description: plainText(guide.lead),
+      abstract: guide.short,
       image: `${SITE}${guide.hero.src}`,
+      datePublished: '2026-11-19',
       dateModified: '2026-11-19',
       inLanguage: 'it-IT',
-      author: { '@type': 'Organization', name: 'Capperificio Caro', url: SITE },
-      publisher: { '@type': 'Organization', name: 'Capperificio Caro', logo: { '@type': 'ImageObject', url: `${SITE}/images/email/logo.png` } },
-      mainEntityOfPage: `${SITE}${guidePath(guide)}`,
-    };
-    if (!faq) return article;
-    return {
-      '@graph': [
-        article,
-        {
-          '@type': 'FAQPage',
-          mainEntity: faq.items.map((it) => ({ '@type': 'Question', name: it.q, acceptedAnswer: { '@type': 'Answer', text: plainText(it.a) } })),
-        },
-      ],
-    };
-  }, [guide]);
+      articleSection: group?.label,
+      timeRequired: `PT${guide.readMin}M`,
+      about: { '@type': 'Thing', name: 'Cappero', sameAs: 'https://it.wikipedia.org/wiki/Capparis_spinosa' },
+      author: { ...org, '@type': 'Organization', name: 'Capperificio Caro', url: SITE },
+      publisher: { ...org, '@type': 'Organization', name: 'Capperificio Caro', logo: { '@type': 'ImageObject', url: `${SITE}/images/email/logo.png` } },
+      isPartOf: { '@id': `${SITE}/#website` },
+      mainEntityOfPage: url,
+    }];
+    // Procedura passo per passo: Google non mostra più il rich result HowTo,
+    // ma i motori di risposta AI usano lo schema per citare i passaggi.
+    if (steps) {
+      graph.push({
+        '@type': 'HowTo',
+        '@id': `${url}#howto`,
+        name: steps.title || guide.title,
+        description: plainText(guide.short),
+        image: `${SITE}${guide.hero.src}`,
+        inLanguage: 'it-IT',
+        step: steps.steps.map((st, i) => ({
+          '@type': 'HowToStep', position: i + 1, name: st.title, text: st.text, url: `${url}#${steps.id}`,
+        })),
+      });
+    }
+    if (faq) {
+      graph.push({
+        '@type': 'FAQPage',
+        '@id': `${url}#faq`,
+        mainEntity: faq.items.map((it) => ({ '@type': 'Question', name: it.q, acceptedAnswer: { '@type': 'Answer', text: plainText(it.a) } })),
+      });
+    }
+    return { '@graph': graph };
+  }, [guide, group]);
 
   useSEO({
     title: guide.title,

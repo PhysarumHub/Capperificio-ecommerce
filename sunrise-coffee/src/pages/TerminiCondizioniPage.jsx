@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { FREE_SHIPPING_THRESHOLD } from '../lib/utils/shipping';
 import { useSEO } from '../hooks/useSEO';
 import LegalLayout from '../components/Legal/LegalLayout';
 import CompanyData from '../components/Legal/CompanyData';
@@ -200,7 +201,7 @@ const SECTIONS = [
           <p>
             <strong>Spese di spedizione:</strong> calcolate in fase di checkout in base a peso e
             destinazione. La spedizione è <strong>gratuita per gli ordini di importo pari o
-            superiore a € 50</strong> con destinazione Italia.
+            superiore a € {FREE_SHIPPING_THRESHOLD}</strong> con destinazione Italia.
           </p>
         </div>
         <p>

@@ -86,7 +86,7 @@ export default function Header() {
 
         <div className={styles.navCenter}>
           <Link to="/">
-            <img src="/images/Logo_icona.svg" alt="Capperificio" className={styles.navLogo} />
+            <img src="/images/Logo_icona.svg" alt="Capperificio" className={styles.navLogo} width="44" height="44" />
           </Link>
         </div>
 

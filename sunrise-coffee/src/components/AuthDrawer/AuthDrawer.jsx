@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useId, isValidElement, cloneElement } from 'react';
 import { useCustomerContext } from '../../context/ShopwareContext';
 import { getCountries, getSalutations } from '../../lib/api/customer';
 import { useDrawerDrag } from '../../hooks/useDrawerDrag';
@@ -24,16 +24,23 @@ function inputStyle(hasError) {
 }
 
 function Field({ label, error, children, required }) {
+  // Collega etichetta e campo (for/id): senza, screen reader e Lighthouse
+  // vedono un input anonimo.
+  const id = useId();
+  const field = isValidElement(children) && !children.props.id
+    ? cloneElement(children, { id })
+    : children;
+  const fieldId = isValidElement(field) ? field.props.id : undefined;
   return (
     <div style={{ marginBottom: 0 }}>
-      <label style={{
+      <label htmlFor={fieldId} style={{
         display: 'block', fontSize: 11, fontWeight: 600,
-        color: error ? 'var(--color-red)' : '#6B8A6B',
+        color: error ? 'var(--color-red)' : 'var(--color-mid)',
         marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em',
       }}>
         {label}{required && <span style={{ color: 'var(--color-red)', marginLeft: 2 }}>*</span>}
       </label>
-      {children}
+      {field}
       {error && (
         <p style={{ fontSize: 12, color: 'var(--color-red)', marginTop: 4 }}>⚠ {error}</p>
       )}
@@ -271,7 +278,7 @@ function RegisterForm({ onSuccess }) {
         <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-2xl)', marginBottom: 8 }}>
           Account creato!
         </h2>
-        <p style={{ color: '#6B8A6B', fontSize: 14 }}>Accesso in corso...</p>
+        <p style={{ color: 'var(--color-mid)', fontSize: 14 }}>Accesso in corso...</p>
       </div>
     );
   }

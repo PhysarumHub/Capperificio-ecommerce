@@ -114,7 +114,11 @@ export default function HomePage() {
   return (
     <>
       <Hero
-        image="/images/HERO.jpeg"
+        // Stesse sorgenti dello shell statico in index.html: il browser
+        // riusa l'immagine già dipinta invece di riscaricarla.
+        image="/images/hero-1280.webp"
+        srcSet="/images/hero-640.webp 640w, /images/hero-960.webp 960w, /images/hero-1280.webp 1280w"
+        sizes="100vw"
         alt="Capperi di Racale raccolti a mano nei campi del Salento"
         heading="Capperificio di Racale — capperi, cucunci e foglie artigianali dal Salento"
       />

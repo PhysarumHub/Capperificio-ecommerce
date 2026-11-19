@@ -8,9 +8,10 @@ import { getProductImage } from '../lib/utils/image';
 import { isProductAvailable } from '../lib/utils/availability';
 import { COMPANY } from '../data/company';
 import { isHiddenProduct } from '../lib/api/products';
+import { FREE_SHIPPING_THRESHOLD } from '../lib/utils/shipping';
 
-/* Soglia di spedizione gratuita: deve restare allineata a CheckoutPage. */
-const FREE_SHIPPING_MIN = 50;
+/* Soglia di spedizione gratuita: fonte unica in lib/utils/shipping.js. */
+const FREE_SHIPPING_MIN = FREE_SHIPPING_THRESHOLD;
 
 /* Tariffa di spedizione standard sotto soglia, in EUR.
    Oggi il costo lo calcola il corriere in checkout in base a peso e

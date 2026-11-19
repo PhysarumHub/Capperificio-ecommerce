@@ -18,7 +18,7 @@ export const COMPANY = {
 
   /* Sede legale */
   address: {
-    street: 'Via Ospina 1/3',
+    street: 'Via Montesanto 64',
     zip: '73055',
     city: 'Racale',
     province: 'LE',
@@ -48,4 +48,4 @@ export const COMPANY = {
 };
 
 /** Ultimo aggiornamento dei documenti legali (mostrato in pagina). */
-export const LEGAL_LAST_UPDATE = '30 luglio 2026';
+export const LEGAL_LAST_UPDATE = '19 novembre 2026';

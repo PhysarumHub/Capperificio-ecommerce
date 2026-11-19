@@ -1,7 +1,9 @@
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
+import { useSEO } from '../hooks/useSEO';
 import styles from './TestPages.module.css';
 
 export default function TestPageB() {
+  useSEO({ title: 'Demo transizioni', path: '/test-b', noindex: true, canonical: false });
   const navigate = useViewTransitionNavigate();
 
   return (

@@ -9,7 +9,7 @@
  * Non usare questa soglia per decidere se mostrare "Gratuita" nel riepilogo
  * ordine — per quello serve `isShippingFree()`, che legge il costo effettivo.
  */
-export const FREE_SHIPPING_THRESHOLD = 50;
+export const FREE_SHIPPING_THRESHOLD = 59;
 
 /**
  * La spedizione è gratuita solo se Shopware ha effettivamente azzerato il costo.

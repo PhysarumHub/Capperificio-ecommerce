@@ -83,7 +83,7 @@ export default function Footer() {
       </div>
 
       <div className={styles.tagline}>
-        <img src="/images/Scritta_caro.svg" alt="Capperificio di Racale" className={styles.scrittaCaro} loading="lazy" />
+        <img src="/images/Scritta_caro.svg" alt="Capperificio di Racale" className={styles.scrittaCaro} width="430" height="90" loading="lazy" />
       </div>
     </footer>
   );

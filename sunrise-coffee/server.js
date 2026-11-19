@@ -6,6 +6,7 @@ import { slugify } from './src/lib/utils/slug.js';
 import { generateMerchantFeed } from './api/_merchantFeed.js';
 import { helpSitemapPaths } from './src/data/assistenza.js';
 import { guideSitemapPaths } from './src/data/guide.js';
+import { renderProduct, renderCollection, rawShell, renderLlmsTxt, renderLlmsFullTxt } from './api/_ssr.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: join(__dirname, '.env'), override: true });
 
@@ -802,6 +803,45 @@ app.get('/feeds/meta.xml', async (_req, res) => {
     console.error('Feed Meta: errore generazione:', e.message);
     res.status(503).set('Retry-After', '600').send('Feed temporaneamente non disponibile');
   }
+});
+
+// ── HTML lato server: schede prodotto e collezioni (SEO / AEO) ────────────────
+// nginx inoltra qui /prodotti/:slug e /collections/:slug. La pagina parte dalla
+// shell della SPA con meta, JSON-LD e un'anteprima del contenuto già dentro:
+// i crawler che non eseguono JavaScript (AI, anteprime social) vedono nome,
+// prezzo e descrizione. Se Shopware non risponde si serve la shell semplice.
+function sendShellFallback(res) {
+  res.status(200).set('Cache-Control', 'no-cache').type('html').send(rawShell());
+}
+
+app.get('/prodotti/:slug', async (req, res) => {
+  try {
+    const r = await renderProduct(req.params.slug);
+    if (r.status === 301) return res.redirect(301, r.location);
+    res.status(r.status).set('Cache-Control', 'no-cache').type('html').send(r.html);
+  } catch (e) {
+    console.warn('SSR prodotto:', e.message);
+    sendShellFallback(res);
+  }
+});
+
+app.get('/collections/:slug', async (req, res) => {
+  try {
+    const r = await renderCollection(req.params.slug);
+    if (r.status === 301) return res.redirect(301, r.location);
+    res.status(r.status).set('Cache-Control', 'no-cache').type('html').send(r.html);
+  } catch (e) {
+    console.warn('SSR collezione:', e.message);
+    sendShellFallback(res);
+  }
+});
+
+// ── llms.txt: indice del sito per i motori di risposta AI ────────────────────
+app.get('/llms.txt', async (_req, res) => {
+  res.type('text/plain; charset=utf-8').set('Cache-Control', 'public, max-age=3600').send(await renderLlmsTxt());
+});
+app.get('/llms-full.txt', async (_req, res) => {
+  res.type('text/plain; charset=utf-8').set('Cache-Control', 'public, max-age=3600').send(await renderLlmsFullTxt());
 });
 
 const PORT = process.env.PORT || 3001;

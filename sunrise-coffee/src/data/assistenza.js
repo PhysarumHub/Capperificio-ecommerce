@@ -14,8 +14,10 @@
  * segnaposto {email} {emailOrdini} {emailB2B} {whatsapp} {soglia}.
  */
 
+import { FREE_SHIPPING_THRESHOLD } from '../lib/utils/shipping.js';
+
 export const HELP_FACTS = {
-  freeShippingFrom: 50, // € — stessa soglia di ShippingBar e Condizioni di vendita
+  freeShippingFrom: FREE_SHIPPING_THRESHOLD, // € — fonte unica: lib/utils/shipping.js
   prepDays: '1–2 giorni lavorativi',
   deliveryIT: '2–5 giorni lavorativi',
   deliveryEU: '5–10 giorni lavorativi',
