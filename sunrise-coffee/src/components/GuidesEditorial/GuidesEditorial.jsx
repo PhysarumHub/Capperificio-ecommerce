@@ -14,13 +14,13 @@ export default function GuidesEditorial({ image }) {
           I capperi di Racale si prestano a mille usi in cucina. Scopri come
           valorizzarli in ricette tradizionali e abbinamenti creativi, dal mare alla carne.
         </p>
-        <Link to="/" className={styles.btn}>Scopri le ricette &rarr;</Link>
+        <Link to="/guide" className={styles.btn}>Scopri le guide &rarr;</Link>
       </div>
       <div
         className={`${styles.photo} ${anim.slideRight} ${inView ? anim.inView : ''}`}
         style={{ '--delay': '80ms' }}
       >
-        {image && <img src={image} alt="Capperi in cucina" className={styles.photoImg} loading="lazy" decoding="async" />}
+        {image && <img src={image} alt="Capperi in cucina" className={styles.photoImg} width="1400" height="933" loading="lazy" decoding="async" />}
       </div>
     </section>
   );

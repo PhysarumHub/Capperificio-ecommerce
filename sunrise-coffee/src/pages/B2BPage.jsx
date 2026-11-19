@@ -102,7 +102,6 @@ export default function B2BPage() {
     title: 'Area B2B — Per Professionisti',
     description: 'Prezzi netti dedicati, formati industriali e ordini flessibili per ristoratori, grossisti e rivenditori di capperi artigianali.',
     path: '/b2b',
-    noindex: true,
   });
 
   const { customer, isLoggedIn, loading } = useCustomerContext();

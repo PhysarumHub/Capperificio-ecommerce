@@ -14,6 +14,9 @@ ARG VITE_B2B_CATEGORY_ID
 ARG VITE_B2B_GROUP_NAME
 ARG VITE_STRAPI_URL
 ARG VITE_GTM_ID
+ARG VITE_XMAS_BOX_FIXED_ID
+ARG VITE_XMAS_BOX_FIXED2_ID
+ARG VITE_XMAS_BOX_TOKENS_ID
 
 ENV VITE_SHOPWARE_API_URL=$VITE_SHOPWARE_API_URL \
     VITE_SHOPWARE_ACCESS_KEY=$VITE_SHOPWARE_ACCESS_KEY \
@@ -22,7 +25,10 @@ ENV VITE_SHOPWARE_API_URL=$VITE_SHOPWARE_API_URL \
     VITE_B2B_CATEGORY_ID=$VITE_B2B_CATEGORY_ID \
     VITE_B2B_GROUP_NAME=$VITE_B2B_GROUP_NAME \
     VITE_STRAPI_URL=$VITE_STRAPI_URL \
-    VITE_GTM_ID=$VITE_GTM_ID
+    VITE_GTM_ID=$VITE_GTM_ID \
+    VITE_XMAS_BOX_FIXED_ID=$VITE_XMAS_BOX_FIXED_ID \
+    VITE_XMAS_BOX_FIXED2_ID=$VITE_XMAS_BOX_FIXED2_ID \
+    VITE_XMAS_BOX_TOKENS_ID=$VITE_XMAS_BOX_TOKENS_ID
 
 COPY . .
 RUN npx vite build
@@ -40,6 +46,16 @@ RUN npm ci --omit=dev
 # Backend Express + cartella api (INDISPENSABILE: server.js la importa)
 COPY server.js ./
 COPY api/ ./api/
+
+# Utility condivisa frontend/backend per lo slug SEO dei prodotti
+# (server.js la importa per generare /prodotti/:slug nella sitemap.xml)
+COPY src/lib/utils/slug.js ./src/lib/utils/slug.js
+# Dati aziendali (brand, URL del sito) letti dal feed Google Merchant
+COPY src/data/company.js ./src/data/company.js
+# Contenuti del centro assistenza (server.js li legge per la sitemap.xml)
+COPY src/data/assistenza.js ./src/data/assistenza.js
+# Guide (sitemap.xml)
+COPY src/data/guide.js ./src/data/guide.js
 
 # Frontend buildato
 COPY --from=builder /app/dist ./dist

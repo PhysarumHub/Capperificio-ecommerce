@@ -25,6 +25,14 @@ function WhatsAppIcon() {
   );
 }
 
+const BEFORE_WRITING = [
+  { to: '/assistenza', label: 'Centro assistenza' },
+  { to: '/assistenza/dove-e-il-mio-ordine', label: 'Dov’è il mio ordine' },
+  { to: '/assistenza/qualcosa-non-va', label: 'Qualcosa non va con l’ordine' },
+  { to: '/spedizioni-e-resi', label: 'Spedizioni e resi' },
+  { to: '/faq', label: 'Domande frequenti' },
+];
+
 const METHODS = [
   {
     icon: <MailIcon />,
@@ -36,7 +44,7 @@ const METHODS = [
   {
     icon: <WhatsAppIcon />,
     label: 'Assistenza diretta',
-    desc: 'Risposta rapida su WhatsApp.',
+    desc: 'Il modo più rapido. Per un ordine, indica il numero d’ordine.',
     cta: 'Scrivici su WhatsApp',
     href: COMPANY.whatsappLink,
     external: true,
@@ -144,10 +152,38 @@ export default function ContattiPage() {
           </div>
         </section>
 
+        <section className={styles.section}>
+          <p className={styles.sectionLabel}>
+            <span className={styles.sectionLabelDot} />
+            Prima di scriverci
+          </p>
+          <ul className={styles.beforeList}>
+            {BEFORE_WRITING.map(({ to, label }) => (
+              <li key={to}><Link to={to}>{label} &rarr;</Link></li>
+            ))}
+          </ul>
+        </section>
+
+        <section className={styles.section}>
+          <p className={styles.sectionLabel}>
+            <span className={styles.sectionLabelDot} />
+            Dati societari
+          </p>
+          <div className={contentStyles.card}>
+            <dl>
+              <dt>Ragione sociale</dt><dd>{COMPANY.legalNameShort}</dd>
+              <dt>Sede</dt><dd>{COMPANY.addressLine}</dd>
+              <dt>P.IVA / C.F.</dt><dd>{COMPANY.vat}</dd>
+              <dt>REA</dt><dd>{COMPANY.rea}</dd>
+              <dt>PEC</dt><dd><a href={`mailto:${COMPANY.pec}`}>{COMPANY.pec}</a></dd>
+            </dl>
+          </div>
+        </section>
+
         <div className={styles.cta}>
           <p className={styles.ctaTitle}>Spedizioni, resi o pagamenti?</p>
-          <p className={styles.ctaDesc}>Prova prima a dare un'occhiata alle domande frequenti.</p>
-          <Link to="/faq" className={styles.ctaBtn}>Vai alle FAQ &rarr;</Link>
+          <p className={styles.ctaDesc}>Nel centro assistenza trovi le risposte e puoi seguire il tuo ordine.</p>
+          <Link to="/assistenza" className={styles.ctaBtn}>Vai al centro assistenza &rarr;</Link>
         </div>
       </div>
     </div>

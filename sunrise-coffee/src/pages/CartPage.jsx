@@ -5,7 +5,7 @@ import { useSEO } from '../hooks/useSEO';
 import { formatPrice } from '../lib/utils/price';
 import { getProductImage, proxyUrl } from '../lib/utils/image';
 import { getLineItemMaxQty } from '../lib/utils/availability';
-import { gtmViewCart, gtmRemoveFromCart } from '../lib/utils/gtm';
+import { gtmViewCart, gtmRemoveFromCart, gtmBeginCheckout } from '../lib/utils/gtm';
 import CartStockNotices from '../components/CartStockNotices/CartStockNotices';
 
 function getVariantLabel(item) {
@@ -211,6 +211,7 @@ export default function CartPage() {
         </Link>
         <Link
           to="/checkout"
+          onClick={() => gtmBeginCheckout(lineItems, positionPrice)}
           style={{
             padding: '14px 28px',
             background: 'var(--color-red)',

@@ -3,7 +3,7 @@
 const photos = [
   '/images/CAPPERI.jpg',
   '/images/capperi-al-sale.webp',
-  '/images/20250611_CapperificioCaro_Capperi___-3635%20(1).webp',
+  '/images/capperificio-caro-capperi-racale.webp',
   '/images/PRODUCTSTILL.jpg',
   '/images/dalcampoallatavola2.webp',
   '/images/giannelli.webp',

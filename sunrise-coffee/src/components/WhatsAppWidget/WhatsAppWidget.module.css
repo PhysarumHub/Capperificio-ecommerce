@@ -1,0 +1,259 @@
+/* ══════════════════════════════════════════════════════════════════════
+   WHATSAPP — pulsante fisso + pannello
+   Pulsante e pannello nel verde del brand (stesso del sito); l'icona
+   WhatsApp garantisce la riconoscibilità. Sotto cookie banner (9999) e drawer
+   carrello (290+), sopra la barra d'acquisto mobile (280).
+══════════════════════════════════════════════════════════════════════ */
+
+.root {
+  --wa-green: var(--color-red);
+  --wa-green-dark: var(--color-red-hover);
+  --wa-bottom: max(20px, env(safe-area-inset-bottom));
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: var(--wa-bottom);
+  z-index: 285;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.root > * { pointer-events: auto; }
+
+/* ── Pulsante ────────────────────────────────────────────── */
+.fab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  padding: 0 20px 0 16px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--wa-green);
+  color: #fff;
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: var(--font-weight-ui);
+  letter-spacing: .02em;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(44, 74, 44, .30), 0 2px 6px rgba(0, 0, 0, .12);
+  transition: background var(--duration-base) var(--ease-default), transform var(--duration-base) var(--ease-default);
+}
+
+.fab:hover { background: var(--wa-green-dark); transform: translateY(-2px); }
+
+.fab:focus-visible {
+  outline: 3px solid var(--color-dark);
+  outline-offset: 3px;
+}
+
+/* ── Pannello ────────────────────────────────────────────── */
+.panel {
+  width: min(360px, calc(100vw - 32px));
+  max-height: min(600px, calc(100dvh - 110px));
+  display: flex;
+  flex-direction: column;
+  background: var(--color-light);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(44, 74, 44, .22);
+  overflow: hidden;
+  transform-origin: bottom right;
+  animation: waIn .22s var(--ease-default);
+}
+
+@keyframes waIn {
+  from { opacity: 0; transform: translateY(8px) scale(.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 14px 16px 18px;
+  background: var(--color-red);
+  color: var(--color-light);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 6px;
+  box-sizing: border-box;
+  border-radius: var(--radius-full);
+  background: var(--color-light);
+  object-fit: contain;
+}
+
+.headText { flex: 1; min-width: 0; }
+
+.title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-xl);
+  line-height: 1.2;
+}
+
+.sub {
+  margin: 2px 0 0;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  opacity: .85;
+}
+
+.close {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.close:hover { background: rgba(252, 243, 223, .15); }
+.close:focus-visible { outline: 2px solid var(--color-light); outline-offset: 1px; }
+
+.body {
+  padding: 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bubble {
+  margin: 0;
+  align-self: flex-start;
+  max-width: 92%;
+  padding: 12px 14px;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: 4px 16px 16px 16px;
+  font-size: var(--text-md);
+  line-height: 1.55;
+  color: var(--color-dark);
+}
+
+.topics {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.topic {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 46px;
+  padding: 10px 16px;
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-white);
+  color: var(--color-dark);
+  text-decoration: none;
+  font-size: var(--text-md);
+  font-weight: var(--font-weight-ui);
+  line-height: 1.3;
+  transition: border-color var(--duration-base) var(--ease-default), background var(--duration-base) var(--ease-default);
+}
+
+.topic span { color: var(--color-red); flex-shrink: 0; }
+
+.topic:hover,
+.topic:focus-visible {
+  border-color: var(--color-red);
+  background: var(--color-cream);
+  outline: none;
+}
+
+.compose {
+  margin: 0 18px 14px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 6px 6px 6px 14px;
+  border: 1px solid var(--color-card-border);
+  border-radius: 22px;
+  background: var(--color-white);
+}
+
+.compose:focus-within { border-color: var(--color-red); }
+
+.textarea {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  resize: none;
+  font: inherit;
+  font-size: 16px; /* niente zoom automatico su iOS */
+  line-height: 1.4;
+  color: var(--color-dark);
+  padding: 8px 0;
+  outline: none;
+}
+
+.send {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--wa-green);
+  color: #fff;
+  cursor: pointer;
+}
+
+.send:disabled { background: var(--color-border); cursor: default; }
+.send:focus-visible { outline: 2px solid var(--color-dark); outline-offset: 2px; }
+
+.foot {
+  margin: 0;
+  padding: 12px 18px 14px;
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+  color: var(--color-mid);
+  text-align: center;
+}
+
+.foot a { color: var(--color-red); }
+
+/* ── Mobile ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .root {
+    right: max(14px, env(safe-area-inset-right));
+    --wa-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  /* Scheda prodotto e Box di Natale: sopra la barra fissa di acquisto */
+  .raised { --wa-bottom: calc(92px + env(safe-area-inset-bottom)); }
+
+  .fab { width: 56px; padding: 0; justify-content: center; }
+  .fabLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel { animation: none; }
+  .fab { transition: none; }
+  .fab:hover { transform: none; }
+}
+
+@media print {
+  .root { display: none; }
+}

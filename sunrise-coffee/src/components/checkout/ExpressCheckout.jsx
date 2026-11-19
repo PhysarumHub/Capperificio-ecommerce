@@ -16,7 +16,7 @@ import styles from './Checkout.module.css';
  * Se sul dispositivo non c'è nessun wallet disponibile, `onReady` non riporta
  * metodi e il blocco si toglie di mezzo senza lasciare spazi vuoti.
  */
-export default function ExpressCheckout({ onSuccess, onProcessingChange }) {
+export default function ExpressCheckout({ onSuccess, onProcessingChange, returnPath = '/checkout', copy = {} }) {
   const stripe = useStripe();
   const elements = useElements();
   const [available, setAvailable] = useState(null);   // null = ancora da sapere
@@ -32,14 +32,14 @@ export default function ExpressCheckout({ onSuccess, onProcessingChange }) {
 
       const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
         elements,
-        confirmParams: { return_url: `${window.location.origin}/checkout` },
+        confirmParams: { return_url: `${window.location.origin}${returnPath}` },
         redirect: 'if_required',
       });
       if (confirmError) { setError(confirmError.message); return; }
 
       await onSuccess(paymentIntent?.id);
     } catch (err) {
-      setError(err?.message || 'Pagamento non riuscito. Riprova.');
+      setError(err?.message || copy.paymentFailed || 'Pagamento non riuscito. Riprova.');
     } finally {
       onProcessingChange?.(false);
     }
@@ -49,7 +49,7 @@ export default function ExpressCheckout({ onSuccess, onProcessingChange }) {
 
   return (
     <div className={styles.express} hidden={available === null}>
-      <p className={styles.expressLabel}>Pagamento rapido</p>
+      <p className={styles.expressLabel}>{copy.express || 'Pagamento rapido'}</p>
 
       <ExpressCheckoutElement
         options={{
@@ -73,7 +73,7 @@ export default function ExpressCheckout({ onSuccess, onProcessingChange }) {
         </p>
       )}
 
-      <div className={styles.divider}>oppure paga con carta</div>
+      <div className={styles.divider}>{copy.orCard || 'oppure paga con carta'}</div>
     </div>
   );
 }

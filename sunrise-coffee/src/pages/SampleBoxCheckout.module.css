@@ -1,0 +1,207 @@
+/* Checkout multistep del box campioni: si appoggia a Checkout.module.css
+   (campi, bottoni, riepilogo) e aggiunge solo stepper, navigazione e recap. */
+
+/* ─── Stepper ─────────────────────────────── */
+.stepper {
+  display: flex;
+  align-items: flex-start;
+  list-style: none;
+  margin: 0 0 var(--space-12);
+  padding: 0;
+}
+
+.step {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* Filetto che collega un cerchio al successivo */
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 17px;
+  left: calc(50% + 24px);
+  right: calc(-50% + 24px);
+  height: 1.5px;
+  background: var(--color-border);
+  transition: background var(--duration-base);
+}
+.stepDone:not(:last-child)::after { background: var(--color-red); }
+
+.stepBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-sans);
+  color: inherit;
+  cursor: default;
+}
+.stepBtn:not(:disabled) { cursor: pointer; }
+.stepBtn:focus-visible { outline: 2px solid var(--color-dark); outline-offset: 4px; border-radius: 4px; }
+
+.stepDot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-light);
+  color: var(--color-mid);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition: background var(--duration-base), border-color var(--duration-base), color var(--duration-base);
+}
+.stepCurrent .stepDot {
+  border-color: var(--color-red);
+  color: var(--color-red);
+  box-shadow: 0 0 0 4px rgba(84, 112, 84, .12);
+}
+.stepDone .stepDot {
+  background: var(--color-red);
+  border-color: var(--color-red);
+  color: var(--color-light);
+}
+
+.stepLabel {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--color-mid);
+  text-align: center;
+  white-space: nowrap;
+}
+.stepCurrent .stepLabel,
+.stepDone .stepLabel { color: var(--color-dark); }
+
+/* ─── Pannello dello step ─────────────────── */
+.panel {
+  animation: panelIn .32s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.panelTitle {
+  font-family: var(--font-serif);
+  font-size: var(--text-2xl);
+  font-weight: 400;
+  color: var(--color-dark);
+  margin-bottom: var(--space-2);
+  outline: none;
+}
+
+.panelHint {
+  font-size: var(--text-sm);
+  color: var(--color-mid);
+  margin-bottom: var(--space-10);
+  line-height: 1.6;
+}
+
+/* ─── Navigazione tra step ────────────────── */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin-top: var(--space-12);
+}
+.nav > :last-child { flex: 1; }
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 54px;
+  padding: 0 var(--space-9);
+  background: transparent;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-dark);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-ui);
+  cursor: pointer;
+  transition: border-color var(--duration-base);
+  flex-shrink: 0;
+}
+.backBtn:hover { border-color: var(--color-dark); }
+
+/* ─── Recap dati (step pagamento) ─────────── */
+.recapCard {
+  border: 1px solid var(--color-border);
+  margin-bottom: var(--space-11);
+}
+.recapRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-7) var(--space-8);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--color-mid);
+}
+.recapRow + .recapRow { border-top: 1px solid var(--color-border); }
+.recapRow > div { min-width: 0; overflow-wrap: anywhere; }
+.recapLabel {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--color-dark);
+}
+.recapRow strong { color: var(--color-dark); font-weight: var(--font-weight-ui); }
+
+.secure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-8);
+  font-size: var(--text-xs);
+  color: var(--color-mid);
+}
+
+/* ─── Mobile ──────────────────────────────── */
+@media (max-width: 900px) {
+  .stepper { margin-bottom: var(--space-10); }
+  .panelHint { margin-bottom: var(--space-9); }
+  .nav { margin-top: var(--space-11); }
+}
+
+@media (max-width: 480px) {
+  .stepDot { width: 32px; height: 32px; }
+  .step:not(:last-child)::after { top: 15px; left: calc(50% + 22px); right: calc(-50% + 22px); }
+  .stepLabel { font-size: 10px; letter-spacing: .06em; }
+  .panelTitle { font-size: var(--text-xl); }
+  .backBtn { padding: 0 var(--space-7); }
+  .recapRow { padding: var(--space-6); }
+}
+
+/* Sui telefoni più stretti l'etichetta lunga andava su due righe */
+.labelShort { display: none; }
+.nav button { white-space: nowrap; }
+@media (max-width: 380px) {
+  .labelLong { display: none; }
+  .labelShort { display: inline; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel { animation: none; }
+}
+
+.nav .secure { margin-top: 0; justify-content: flex-end; }

@@ -87,14 +87,28 @@ export async function registerGuestIfNeeded(contextToken, { email, customer, bil
   if (!contextToken) throw new Error('contextToken mancante');
 
   // Se la sessione è già di un cliente (loggato o guest registrato), salta.
+  let ctx = null;
   try {
-    const { data: ctx } = await swFetch('/context', { method: 'GET', contextToken });
+    ({ data: ctx } = await swFetch('/context', { method: 'GET', contextToken }));
     if (ctx?.customer?.id) return contextToken;
   } catch {
     // /context senza cliente può rispondere comunque; proseguiamo con la registrazione
   }
 
   if (!email) throw new Error('Email cliente mancante per la registrazione');
+
+  // Shopware rifiuta la registrazione senza paese (COUNTRY_IS_BLANK_ERROR). Se il
+  // client non l'ha inviato (getCountries lento o fallito lato browser), ripieghiamo
+  // sul paese di default del sales channel: meglio un ordine con paese da correggere
+  // che un checkout che non parte.
+  const safeBillingAddress = {
+    ...billingAddress,
+    countryId: billingAddress?.countryId
+      || ctx?.salesChannel?.countryId
+      || ctx?.shippingLocation?.country?.id
+      || undefined,
+  };
+  if (!safeBillingAddress.countryId) throw new Error('Paese non determinabile per la registrazione');
 
   try {
     const { contextToken: newToken } = await swFetch('/account/register', {
@@ -107,7 +121,7 @@ export async function registerGuestIfNeeded(contextToken, { email, customer, bil
         lastName: customer?.lastName,
         salutationId: customer?.salutationId,
         storefrontUrl: customer?.storefrontUrl,
-        billingAddress,
+        billingAddress: safeBillingAddress,
       },
     });
     return newToken || contextToken;
@@ -381,7 +395,41 @@ export async function fetchOrdersInOrderState(stateTechnicalName, limit = 50) {
 }
 
 /**
+ * Ordini con la transazione già "paid" creati nelle ultime `hours` ore.
+ * Serve alla rete di sicurezza del poller: se la conferma ordine non è partita
+ * al momento del checkout (crash, riavvio, errore Resend), qui viene recuperata.
+ */
+export async function fetchRecentPaidOrders(hours = 48, limit = 50) {
+  if (!adminConfigured()) return [];
+  try {
+    const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+    const data = await adminFetch('/search/order', {
+      method: 'POST',
+      body: {
+        limit,
+        filter: [
+          { type: 'equals', field: 'transactions.stateMachineState.technicalName', value: 'paid' },
+          { type: 'range', field: 'createdAt', parameters: { gte: since } },
+        ],
+        associations: FULL_ORDER_ASSOCIATIONS,
+      },
+    });
+    return data?.data || [];
+  } catch (e) {
+    console.warn('fetchRecentPaidOrders:', e.message);
+    return [];
+  }
+}
+
+/**
  * Prodotti con stock sotto la soglia — per alert merchant.
+ *
+ * Il filtro è `childCount = 0`, cioè i soli prodotti che hanno una giacenza
+ * vera: prodotti semplici e figli-variante. NON `parentId = null`: quello
+ * seleziona i padri-variante, il cui `availableStock` è strutturalmente 0
+ * perché lo stock reale sta sui figli — stessa trappola documentata in
+ * `src/lib/utils/availability.js`. Con quel filtro l'alert segnalava come
+ * "esaurito" un catalogo pieno (padri a 0, figli con centinaia di pezzi).
  */
 export async function fetchLowStockProducts(threshold = 5) {
   if (!adminConfigured()) return [];
@@ -393,7 +441,7 @@ export async function fetchLowStockProducts(threshold = 5) {
         filter: [
           { type: 'range', field: 'availableStock', parameters: { lte: threshold } },
           { type: 'equals', field: 'active', value: true },
-          { type: 'equals', field: 'parentId', value: null },
+          { type: 'equals', field: 'childCount', value: 0 },
         ],
         includes: { product: ['id', 'name', 'productNumber', 'availableStock'] },
       },
@@ -541,4 +589,64 @@ export async function markTransactionRefunded(orderId, refundId, { partial = fal
   } catch (e) {
     return { ok: false, reason: e.message };
   }
+}
+
+// ── Centro assistenza: "Dov'è il mio ordine" ─────────────────────────────────
+//
+//  Cerca l'ordine per numero e verifica che l'email coincida con quella
+//  dell'ordine. Restituisce SOLO lo stato e il tracciamento: niente indirizzi,
+//  importi o dati di pagamento, perché chi conosce numero + email di un altro
+//  cliente non deve poter leggere altro. Se numero o email non coincidono la
+//  risposta è identica (null), così non si può sondare quali numeri esistono.
+
+function trackingUrlFor(method, code) {
+  const tpl = method?.translated?.trackingUrl || method?.trackingUrl;
+  return tpl && code ? tpl.replace('%s', encodeURIComponent(code)) : null;
+}
+
+export async function lookupOrderStatus(orderNumber, email) {
+  if (!adminConfigured()) throw new Error('Admin API non configurata');
+  const data = await adminFetch('/search/order', {
+    method: 'POST',
+    body: {
+      limit: 1,
+      filter: [{ type: 'equals', field: 'orderNumber', value: String(orderNumber) }],
+      associations: {
+        orderCustomer: {},
+        stateMachineState: {},
+        transactions: { associations: { stateMachineState: {} } },
+        deliveries: { associations: { stateMachineState: {}, shippingMethod: {} } },
+      },
+    },
+  });
+  const order = data?.data?.[0];
+  const orderEmail = order?.orderCustomer?.email || '';
+  if (!order || orderEmail.trim().toLowerCase() !== String(email).trim().toLowerCase()) return null;
+
+  const orderState = order.stateMachineState?.technicalName;          // open | in_progress | completed | cancelled
+  const delivery = order.deliveries?.[0];
+  const deliveryState = delivery?.stateMachineState?.technicalName;   // open | shipped | shipped_partially | returned | cancelled
+  const paid = (order.transactions || []).some((t) =>
+    ['paid', 'paid_partially'].includes(t.stateMachineState?.technicalName));
+
+  // received → prepared → shipped → delivered (cancelled a parte)
+  let status = 'received';
+  if (orderState === 'cancelled' || deliveryState === 'cancelled') status = 'cancelled';
+  else if (orderState === 'completed') status = 'delivered';
+  else if (deliveryState === 'shipped' || deliveryState === 'shipped_partially') status = 'shipped';
+  else if (orderState === 'in_progress') status = 'prepared';
+  else if (deliveryState === 'returned') status = 'returned';
+
+  const code = delivery?.trackingCodes?.[0] || null;
+  return {
+    orderNumber: order.orderNumber,
+    orderDate: order.orderDateTime || order.createdAt,
+    paid,
+    status,
+    tracking: code ? {
+      number: code,
+      carrier: delivery?.shippingMethod?.translated?.name || delivery?.shippingMethod?.name || '',
+      url: trackingUrlFor(delivery?.shippingMethod, code),
+    } : null,
+  };
 }

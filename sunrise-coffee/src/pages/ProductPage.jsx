@@ -1,13 +1,13 @@
-import { useMemo, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useMemo } from 'react';
+import { Navigate, useParams } from 'react-router-dom';
 import ProductDetail from '../components/ProductDetail/ProductDetail';
 import { ProductsMarquee } from '../components/Marquee/Marquee';
 import { useProduct } from '../hooks/useProducts';
 import { useSEO } from '../hooks/useSEO';
 import { getProductImage } from '../lib/utils/image';
-import { gtmViewItem } from '../lib/utils/gtm';
 import { isProductAvailable } from '../lib/utils/availability';
 import { COMPANY } from '../data/company';
+import { isHiddenProduct } from '../lib/api/products';
 
 /* Soglia di spedizione gratuita: deve restare allineata a CheckoutPage. */
 const FREE_SHIPPING_MIN = 50;
@@ -25,6 +25,16 @@ function priceValidUntil() {
   return `${new Date().getFullYear()}-12-31`;
 }
 
+/* Google mostra ~155-160 caratteri di meta description: un taglio secco a
+   160 finiva spesso a metà parola. Qui si taglia sull'ultimo spazio utile
+   e si chiude con "…" così il risultato di ricerca resta leggibile. */
+function truncateDescription(text, maxLen = 155) {
+  if (!text || text.length <= maxLen) return text;
+  const cut = text.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trim()}…`;
+}
+
 export default function ProductPage() {
   const params = useParams();
   const slug = params['*'] || params.slug || '';
@@ -32,14 +42,18 @@ export default function ProductPage() {
 
   const productName = product?.translated?.name || product?.name || '';
   const productDesc = product?.translated?.description || product?.description || '';
-  const plainDesc = productDesc.replace(/<[^>]*>/g, '').slice(0, 160);
-  const productImage = product ? getProductImage(product) : undefined;
+  const plainDesc = truncateDescription(
+    productDesc.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  );
+  // 'large' per OG/Twitter/JSON-LD: un'anteprima social nitida vuole un'immagine
+  // grande, non la thumbnail 600px usata nelle card di listing.
+  const productImage = product ? getProductImage(product, 'large') : undefined;
   const price = product?.calculatedPrice?.unitPrice || product?.price?.[0]?.gross;
 
   const jsonLd = useMemo(() => {
     if (!product) return null;
 
-    const productUrl = `${COMPANY.siteUrl}/product/${slug}`;
+    const productUrl = `${COMPANY.siteUrl}/prodotti/${slug}`;
     const inStock = isProductAvailable(product);
     const sku = product.productNumber || product.id;
     const gtin = product.ean || undefined;
@@ -106,24 +120,24 @@ export default function ProductPage() {
     };
   }, [product, productName, plainDesc, productImage, price, slug]);
 
-  useEffect(() => {
-    if (!product) return;
-    gtmViewItem({ id: product.id, name: productName, price: price ?? 0 });
-  }, [product?.id]);
 
   useSEO({
     title: productName || 'Prodotto',
     description: plainDesc || (productName ? `Scopri ${productName} — capperi artigianali dal Salento.` : undefined),
-    path: `/product/${slug}`,
+    path: `/prodotti/${slug}`,
     image: productImage,
     type: 'product',
     jsonLd,
     breadcrumbs: [
       { name: 'Home', path: '/' },
       { name: 'Tutti i Prodotti', path: '/collections/all' },
-      { name: productName || 'Prodotto', path: `/product/${slug}` },
+      { name: productName || 'Prodotto', path: `/prodotti/${slug}` },
     ],
   });
+
+  // Le Box di Natale si compongono su /box-di-natale: la scheda "nuda"
+  // permetterebbe di comprarle senza contenuto.
+  if (product && isHiddenProduct(product)) return <Navigate to="/box-di-natale" replace />;
 
   return (
     <>
