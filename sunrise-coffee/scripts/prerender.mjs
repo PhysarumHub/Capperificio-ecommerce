@@ -144,7 +144,9 @@ async function capture(page, base, route) {
       const heroImg = main?.querySelector('img[src*="hero-"]');
       let hero = heroImg;
       while (hero && hero.parentElement !== main) hero = hero.parentElement;
-      const rest = [];
+      // L'h1 (sr-only) dell'hero non è nello shell statico: va portato con sé.
+      const h1 = hero?.querySelector('h1');
+      const rest = h1 ? [h1] : [];
       for (let n = hero?.nextElementSibling; n; n = n.nextElementSibling) rest.push(n);
       for (let n = main?.nextElementSibling; n; n = n.nextElementSibling) rest.push(n);
       rest.forEach((n) => n.querySelectorAll('img').forEach((img) => {
@@ -239,6 +241,27 @@ await context.addInitScript(() => {
 });
 // Niente tracciamenti o risorse esterne durante il pre-render.
 await context.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
+// In produzione il bundle chiama Shopware con URL assoluto
+// (VITE_SHOPWARE_API_URL=https://www.capperificiocaro.com): da 127.0.0.1 il
+// browser lo bloccherebbe (CORS, e la regola sopra). Lo giriamo al proxy
+// locale aggiungendo gli header CORS. Registrata dopo, ha la precedenza.
+await context.route(/^https?:\/\/(www\.)?capperificiocaro\.com\/(store-api|media|thumbnail)\//, async (route) => {
+  const req = route.request();
+  const cors = {
+    'access-control-allow-origin': base,
+    'access-control-allow-methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+    'access-control-allow-headers': req.headers()['access-control-request-headers'] || '*',
+    'access-control-expose-headers': 'sw-context-token, sw-access-key',
+  };
+  if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+  const u = new URL(req.url());
+  try {
+    const response = await route.fetch({ url: base + u.pathname + u.search });
+    return route.fulfill({ response, headers: { ...response.headers(), ...cors } });
+  } catch {
+    return route.abort();
+  }
+});
 
 const failed = [];
 const skipped = [];
