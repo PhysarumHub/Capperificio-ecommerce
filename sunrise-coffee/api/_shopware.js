@@ -590,3 +590,63 @@ export async function markTransactionRefunded(orderId, refundId, { partial = fal
     return { ok: false, reason: e.message };
   }
 }
+
+// ── Centro assistenza: "Dov'è il mio ordine" ─────────────────────────────────
+//
+//  Cerca l'ordine per numero e verifica che l'email coincida con quella
+//  dell'ordine. Restituisce SOLO lo stato e il tracciamento: niente indirizzi,
+//  importi o dati di pagamento, perché chi conosce numero + email di un altro
+//  cliente non deve poter leggere altro. Se numero o email non coincidono la
+//  risposta è identica (null), così non si può sondare quali numeri esistono.
+
+function trackingUrlFor(method, code) {
+  const tpl = method?.translated?.trackingUrl || method?.trackingUrl;
+  return tpl && code ? tpl.replace('%s', encodeURIComponent(code)) : null;
+}
+
+export async function lookupOrderStatus(orderNumber, email) {
+  if (!adminConfigured()) throw new Error('Admin API non configurata');
+  const data = await adminFetch('/search/order', {
+    method: 'POST',
+    body: {
+      limit: 1,
+      filter: [{ type: 'equals', field: 'orderNumber', value: String(orderNumber) }],
+      associations: {
+        orderCustomer: {},
+        stateMachineState: {},
+        transactions: { associations: { stateMachineState: {} } },
+        deliveries: { associations: { stateMachineState: {}, shippingMethod: {} } },
+      },
+    },
+  });
+  const order = data?.data?.[0];
+  const orderEmail = order?.orderCustomer?.email || '';
+  if (!order || orderEmail.trim().toLowerCase() !== String(email).trim().toLowerCase()) return null;
+
+  const orderState = order.stateMachineState?.technicalName;          // open | in_progress | completed | cancelled
+  const delivery = order.deliveries?.[0];
+  const deliveryState = delivery?.stateMachineState?.technicalName;   // open | shipped | shipped_partially | returned | cancelled
+  const paid = (order.transactions || []).some((t) =>
+    ['paid', 'paid_partially'].includes(t.stateMachineState?.technicalName));
+
+  // received → prepared → shipped → delivered (cancelled a parte)
+  let status = 'received';
+  if (orderState === 'cancelled' || deliveryState === 'cancelled') status = 'cancelled';
+  else if (orderState === 'completed') status = 'delivered';
+  else if (deliveryState === 'shipped' || deliveryState === 'shipped_partially') status = 'shipped';
+  else if (orderState === 'in_progress') status = 'prepared';
+  else if (deliveryState === 'returned') status = 'returned';
+
+  const code = delivery?.trackingCodes?.[0] || null;
+  return {
+    orderNumber: order.orderNumber,
+    orderDate: order.orderDateTime || order.createdAt,
+    paid,
+    status,
+    tracking: code ? {
+      number: code,
+      carrier: delivery?.shippingMethod?.translated?.name || delivery?.shippingMethod?.name || '',
+      url: trackingUrlFor(delivery?.shippingMethod, code),
+    } : null,
+  };
+}

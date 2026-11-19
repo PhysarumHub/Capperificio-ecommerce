@@ -4,6 +4,8 @@ import { dirname, join } from 'path';
 import { readFileSync, writeFileSync } from 'fs';
 import { slugify } from './src/lib/utils/slug.js';
 import { generateMerchantFeed } from './api/_merchantFeed.js';
+import { helpSitemapPaths } from './src/data/assistenza.js';
+import { guideSitemapPaths } from './src/data/guide.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: join(__dirname, '.env'), override: true });
 
@@ -78,7 +80,7 @@ import {
   fetchOrderDetails, savePacklinkReference,
   fetchOrdersInDeliveryState, fetchOrdersInOrderState, fetchRecentPaidOrders,
   fetchLowStockProducts, findOrderByPaymentIntentId, markTransactionRefunded,
-  swFetch,
+  swFetch, lookupOrderStatus,
 } from './api/_shopware.js';
 import { createShipmentForOrder, packlinkConfigured } from './api/_packlink.js';
 import {
@@ -592,6 +594,35 @@ app.post('/api/newsletter/confirm', async (req, res) => {
 
 // ── Strapi proxy: GET /api/strapi/* → Strapi CMS ─────────────────────────────
 const STRAPI_ALLOWED = [/^articles(\/|\?|$)/, /^articles$/];
+// ── Centro assistenza ────────────────────────────────────────────────────────
+// Limite stretto: numero d'ordine + email non devono poter essere provati a raffica.
+const helpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Troppe richieste. Riprova tra qualche minuto.' },
+});
+
+const ORDER_NUMBER_RE = /^[A-Za-z0-9-]{1,32}$/;
+
+// "Dov'è il mio ordine": solo stato e tracciamento, mai indirizzi o importi.
+app.post('/api/order-status', helpLimiter, async (req, res) => {
+  const orderNumber = String(req.body?.orderNumber || '').trim().replace(/^#/, '');
+  const email = String(req.body?.email || '').trim();
+  if (!ORDER_NUMBER_RE.test(orderNumber) || !EMAIL_RE.test(email)) {
+    return res.status(400).json({ error: 'Controlla numero d’ordine ed email.' });
+  }
+  try {
+    const result = await lookupOrderStatus(orderNumber, email);
+    if (!result) return res.status(404).json({ error: 'Non troviamo un ordine con questo numero e questa email.' });
+    res.json(result);
+  } catch (e) {
+    console.error('order-status:', e.message);
+    res.status(503).json({ error: 'Il servizio non risponde. Scrivici su WhatsApp e controlliamo noi.' });
+  }
+});
+
 app.get('/api/strapi/*path', async (req, res) => {
   const STRAPI_URL = (process.env.STRAPI_URL || '').replace(/\/$/, '');
   const STRAPI_TOKEN = process.env.STRAPI_TOKEN || '';
@@ -638,6 +669,8 @@ app.get('/sitemap.xml', async (_req, res) => {
     { path: '/b2b',                   priority: '0.6', changefreq: 'monthly' },
     { path: '/contatti',              priority: '0.5', changefreq: 'yearly'  },
     { path: '/faq',                   priority: '0.5', changefreq: 'monthly' },
+    ...guideSitemapPaths().map(path => ({ path, priority: path === '/guide' ? '0.7' : '0.6', changefreq: 'monthly' })),
+    ...helpSitemapPaths().map(path => ({ path, priority: path === '/assistenza' ? '0.6' : '0.4', changefreq: 'monthly' })),
     { path: '/privacy-policy',        priority: '0.3', changefreq: 'yearly'  },
     { path: '/cookie-policy',         priority: '0.3', changefreq: 'yearly'  },
     { path: '/termini-e-condizioni',  priority: '0.3', changefreq: 'yearly'  },
@@ -751,6 +784,22 @@ app.get('/feeds/google-merchant.xml', async (_req, res) => {
   } catch (e) {
     console.error('Feed Merchant: errore generazione:', e.message);
     // 503: Google riprova più tardi invece di svuotare il catalogo
+    res.status(503).set('Retry-After', '600').send('Feed temporaneamente non disponibile');
+  }
+});
+
+// ── Feed catalogo Meta ───────────────────────────────────────────────────────
+// Stesso feed di Google ma con id = UUID Shopware, l'ID che il pixel invia
+// negli eventi: Meta lo scarica ogni giorno (catalogo "Capperificio Caro -
+// Prodotti", collegato al pixel cappixel).
+app.get('/feeds/meta.xml', async (_req, res) => {
+  try {
+    const { xml, count } = await generateMerchantFeed({ idType: 'uuid' });
+    if (!count) console.warn('Feed Meta: nessun prodotto idoneo');
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.send(xml);
+  } catch (e) {
+    console.error('Feed Meta: errore generazione:', e.message);
     res.status(503).set('Retry-After', '600').send('Feed temporaneamente non disponibile');
   }
 });

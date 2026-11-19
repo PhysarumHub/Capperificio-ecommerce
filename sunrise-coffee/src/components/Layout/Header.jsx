@@ -14,6 +14,7 @@ const MEGA_LINKS = [
   { label: 'Storia',              href: '/storia' },
   { label: 'Territorio',          href: '/territorio' },
   { label: 'Processo produttivo', href: '/processo-produttivo' },
+  { label: 'Guide',               href: '/guide' },
   { label: 'Area B2B',            href: '/b2b', b2b: true },
 ];
 

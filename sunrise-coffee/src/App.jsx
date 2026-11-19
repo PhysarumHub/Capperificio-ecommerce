@@ -27,6 +27,14 @@ const TerminiCondizioniPage  = lazy(() => import('./pages/TerminiCondizioniPage'
 const NewsletterConfirmPage  = lazy(() => import('./pages/NewsletterConfirmPage'));
 const ContattiPage           = lazy(() => import('./pages/ContattiPage'));
 const FAQPage                = lazy(() => import('./pages/FAQPage'));
+const AssistenzaPage         = lazy(() => import('./pages/AssistenzaPage'));
+const GuideHubPage           = lazy(() => import('./pages/GuideHubPage'));
+const GuidePage              = lazy(() => import('./pages/GuidePage'));
+const AssistenzaTopicPage    = lazy(() => import('./pages/AssistenzaTopicPage'));
+const OrderStatusPage        = lazy(() => import('./pages/OrderStatusPage'));
+const QualcosaNonVaPage      = lazy(() => import('./pages/QualcosaNonVaPage'));
+const PrimoOrdinePage        = lazy(() => import('./pages/PrimoOrdinePage'));
+const SpedizioniResiPage     = lazy(() => import('./pages/SpedizioniResiPage'));
 const SampleBoxPage          = lazy(() => import('./pages/SampleBoxPage'));
 const SampleBoxCheckoutPage  = lazy(() => import('./pages/SampleBoxCheckoutPage'));
 const NatalBoxPage           = lazy(() => import('./pages/NatalBoxPage'));
@@ -71,6 +79,19 @@ export default function App() {
 
             <Route path="/contatti" element={<ContattiPage />} />
             <Route path="/faq" element={<FAQPage />} />
+
+            {/* Centro assistenza: contenuti in src/data/assistenza.js */}
+            <Route path="/assistenza" element={<AssistenzaPage />} />
+            <Route path="/assistenza/dove-e-il-mio-ordine" element={<OrderStatusPage />} />
+            <Route path="/assistenza/qualcosa-non-va" element={<QualcosaNonVaPage />} />
+            <Route path="/assistenza/primo-ordine" element={<PrimoOrdinePage />} />
+            <Route path="/assistenza/:cat" element={<AssistenzaTopicPage />} />
+            <Route path="/assistenza/:cat/:slug" element={<AssistenzaTopicPage />} />
+            <Route path="/spedizioni-e-resi" element={<SpedizioniResiPage />} />
+
+            {/* Guide: contenuti in src/data/guide.js */}
+            <Route path="/guide" element={<GuideHubPage />} />
+            <Route path="/guide/:slug" element={<GuidePage />} />
 
             {/* Configuratore box di Natale (Box Racale + Box a Gettoni) */}
             <Route path="/box-di-natale" element={<NatalBoxPage />} />

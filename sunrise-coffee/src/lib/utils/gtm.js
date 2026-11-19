@@ -208,3 +208,8 @@ export function gtmPurchase({ orderNumber, total, tax = 0, shipping = 0, lineIte
     },
   });
 }
+
+/** Evento generico (es. click su WhatsApp). Stesse regole di consenso degli altri. */
+export function gtmEvent(name, params = {}) {
+  push({ event: name, ...params });
+}

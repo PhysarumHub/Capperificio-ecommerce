@@ -52,6 +52,10 @@ COPY api/ ./api/
 COPY src/lib/utils/slug.js ./src/lib/utils/slug.js
 # Dati aziendali (brand, URL del sito) letti dal feed Google Merchant
 COPY src/data/company.js ./src/data/company.js
+# Contenuti del centro assistenza (server.js li legge per la sitemap.xml)
+COPY src/data/assistenza.js ./src/data/assistenza.js
+# Guide (sitemap.xml)
+COPY src/data/guide.js ./src/data/guide.js
 
 # Frontend buildato
 COPY --from=builder /app/dist ./dist

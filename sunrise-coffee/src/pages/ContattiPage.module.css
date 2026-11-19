@@ -204,3 +204,24 @@
   .methods { grid-template-columns: 1fr; }
   .mapWrap { aspect-ratio: 4 / 3; }
 }
+
+/* ── Prima di scriverci ─────────────────────────────────── */
+.beforeList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.beforeList li { border-bottom: 1px solid var(--color-border); }
+
+.beforeList a {
+  display: block;
+  padding: var(--space-7) 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
+  color: var(--color-dark);
+  text-decoration: none;
+}
+
+.beforeList a:hover { color: var(--color-red); }
