@@ -1,0 +1,272 @@
+/* Processo produttivo — stessa grammatica della pagina Storia (righe 50/50,
+   eyebrow numerato, titoli corsivi) e della Home (colonne con divisori,
+   testo mono, fascia verde scorrevole). */
+
+.page {
+  background: var(--color-light);
+  color: var(--color-dark);
+}
+
+/* ── Righe 50/50 ─────────────────────────────── */
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: min(88vh, 760px);
+}
+
+.flip .rowImage { order: 2; }
+.flip .rowCopy  { order: 1; }
+
+.rowImage {
+  position: relative;
+  overflow: hidden;
+  min-height: 420px;
+}
+
+.rowImage img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.rowCopy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(3rem, 7vw, 7rem) clamp(2rem, 5vw, 6rem);
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-red);
+  opacity: 0.8;
+  margin-bottom: 1.5rem;
+}
+
+.heroTitle,
+.rowTitle {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.05;
+  color: var(--color-dark);
+  margin: 0 0 1.5rem;
+}
+
+.heroTitle { font-size: clamp(2.8rem, 5.6vw, 5.4rem); }
+.rowTitle  { font-size: clamp(2rem, 3.5vw, 3.8rem); }
+
+.rowDesc {
+  font-size: clamp(0.9rem, 1.1vw, 1.05rem);
+  color: var(--color-mid);
+  line-height: 1.9;
+  max-width: 400px;
+  margin: 0;
+}
+
+/* ── Fascia mesi ─────────────────────────────── */
+.marquee {
+  background: var(--color-red);
+  overflow: hidden;
+  padding: 14px 0;
+}
+
+.marqueeTrack {
+  display: flex;
+  width: max-content;
+  white-space: nowrap;
+  animation: processo-marquee 40s linear infinite;
+}
+
+.marqueeTrack > span {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 20px;
+  color: var(--color-light);
+  padding-left: 24px;
+}
+
+.marqueeSep {
+  padding-left: 24px;
+  opacity: 0.6;
+  font-style: normal;
+}
+
+@keyframes processo-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-33.333%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marqueeTrack { animation: none; }
+}
+
+/* ── Manifesto ───────────────────────────────── */
+.kicker {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-red);
+}
+
+.manifesto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
+  text-align: center;
+  padding: clamp(70px, 9vw, 120px) clamp(1.25rem, 5vw, 5rem);
+}
+
+.manifestoText {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(1.6rem, 2.7vw, 2.5rem);
+  line-height: 1.3;
+  color: var(--color-red);
+  max-width: 820px;
+  margin: 0;
+}
+
+/* ── Laboratorio ─────────────────────────────── */
+.lab {
+  padding-top: clamp(70px, 9vw, 120px);
+}
+
+.labHead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+  padding: 0 1.25rem 3.5rem;
+}
+
+.labTitle {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  line-height: 1.05;
+  color: var(--color-dark);
+  margin: 0;
+}
+
+.labGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.labCell {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 36px 28px;
+  border-left: 1px solid var(--color-border);
+}
+
+.labCell:first-child { border-left: 0; }
+
+.labCell .eyebrow { margin-bottom: 0; }
+
+.labCell img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+}
+
+.mono {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  color: var(--color-red);
+  margin: 0;
+}
+
+.after {
+  margin-top: clamp(70px, 9vw, 120px);
+}
+
+/* ── CTA (come "Cammina con noi" in Storia) ───── */
+.cta {
+  background: var(--color-red);
+  padding: clamp(70px, 9vw, 130px) clamp(1.25rem, 4vw, 3.5rem);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ctaTitle {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-style: italic;
+  font-size: clamp(2.6rem, 5.5vw, 5.2rem);
+  color: var(--color-light);
+  line-height: 1.05;
+  margin: 0 0 1.5rem;
+}
+
+.ctaDesc {
+  font-size: clamp(0.95rem, 1.3vw, 1.1rem);
+  color: rgba(252, 243, 223, 0.8);
+  max-width: 460px;
+  line-height: 1.75;
+  margin: 0 0 2.5rem;
+}
+
+.ctaBtn {
+  display: inline-block;
+  background: var(--color-light);
+  color: var(--color-red);
+  border: 2px solid var(--color-light);
+  border-radius: 2rem;
+  padding: 0.9rem 2.6rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: opacity var(--duration-base) var(--ease-default);
+}
+
+.ctaBtn:hover { opacity: 0.85; }
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 900px) {
+  .labGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .labCell:nth-child(3) { border-left: 0; }
+  .labCell:nth-child(n + 3) { border-top: 1px solid var(--color-border); }
+  .labCell { padding: 24px 18px; }
+}
+
+@media (max-width: 768px) {
+  .row {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  .rowImage {
+    order: -1;
+    min-height: 0;
+    aspect-ratio: 4 / 3;
+  }
+  .flip .rowImage { order: -1; }
+  .flip .rowCopy  { order: 0; }
+  .rowCopy { padding: 2.5rem 1.5rem 3.5rem; }
+  .rowDesc { max-width: none; }
+  .marqueeTrack > span { font-size: 16px; }
+}

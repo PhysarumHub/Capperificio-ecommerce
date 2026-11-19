@@ -19,6 +19,7 @@ const CheckoutPage           = lazy(() => import('./pages/CheckoutPage'));
 const AccountPage            = lazy(() => import('./pages/AccountPage'));
 const B2BPage                = lazy(() => import('./pages/B2BPage'));
 const AboutPage              = lazy(() => import('./pages/AboutPage'));
+const ProcessoPage           = lazy(() => import('./pages/ProcessoPage'));
 const PrivacyPolicyPage      = lazy(() => import('./pages/PrivacyPolicyPage'));
 const CookiePolicyPage       = lazy(() => import('./pages/CookiePolicyPage'));
 const TerminiCondizioniPage  = lazy(() => import('./pages/TerminiCondizioniPage'));
@@ -30,7 +31,6 @@ const SampleBoxCheckoutPage  = lazy(() => import('./pages/SampleBoxCheckoutPage'
 const NatalBoxPage           = lazy(() => import('./pages/NatalBoxPage'));
 const TestPageA              = lazy(() => import('./pages/TestPageA'));
 const TestPageB              = lazy(() => import('./pages/TestPageB'));
-const CylinderCarousel       = lazy(() => import('./components/CylinderCarousel'));
 const Carousel3D             = lazy(() => import('./components/Carousel3D/Carousel3D'));
 
 /* Fallback neutro: evita il flash di layout mentre arriva il chunk. */
@@ -65,6 +65,7 @@ export default function App() {
             <Route path="/account/register" element={<AccountPage />} />
             <Route path="/b2b" element={<B2BPage />} />
             <Route path="/storia" element={<AboutPage />} />
+            <Route path="/processo-produttivo" element={<ProcessoPage />} />
             <Route path="/newsletter-subscribe" element={<NewsletterConfirmPage />} />
 
             <Route path="/contatti" element={<ContattiPage />} />
@@ -87,7 +88,6 @@ export default function App() {
           <Route path="/territorio" element={<Carousel3D />} />
           <Route path="/test-a" element={<TestPageA />} />
           <Route path="/test-b" element={<TestPageB />} />
-          <Route path="/processo-produttivo" element={<CylinderCarousel />} />
 
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
