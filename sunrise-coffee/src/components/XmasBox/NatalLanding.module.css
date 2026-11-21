@@ -73,6 +73,7 @@
 .heroArt { flex: 1 1 500px; min-width: 0; position: relative; }
 .heroKraft { background: var(--kraft); border-radius: var(--radius-card); padding: 28px; }
 .heroKraft img { width: 100%; height: auto; mix-blend-mode: multiply; }
+.heroKraft img.heroPhoto { mix-blend-mode: normal; border-radius: 4px; display: block; }
 
 .heroNote {
   position: absolute;

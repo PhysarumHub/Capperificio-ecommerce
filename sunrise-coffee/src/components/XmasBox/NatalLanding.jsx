@@ -43,9 +43,10 @@ export default function NatalLanding({ onTokens, onRacale }) {
         <div className={styles.heroArt}>
           <div className={styles.heroKraft}>
             <img
-              src="/images/box-natale/box-poster-cassetta.webp"
-              alt="La Cassetta in Legno piena: vasetti di capperi, olio, vino e sacchetti di forno e legumi, chiusa con il nastro rosso"
-              width="1200" height="900" fetchPriority="high" decoding="async"
+              className={styles.heroPhoto}
+              src="/images/box-natale/box-natale-hero.webp"
+              alt="Le box di Natale del Capperificio Caro sotto l’albero: la cassetta di legno con capperi, vino e dolci e le confezioni in lino verde con i vasetti"
+              width="1200" height="896" fetchPriority="high" decoding="async"
             />
           </div>
           <figure className={styles.heroNote} aria-label="Esempio di biglietto">
