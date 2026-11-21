@@ -26,17 +26,17 @@ from _config import shopware_config
 cfg = shopware_config()
 BASE, USER, PASS = cfg.api_base, cfg.user, cfg.password
 DRY = '--dry-run' in sys.argv
-COVER = pathlib.Path(__file__).resolve().parent.parent / 'public/images/box-natale/box-poster-cassetta.webp'
+IMGDIR = pathlib.Path(__file__).resolve().parent.parent / 'public/images/box-natale'
 
 # Prezzi lordi (confermati il 21/11/2026).
 BOXES = [
-    {'number': 'XMAS-BOX-RACALE-3', 'env': 'VITE_XMAS_BOX_FIXED_ID', 'gross': 20.00,
+    {'number': 'XMAS-BOX-RACALE-3', 'env': 'VITE_XMAS_BOX_FIXED_ID', 'gross': 20.00, 'cover': 'box-racale-3-foto.webp',
      'name': 'Box di Natale Racale · 3 vasetti',
      'desc': 'Confezione regalo in tela verde con finestre e fiocco: germogli di cappero, polvere di cappero e capperi Lilliput.'},
-    {'number': 'XMAS-BOX-RACALE-2', 'env': 'VITE_XMAS_BOX_FIXED2_ID', 'gross': 14.00,
+    {'number': 'XMAS-BOX-RACALE-2', 'env': 'VITE_XMAS_BOX_FIXED2_ID', 'gross': 14.00, 'cover': 'box-racale-2-foto.webp',
      'name': 'Box di Natale Racale · 2 vasetti',
      'desc': 'Confezione regalo in tela verde con finestre e fiocco: capperi Lilliput e polvere di cappero.'},
-    {'number': 'XMAS-BOX-GETTONI', 'env': 'VITE_XMAS_BOX_TOKENS_ID', 'gross': 50.00,
+    {'number': 'XMAS-BOX-GETTONI', 'env': 'VITE_XMAS_BOX_TOKENS_ID', 'gross': 50.00, 'cover': 'cassetta-legno-foto.webp',
      'name': 'Cassetta in Legno',
      'desc': 'Cassetta composta dal cliente con 11 gettoni: almeno 3 vasetti del Capperificio Caro, poi olio, vino, forno di Pane è Fantasie e legumi di Terra Nera. La composizione è nella riga d’ordine.'},
 ]
@@ -111,18 +111,22 @@ def main():
     rate = tax['taxRate']
     print(f'✓ IVA {rate}% ({tax["name"]}) — sales channel {channel}')
 
-    # copertina condivisa (poster della scatola chiusa)
-    media_id = None
-    if COVER.exists():
-        found = search('media', [{'type': 'equals', 'field': 'fileName', 'value': 'box-natale-poster'}])
+    # copertina di ogni box: la sua foto (carrello, checkout, email)
+    def cover_media(fname):
+        path = IMGDIR / fname
+        if not path.exists():
+            return None
+        stem = 'box-natale-' + path.stem
+        found = search('media', [{'type': 'equals', 'field': 'fileName', 'value': stem}])
         if found:
-            media_id = found[0]['id']
-        elif not DRY:
-            media_id = uid()
-            api('POST', '/media', {'id': media_id})
-            api('POST', f'/_action/media/{media_id}/upload?extension=webp&fileName=box-natale-poster',
-                raw=COVER.read_bytes(), ctype='image/webp')
-        print('✓ copertina', media_id or '(dry-run)')
+            return found[0]['id']
+        if DRY:
+            return None
+        mid = uid()
+        api('POST', '/media', {'id': mid})
+        api('POST', f'/_action/media/{mid}/upload?extension=webp&fileName={stem}',
+            raw=path.read_bytes(), ctype='image/webp')
+        return mid
 
     lines = []
     for b in BOXES:
@@ -139,6 +143,8 @@ def main():
             'weight': 1.2,
             'price': [{'currencyId': eur, 'gross': b['gross'], 'net': net, 'linked': True}],
         }
+        media_id = cover_media(b['cover']) if b.get('cover') else None
+        print(f'  copertina {b.get("cover")} → {media_id or "(dry-run)"}')
         existing = search('product', [{'type': 'equals', 'field': 'productNumber', 'value': b['number']}],
                           assoc={'visibilities': {}, 'media': {}})
         if existing:
@@ -146,6 +152,12 @@ def main():
             vis = (existing[0].get('visibilities') or [])
             if not any(v.get('salesChannelId') == channel for v in vis):
                 payload['visibilities'] = [{'salesChannelId': channel, 'visibility': 10}]
+            if media_id:
+                pm_found = [m for m in (existing[0].get('media') or []) if m.get('mediaId') == media_id]
+                pm = pm_found[0]['id'] if pm_found else uid()
+                if not pm_found:
+                    payload['media'] = [{'id': pm, 'mediaId': media_id, 'position': 0}]
+                payload['coverId'] = pm
             api('PATCH', f'/product/{pid}', payload)
             action = 'aggiornato'
         else:
