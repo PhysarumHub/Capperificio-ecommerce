@@ -10,9 +10,11 @@ import styles from './Header.module.css';
 const MEGA_LINKS = [
   { label: 'Home',                href: '/' },
   { label: 'I nostri prodotti',   href: '/collections/all' },
+  { label: 'Box di Natale',       href: '/box-di-natale' },
   { label: 'Storia',              href: '/storia' },
   { label: 'Territorio',          href: '/territorio' },
   { label: 'Processo produttivo', href: '/processo-produttivo' },
+  { label: 'Guide',               href: '/guide' },
   { label: 'Area B2B',            href: '/b2b', b2b: true },
 ];
 
@@ -32,6 +34,13 @@ export default function Header() {
   }, []);
 
   const closeCart = useCallback(() => setCartOpen(false), []);
+
+  // Le pagine possono aprire il carrello senza passare dall'header
+  // (es. /box-di-natale dopo l'aggiunta della box).
+  useEffect(() => {
+    window.addEventListener('caro:open-cart', openCart);
+    return () => window.removeEventListener('caro:open-cart', openCart);
+  }, [openCart]);
 
   const openAuth = useCallback(() => {
     setAuthOpen(true);
@@ -77,7 +86,7 @@ export default function Header() {
 
         <div className={styles.navCenter}>
           <Link to="/">
-            <img src="/images/Logo_icona.svg" alt="Capperificio" className={styles.navLogo} />
+            <img src="/images/Logo_icona.svg" alt="Capperificio" className={styles.navLogo} width="44" height="44" />
           </Link>
         </div>
 

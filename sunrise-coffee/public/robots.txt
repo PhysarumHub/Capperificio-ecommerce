@@ -1,16 +1,48 @@
 User-agent: *
 Allow: /
 
-# Pagine private
+# Pagine private o di servizio
 Disallow: /cart
 Disallow: /checkout
 Disallow: /account
-Disallow: /account/login
-Disallow: /account/register
+Disallow: /sample-box/checkout
+Disallow: /newsletter-subscribe
+Disallow: /test-a
+Disallow: /test-b
 
 # API
 Disallow: /store-api/
 Disallow: /api/
 
-# Sitemap
+# Motori di ricerca e di risposta AI: benvenuti su tutto il contenuto pubblico.
+# (Elencati per chiarezza: valgono le stesse regole di "*".)
+User-agent: Googlebot
+User-agent: Bingbot
+User-agent: Applebot
+User-agent: Applebot-Extended
+User-agent: Google-Extended
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: CCBot
+User-agent: DuckAssistBot
+User-agent: meta-externalagent
+Allow: /
+Disallow: /cart
+Disallow: /checkout
+Disallow: /account
+Disallow: /sample-box/checkout
+Disallow: /newsletter-subscribe
+Disallow: /test-a
+Disallow: /test-b
+Disallow: /store-api/
+Disallow: /api/
+
+# Indice per i modelli linguistici: https://www.capperificiocaro.com/llms.txt
+
 Sitemap: https://www.capperificiocaro.com/sitemap.xml

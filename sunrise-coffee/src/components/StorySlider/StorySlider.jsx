@@ -8,7 +8,7 @@ const ITEMS = [
   },
   {
     type: 'image',
-    src: '/images/20250611_CapperificioCaro_Capperi___-3635 (1).webp',
+    src: '/images/capperificio-caro-capperi-racale.webp',
     alt: 'Capperi di Racale',
   },
   {
@@ -59,7 +59,7 @@ export default function StorySlider() {
           </div>
         ) : (
           <div key={i} className={styles.imageCell}>
-            <img src={item.src} alt={item.alt} className={styles.image} draggable={false} loading="lazy" decoding="async" />
+            <img src={item.src} alt={item.alt} className={styles.image} width="600" height="400" draggable={false} loading="lazy" decoding="async" />
           </div>
         )
       ))}

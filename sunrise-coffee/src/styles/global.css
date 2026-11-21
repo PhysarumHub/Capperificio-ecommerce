@@ -122,7 +122,7 @@
   --color-red:        #547054;
   --color-red-hover:  #3D5A3D;
   --color-dark:       #2C4A2C;
-  --color-mid:        #6B8A6B;
+  --color-mid:        #587558; /* 4.6:1 sul crema (WCAG AA); era #6B8A6B, 3.5:1 */
   --color-light:      #FCF3DF;
   --color-cream:      #EAF0E5;
   --color-white:      #FFFFFF;

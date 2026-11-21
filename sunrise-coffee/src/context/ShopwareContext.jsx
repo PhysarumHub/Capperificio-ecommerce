@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo } from 'react';
 import { useCart } from '../hooks/useCart';
 import { useCustomer } from '../hooks/useCustomer';
-import { isShopwareConfigured } from '../lib/shopware-client';
+import { isShopwareConfigured, getContextToken } from '../lib/shopware-client';
 
 const B2B_GROUP_NAME = import.meta.env.VITE_B2B_GROUP_NAME || 'B2B';
 
@@ -28,8 +28,13 @@ export default function ShopwareProvider({ children }) {
   // Initialize cart and customer session on mount
   useEffect(() => {
     if (!isShopwareConfigured()) return;
+    // Senza context token è un visitatore nuovo: non può essere loggato, e
+    // chiedere /account/customer darebbe solo un 403 in console (Lighthouse
+    // lo conta in Best Practices). Il token va letto prima di fetchCart, che
+    // potrebbe crearne uno nuovo (anonimo).
+    const hadSession = Boolean(getContextToken());
     cartState.fetchCart();
-    customerState.fetchCustomer();
+    if (hadSession) customerState.fetchCustomer();
   }, []);
 
   return (

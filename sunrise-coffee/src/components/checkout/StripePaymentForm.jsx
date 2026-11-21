@@ -7,8 +7,14 @@ import styles from './Checkout.module.css';
 /**
  * Modulo carta/wallet: conferma il pagamento su Stripe, poi lascia al server la
  * creazione dell'ordine (`onSuccess`).
+ *
+ * `returnPath` e `copy` servono ai checkout fuori dal carrello (es. /sample-box,
+ * in inglese): i default restano quelli del checkout principale.
  */
-export default function StripePaymentForm({ onSuccess, totalPrice, disabled, billingDetails }) {
+export default function StripePaymentForm({
+  onSuccess, totalPrice, disabled, billingDetails, returnPath = '/checkout', copy = {},
+  paymentMethodOrder,
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -31,7 +37,7 @@ export default function StripePaymentForm({ onSuccess, totalPrice, disabled, bil
     const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/checkout`,
+        return_url: `${window.location.origin}${returnPath}`,
         // I dati di fatturazione arrivano dal form: senza questo Stripe li
         // richiederebbe di nuovo (nome, email, paese) subito dopo che l'utente
         // li ha appena scritti.
@@ -50,7 +56,7 @@ export default function StripePaymentForm({ onSuccess, totalPrice, disabled, bil
     try {
       await onSuccess(paymentIntent?.id);
     } catch (err) {
-      setError(err?.message || 'Errore durante il completamento dell’ordine.');
+      setError(err?.message || copy.orderError || 'Errore durante il completamento dell’ordine.');
     }
     setLoading(false);
   };
@@ -65,6 +71,9 @@ export default function StripePaymentForm({ onSuccess, totalPrice, disabled, bil
           // Nessun campo di fatturazione duplicato: li abbiamo già tutti dal
           // form e li passiamo alla conferma. Restano solo i dati della carta.
           fields: { billingDetails: 'never' },
+          // Metodo locale in prima posizione (es. Bancontact per il Belgio):
+          // su mobile le schede oltre la terza finiscono nel menu a tendina.
+          ...(paymentMethodOrder ? { paymentMethodOrder } : {}),
         }}
       />
 
@@ -82,10 +91,10 @@ export default function StripePaymentForm({ onSuccess, totalPrice, disabled, bil
         style={{ marginTop: 'var(--space-9)' }}
       >
         {busy ? (
-          <><SpinnerIcon size={17} className={styles.spinner} />Elaborazione…</>
+          <><SpinnerIcon size={17} className={styles.spinner} />{copy.processing || 'Elaborazione…'}</>
         ) : (
           <><LockIcon size={17} />
-            Paga {typeof totalPrice === 'number' ? formatPrice(totalPrice) : ''}</>
+            {copy.pay || <>Paga {typeof totalPrice === 'number' ? formatPrice(totalPrice) : ''}</>}</>
         )}
       </button>
     </form>

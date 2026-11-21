@@ -1,0 +1,53 @@
+/* Elementi comuni della Box di Natale: bottoni, kicker, gettone.
+   Bottoni e kicker sono quelli del sito (maiuscoletto, pill verde). Il kraft e
+   il rosso del nastro sono i materiali della confezione vera. */
+
+.btnPrimary, .btnOutline, .btnLight {
+  min-height: 50px;
+  padding: 0 26px;
+  border-radius: 30px;
+  border: 1.5px solid var(--color-red);
+  font-size: var(--text-md);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  transition: background var(--duration-base), color var(--duration-base), border-color var(--duration-base), transform 160ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms;
+}
+.btnPrimary { background: var(--color-red); color: var(--color-white); }
+.btnPrimary:hover:not(:disabled) { background: var(--color-red-hover); border-color: var(--color-red-hover); color: var(--color-white); }
+.btnOutline { background: transparent; color: var(--color-red); }
+.btnOutline:hover { background: var(--color-red); color: var(--color-white); }
+.btnLight { background: var(--color-light); border-color: var(--color-light); color: var(--color-dark); }
+.btnLight:hover { background: var(--color-white); border-color: var(--color-white); }
+.btnPrimary:active:not(:disabled), .btnOutline:active, .btnLight:active { transform: scale(.97); }
+.btnPrimary:disabled { opacity: .45; cursor: not-allowed; }
+.btnPrimary:focus-visible, .btnOutline:focus-visible, .btnLight:focus-visible { outline: 2px solid var(--color-dark); outline-offset: 3px; }
+
+.kicker {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--color-red);
+}
+.kicker::before { content: '• '; }
+
+/* gettone d'ottone */
+.coin {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #C99A45;
+  box-shadow: inset 0 0 0 2px #E6C77E, 0 0 0 1px #9C722A;
+  vertical-align: -3px;
+  flex: none;
+}
+.coins { display: inline-flex; }
+.coins .coin + .coin { margin-left: -6px; }

@@ -9,12 +9,16 @@ const LINKS_COL1 = [
   { label: 'Storia',              href: '/storia' },
   { label: 'Territorio',          href: '/territorio' },
   { label: 'Processo produttivo', href: '/processo-produttivo' },
+  { label: 'Guide',               href: '/guide' },
 ];
 
 const LINKS_COL2 = [
-  { label: 'Area B2B',         href: '/b2b' },
-  { label: 'Contatti',         href: '/contatti' },
-  { label: 'FAQ',              href: '/faq' },
+  { label: 'Centro assistenza',    href: '/assistenza' },
+  { label: 'Dov’è il mio ordine',  href: '/assistenza/dove-e-il-mio-ordine' },
+  { label: 'Spedizioni e resi',    href: '/spedizioni-e-resi' },
+  { label: 'Domande frequenti',    href: '/faq' },
+  { label: 'Contatti',             href: '/contatti' },
+  { label: 'Area B2B',             href: '/b2b' },
   { label: 'Gestione cookie',  href: '#', cookie: true },
 ];
 
@@ -79,7 +83,7 @@ export default function Footer() {
       </div>
 
       <div className={styles.tagline}>
-        <img src="/images/Scritta_caro.svg" alt="Capperificio di Racale" className={styles.scrittaCaro} loading="lazy" />
+        <img src="/images/Scritta_caro.svg" alt="Capperificio di Racale" className={styles.scrittaCaro} width="430" height="90" loading="lazy" />
       </div>
     </footer>
   );

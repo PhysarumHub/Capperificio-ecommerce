@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { useSEO } from '../hooks/useSEO';
+import { COLLECTIONS } from '../data/collections';
 
 const B2B_CATEGORY_ID = import.meta.env.VITE_B2B_CATEGORY_ID || null;
 import ProductCard from '../components/ProductCard/ProductCard';
@@ -120,36 +121,6 @@ const ALL_PRODUCTS_FALLBACK = [
   },
 ];
 
-/* ─── Metadati collezioni ─── */
-
-const COLLECTIONS = {
-  all: {
-    title: 'Tutti i Prodotti',
-    description: "L'intera gamma dei nostri capperi di Racale — dalle varietà classiche alle specialità artigianali.",
-    label: 'Shop',
-  },
-  cappero: {
-    title: 'Capperi',
-    description: 'Capperi di Racale raccolti a mano e conservati al sale marino o in aceto artigianale.',
-    label: 'Categoria',
-  },
-  cucunci: {
-    title: 'Cucunci',
-    description: 'I frutti del cappero, dalla polpa carnosa e dal sapore intenso e profumato.',
-    label: 'Categoria',
-  },
-  foglie: {
-    title: 'Foglie di Cappero',
-    description: 'Foglie tenere di cappero conservate in aceto, perfette per antipasti e condimenti.',
-    label: 'Categoria',
-  },
-  polvere: {
-    title: 'Polvere di Cappero',
-    description: 'Capperi di Racale essiccati e macinati: un condimento unico, intenso e versatile.',
-    label: 'Specialità',
-  },
-};
-
 const SORT_OPTIONS = [
   { value: 'featured',   label: 'In evidenza' },
   { value: 'name-asc',   label: 'A — Z' },
@@ -223,6 +194,8 @@ function mapShopwareProduct(product) {
     options:        resolveVariantOptions(product),
     variantMap:     product._variantMap || {},
     availabilityMap: product._availabilityMap || {},
+    variantImageMap: product._variantImageMap || {},
+    variantHoverImageMap: product._variantHoverImageMap || {},
     collections:    ['all'],
     tipo,
     formato,
@@ -372,6 +345,8 @@ export default function CollectionPage() {
                   options={p.options}
                   variantMap={p.variantMap}
                   availabilityMap={p.availabilityMap}
+                  variantImageMap={p.variantImageMap}
+                  variantHoverImageMap={p.variantHoverImageMap}
                   soldOut={p.soldOut}
                 />
               ))}
