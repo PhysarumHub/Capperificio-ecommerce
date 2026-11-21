@@ -241,7 +241,7 @@
   .heroLead { font-size: var(--text-lg); }
   .heroCtas > * { flex: 1 1 100%; }
   .heroKraft { padding: 16px; }
-  .heroNote { left: -6px; bottom: -24px; width: 190px; padding: 14px 16px; }
+  .heroNote { display: none; } /* su mobile il biglietto copre la foto */
   .noteText { font-size: 17px; }
   .heroSeal { width: 80px; height: 80px; right: 8px; top: -18px; }
   .sealNum { font-size: 28px; }

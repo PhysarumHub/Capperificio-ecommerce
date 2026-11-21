@@ -7,10 +7,9 @@ import {
   BOXES, BOX_PRODUCT_IDS, PRODUCTS, PRODUCT_BY_ID, STEPS, STEP_GROUPS, SHIP_ASAP,
 } from '../data/natalBox';
 import {
-  summarize, itemState, addPick, removePick, stepStatus, sceneFor, tokens, plural,
+  summarize, itemState, addPick, removePick, stepStatus, tokens, plural,
   cleanPicked,
 } from '../components/XmasBox/boxLogic';
-import BoxStage from '../components/XmasBox/BoxStage';
 import BoxItemCard, { Coins } from '../components/XmasBox/BoxItemCard';
 import TokenMeter from '../components/XmasBox/TokenMeter';
 import NatalLanding from '../components/XmasBox/NatalLanding';
@@ -28,6 +27,7 @@ import styles from './NatalBoxPage.module.css';
    spedizione e regalo viaggiano nel payload della riga (natalBox). */
 
 const STORE_KEY = 'caro:box-natale';
+const CASSETTA_PHOTO = '/images/box-natale/cassetta-legno-foto.webp';
 const eur = (n) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
 
 function loadSaved() {
@@ -54,7 +54,6 @@ export default function NatalBoxPage() {
     return g;
   });
   const [giftErrors, setGiftErrors] = useState({});
-  const [giftNonce, setGiftNonce] = useState(0);
   const [added, setAdded] = useState(null);       // { type, preview, ship, to } dopo l'aggiunta
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -93,16 +92,6 @@ export default function NatalBoxPage() {
   // nessuna scelta della data: parte appena pronta
   const week = SHIP_ASAP;
   const size = BOXES.racale.sizes.find((x) => x.n === giftSize);
-  const scene = useMemo(
-    () => sceneFor({
-      view: view === 'gift' ? 'done' : view,
-      step,
-      picked,
-      giftItems: size.items,
-      added: view === 'gift' ? giftFor : added?.type,
-    }),
-    [view, step, picked, size, added, giftFor],
-  );
 
   /* ── navigazione ──────────────────────────────────────── */
   // lo scroll parte dopo il render della nuova vista (su mobile cambia
@@ -130,7 +119,7 @@ export default function NatalBoxPage() {
     scrollToPanel();
   }, [setParams]);
   const goStep = (i) => go({ box: 'gettoni', step: String(i + 1) });
-  const openRacale = () => { setGiftNonce((n) => n + 1); go({ box: 'racale' }); };
+  const openRacale = () => go({ box: 'racale' });
   const openTokens = () => go({ box: 'gettoni', step: '1' });
   const backToIntro = () => go({});
   const openGift = () => {
@@ -150,19 +139,10 @@ export default function NatalBoxPage() {
   };
   useEffect(() => () => clearTimeout(toastTimer.current), []);
 
-  // tocco su un prodotto nella scena 3D = lo tolgo (con annulla)
-  const pickFromStage = view === 'tokens' && step < 3 ? (id) => {
-    const p = PRODUCT_BY_ID[id];
-    if (!p) return;
-    const before = picked;
-    setPicked(removePick(before, id));
-    showToast(`Tolto: ${p.name}`, () => setPicked(before));
-  } : undefined;
 
   const changeSize = (n) => {
     if (n === giftSize) return;
     setGiftSize(n);
-    setGiftNonce((x) => x + 1);
   };
 
   const changeGift = (next) => {
@@ -305,13 +285,12 @@ export default function NatalBoxPage() {
     };
   }
 
-  const stageLabel = view === 'tokens'
-    ? `Anteprima 3D della tua cassetta: ${sum.items ? sum.chosen.map(({ p, qty }) => `${qty} ${p.name}`).join(', ') : 'ancora vuota'}.`
-    : giftFor === 'racale' && (view === 'racale' || view === 'gift' || added?.type === 'racale')
-      ? `Anteprima 3D della ${BOXES.racale.name} da ${size.label}.`
-      : 'Anteprima 3D della tua Cassetta in Legno chiusa con il nastro.';
 
-  const showRacalePhoto = giftFor === 'racale' && (view === 'racale' || view === 'gift' || added?.type === 'racale');
+  // Foto al posto della scena 3D: una per formato della Box Racale, una per la Cassetta
+  const isRacaleView = giftFor === 'racale' && (view === 'racale' || view === 'gift' || added?.type === 'racale');
+  const stagePhoto = isRacaleView
+    ? { src: size.photo, alt: `La Box Racale da ${size.label}: confezione in lino verde a finestre con i vasetti del Capperificio Caro, sotto l’albero di Natale` }
+    : { src: CASSETTA_PHOTO, alt: 'La Cassetta in Legno del Capperificio Caro con capperi di Racale, vino, dolci e biscotti, sotto l’albero di Natale' };
   const showMeter = view === 'tokens' || (view === 'gift' && giftFor === 'tokens');
   const boxTitle = view === 'racale' || (view === 'gift' && giftFor === 'racale') || added?.type === 'racale'
     ? BOXES.racale.name : BOXES.tokens.name;
@@ -367,25 +346,14 @@ export default function NatalBoxPage() {
         {/* ── la scatola ── */}
         <div className={styles.stageCol}>
           <div className={styles.kraft}>
-            <div className={`${styles.stageBox} ${showRacalePhoto ? styles.stageBoxPhoto : ''}`}>
-              {showRacalePhoto ? (
-                // Box Racale: foto della confezione (una per formato) al posto della scena 3D
-                <img
-                  key={size.photo}
-                  className={styles.stagePhoto}
-                  src={size.photo}
-                  alt={`La Box Racale da ${size.label}: confezione in lino verde a finestre con i vasetti del Capperificio Caro, sotto l’albero di Natale`}
-                  width="896" height="1200" decoding="async"
-                />
-              ) : (
-                <BoxStage scene={scene} giftNonce={giftNonce} onPick={pickFromStage} label={stageLabel}>
-                  {view === 'tokens' && step < 3 && (
-                    <p className={styles.stageHint} data-busy={sum.items > 0}>
-                      {sum.items ? 'Tocca un prodotto nella cassetta per toglierlo' : 'Trascina per ruotare la cassetta'}
-                    </p>
-                  )}
-                </BoxStage>
-              )}
+            <div className={`${styles.stageBox} ${styles.stageBoxPhoto}`}>
+              <img
+                key={stagePhoto.src}
+                className={styles.stagePhoto}
+                src={stagePhoto.src}
+                alt={stagePhoto.alt}
+                width="1200" height="896" decoding="async"
+              />
               {view === 'gift' && gift.mode === 'recipient' && (
                 <div className={styles.stageNote}><GiftNote gift={gift} /></div>
               )}
