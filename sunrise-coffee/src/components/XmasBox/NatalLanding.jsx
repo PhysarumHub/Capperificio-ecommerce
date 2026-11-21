@@ -26,8 +26,8 @@ export default function NatalLanding({ onTokens, onRacale }) {
           <p className={ui.kicker}>Natale · Racale, Salento</p>
           <h1 className={styles.heroTitle}>Il Salento,<br /><em>chiuso</em> in una scatola.</h1>
           <p className={styles.heroLead}>
-            Capperi raccolti a mano a Racale, olio e vino del territorio, il forno di Pane è Fantasie e i legumi
-            di Terra Nera. La componi tu, noi la chiudiamo con il nastro e la spediamo a chi vuoi tu.
+            Capperi raccolti a mano a Racale, olio e vino del territorio, dolci da forno e legumi
+            del Salento. La componi tu, noi la chiudiamo con il nastro e la spediamo a chi vuoi tu.
           </p>
           <div className={styles.heroCtas}>
             <button type="button" className={ui.btnPrimary} onClick={onTokens}>Componi la tua cassetta <span aria-hidden="true">→</span></button>
@@ -141,13 +141,13 @@ export default function NatalLanding({ onTokens, onRacale }) {
           <li>
             <span className={styles.howNum}>2</span>
             <h3>Olio e vino</h3>
-            <p>Olio EVO biologico di OP ACLI Racale e vino da un litro della Cantina Torre Ospina: rosso, rosato o bianco.</p>
+            <p>Olio EVO biologico del Salento e vino da un litro della Cantina Torre Ospina: rosso, rosato o bianco.</p>
             <p className={styles.howCost}><Coins n={1} /> 1 vino · <Coins n={2} /> 2 olio</p>
           </li>
           <li>
             <span className={styles.howNum}>3</span>
             <h3>Forno e legumi</h3>
-            <p>Purciddhuzzi, mustazzere, cantucci, tarallini e friselle di Pane è Fantasie. Pisello nano, lenticchie e cicerchia di Terra Nera.</p>
+            <p>Purciddhuzzi, mustazzere, cantucci, tarallini e friselle. Pisello nano, lenticchie e cicerchia del Salento.</p>
             <p className={styles.howCost}><Coins n={1} /> 1 l’uno</p>
           </li>
         </ol>

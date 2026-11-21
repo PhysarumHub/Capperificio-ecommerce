@@ -38,7 +38,7 @@ BOXES = [
      'desc': 'Confezione regalo in tela verde con finestre e fiocco: capperi Lilliput e polvere di cappero.'},
     {'number': 'XMAS-BOX-GETTONI', 'env': 'VITE_XMAS_BOX_TOKENS_ID', 'gross': 50.00, 'cover': 'cassetta-legno-foto.webp',
      'name': 'Cassetta in Legno',
-     'desc': 'Cassetta composta dal cliente con 11 gettoni: almeno 3 vasetti del Capperificio Caro, poi olio, vino, forno di Pane è Fantasie e legumi di Terra Nera. La composizione è nella riga d’ordine.'},
+     'desc': 'Cassetta composta dal cliente con 11 gettoni: almeno 3 vasetti del Capperificio Caro, poi olio, vino, prodotti da forno e legumi del Salento. La composizione è nella riga d’ordine.'},
 ]
 _h = {}
 

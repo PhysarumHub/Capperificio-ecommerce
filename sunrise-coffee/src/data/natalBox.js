@@ -55,8 +55,6 @@ export const BOXES = {
    cost:   gettoni per unità
    image:  solo per i vasetti del Capperificio con foto; null = card solo testo
    m3:     aspetto nella scena 3D [forma, contenuto, titolo, sottotitolo, piede, peso, vetro, colore etichetta] */
-const PF = 'Pane è Fantasie';
-const TN = 'Terra Nera';
 
 export const PRODUCTS = [
   // Capperi di Racale — sotto sale
@@ -87,26 +85,26 @@ export const PRODUCTS = [
   { id: 'leaves', sect: 'caro', cost: 1, name: 'Foglie di cappero', detail: 'Al sale marino · 50 g', note: 'Fresche e minerali', image: `${IMG}/leaves.webp`,
     m3: ['squat', 'leaves', 'Foglie di cappero', 'Al sale marino', '', '50g'] },
   // Olio e vino
-  { id: 'olio', sect: 'olio', cost: 2, name: 'Olio EVO biologico', detail: '500 ml', producer: 'OP ACLI Racale', image: null,
-    m3: ['bottle', '', 'Olio EVO BIO', 'OP ACLI Racale', '', '500ml', 0x4a5a22] },
+  { id: 'olio', sect: 'olio', cost: 2, name: 'Olio EVO biologico', detail: '500 ml', image: null,
+    m3: ['bottle', '', 'Olio EVO BIO', 'Salento', '', '500ml', 0x4a5a22] },
   { id: 'vino-rosso', sect: 'vino', cost: 1, name: 'Vino rosso', detail: '1 L', producer: 'Cantina Torre Ospina', image: null,
     m3: ['bottle', '', 'Vino rosso', 'Torre Ospina', '', '1L', 0x2e1014] },
   { id: 'vino-rosato', sect: 'vino', cost: 1, name: 'Vino rosato', detail: '1 L', producer: 'Cantina Torre Ospina', image: null,
     m3: ['bottle', '', 'Vino rosato', 'Torre Ospina', '', '1L', 0x8e3a46] },
   { id: 'vino-bianco', sect: 'vino', cost: 1, name: 'Vino bianco', detail: '1 L', producer: 'Cantina Torre Ospina', image: null,
     m3: ['bottle', '', 'Vino bianco', 'Torre Ospina', '', '1L', 0x8f9a5a] },
-  // Forno — Pane è Fantasie
-  { id: 'pf-purciddhuzzi', sect: 'forno', cost: 1, name: 'Purciddhuzzi', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Purciddhuzzi', PF, '', '', 0, 0x8c1c24] },
-  { id: 'pf-pitteddhe', sect: 'forno', cost: 1, name: 'Pitteddhe', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Pitteddhe', PF, '', '', 0, 0x8c1c24] },
-  { id: 'pf-mustazzere', sect: 'forno', cost: 1, name: 'Mustazzere', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Mustazzere', PF, '', '', 0, 0x8c1c24] },
-  { id: 'pf-cantucci', sect: 'forno', cost: 1, name: 'Cantucci', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Cantucci', PF, '', '', 0, 0x8c1c24] },
-  { id: 'pf-tarallini-vino', sect: 'forno', cost: 1, name: 'Tarallini al vino', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Tarallini al vino', PF, '', '', 0, 0x8c1c24] },
-  { id: 'pf-tarallini-zucchero', sect: 'forno', cost: 1, name: 'Tarallini zuccherati', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Tarallini zuccherati', PF, '', '', 0, 0x8c1c24] },
-  { id: 'pf-friselle', sect: 'forno', cost: 1, name: 'Friselle', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Friselle', PF, '', '', 0, 0x8c1c24] },
-  // Legumi — Terra Nera
-  { id: 'tn-pisello', sect: 'legumi', cost: 1, name: 'Pisello nano di Zollino', detail: '500 g', producer: TN, image: null, m3: ['pouch', '', 'Pisello nano', TN, '', '', 0, 0x2c4a2c] },
-  { id: 'tn-lenticchie', sect: 'legumi', cost: 1, name: 'Lenticchie multicolore di Zollino', detail: '500 g', producer: TN, image: null, m3: ['pouch', '', 'Lenticchie', TN, '', '', 0, 0x2c4a2c] },
-  { id: 'tn-cicerchia', sect: 'legumi', cost: 1, name: 'Cicerchia di Uggiano', detail: '500 g', producer: TN, image: null, m3: ['pouch', '', 'Cicerchia', TN, '', '', 0, 0x2c4a2c] },
+  // Forno salentino
+  { id: 'pf-purciddhuzzi', sect: 'forno', cost: 1, name: 'Purciddhuzzi', detail: '250 g', image: null, m3: ['pouch', '', 'Purciddhuzzi', 'Forno salentino', '', '', 0, 0x8c1c24] },
+  { id: 'pf-pitteddhe', sect: 'forno', cost: 1, name: 'Pitteddhe', detail: '250 g', image: null, m3: ['pouch', '', 'Pitteddhe', 'Forno salentino', '', '', 0, 0x8c1c24] },
+  { id: 'pf-mustazzere', sect: 'forno', cost: 1, name: 'Mustazzere', detail: '250 g', image: null, m3: ['pouch', '', 'Mustazzere', 'Forno salentino', '', '', 0, 0x8c1c24] },
+  { id: 'pf-cantucci', sect: 'forno', cost: 1, name: 'Cantucci', detail: '250 g', image: null, m3: ['pouch', '', 'Cantucci', 'Forno salentino', '', '', 0, 0x8c1c24] },
+  { id: 'pf-tarallini-vino', sect: 'forno', cost: 1, name: 'Tarallini al vino', detail: '250 g', image: null, m3: ['pouch', '', 'Tarallini al vino', 'Forno salentino', '', '', 0, 0x8c1c24] },
+  { id: 'pf-tarallini-zucchero', sect: 'forno', cost: 1, name: 'Tarallini zuccherati', detail: '250 g', image: null, m3: ['pouch', '', 'Tarallini zuccherati', 'Forno salentino', '', '', 0, 0x8c1c24] },
+  { id: 'pf-friselle', sect: 'forno', cost: 1, name: 'Friselle', detail: '250 g', image: null, m3: ['pouch', '', 'Friselle', 'Forno salentino', '', '', 0, 0x8c1c24] },
+  // Legumi salentini
+  { id: 'tn-pisello', sect: 'legumi', cost: 1, name: 'Pisello nano di Zollino', detail: '500 g', image: null, m3: ['pouch', '', 'Pisello nano', 'Legumi del Salento', '', '', 0, 0x2c4a2c] },
+  { id: 'tn-lenticchie', sect: 'legumi', cost: 1, name: 'Lenticchie multicolore di Zollino', detail: '500 g', image: null, m3: ['pouch', '', 'Lenticchie', 'Legumi del Salento', '', '', 0, 0x2c4a2c] },
+  { id: 'tn-cicerchia', sect: 'legumi', cost: 1, name: 'Cicerchia di Uggiano', detail: '500 g', image: null, m3: ['pouch', '', 'Cicerchia', 'Legumi del Salento', '', '', 0, 0x2c4a2c] },
 ];
 
 export const PRODUCT_BY_ID = Object.fromEntries(PRODUCTS.map((p) => [p.id, p]));
@@ -115,7 +113,7 @@ export const PRODUCT_BY_ID = Object.fromEntries(PRODUCTS.map((p) => [p.id, p]));
 export const STEPS = [
   { key: 'caro',     short: 'Capperificio',   title: 'I vasetti del Capperificio', lead: 'Almeno tre, raccolti e lavorati a mano a Racale. Ogni vasetto vale un gettone.' },
   { key: 'vo',       short: 'Olio e vino',    title: 'Olio e vino del Salento', lead: 'Facoltativi. L’olio EVO biologico vale due gettoni, il vino da un litro uno.' },
-  { key: 'dispensa', short: 'Forno e legumi', title: 'Forno e legumi salentini', lead: 'Spendi i gettoni rimasti tra il forno di Pane è Fantasie e i legumi di Terra Nera.' },
+  { key: 'dispensa', short: 'Forno e legumi', title: 'Forno e legumi salentini', lead: 'Spendi i gettoni rimasti tra i prodotti da forno e i legumi del Salento.' },
   { key: 'chiudi',   short: 'Chiudi',         title: 'La tua cassetta è pronta', lead: 'Controlla il contenuto: la chiudiamo con il nastro e la spediamo da Racale.' },
 ];
 
@@ -126,12 +124,12 @@ export const STEP_GROUPS = {
     { title: 'Altre specialità', sub: 'Cucunci, germogli, polvere e foglie', filter: (p) => p.sect === 'caro' },
   ],
   vo: [
-    { title: 'Olio', sub: 'OP ACLI Racale · 2 gettoni', filter: (p) => p.sect === 'olio' },
+    { title: 'Olio', sub: 'Biologico · 2 gettoni', filter: (p) => p.sect === 'olio' },
     { title: 'Vino', sub: 'Cantina Torre Ospina · 1 gettone', filter: (p) => p.sect === 'vino' },
   ],
   dispensa: [
-    { title: 'Forno', sub: 'Pane è Fantasie', filter: (p) => p.sect === 'forno' },
-    { title: 'Legumi', sub: 'Terra Nera', filter: (p) => p.sect === 'legumi' },
+    { title: 'Forno', sub: 'Dolci e taralli salentini', filter: (p) => p.sect === 'forno' },
+    { title: 'Legumi', sub: 'Legumi del Salento', filter: (p) => p.sect === 'legumi' },
   ],
 };
 
