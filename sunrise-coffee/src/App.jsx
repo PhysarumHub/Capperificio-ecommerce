@@ -138,7 +138,7 @@ export default function App() {
             <Route path="/guide" element={<GuideHubPage />} />
             <Route path="/guide/:slug" element={<GuidePage />} />
 
-            {/* Configuratore box di Natale (Box Natalizia + Cassetta in Legno) */}
+            {/* Configuratore box di Natale (Box Racale + Cassetta in Legno) */}
             <Route path="/box-di-natale" element={<NatalBoxPage />} />
 
             {/* Landing B2B (EN, noindex): box campioni, si paga solo la spedizione */}

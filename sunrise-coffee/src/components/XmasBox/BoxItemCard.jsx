@@ -4,9 +4,9 @@ import styles from './BoxItemCard.module.css';
 /* Card prodotto del configuratore: vasetto su tessera crema, nome, costo in
    gettoni e comandi − n + a destra. In griglia a due colonne su desktop,
    una sotto l'altra su mobile.
-   variant 'radio' → scelta esclusiva (il vino della Box Natalizia).
+   variant 'radio' → scelta esclusiva.
    Senza foto (image: null) la card è solo testo, senza riquadro.
-   showCost=false nasconde i gettoni (Box Natalizia, dove non contano). */
+   showCost=false nasconde i gettoni. */
 
 export function Coins({ n, className = '' }) {
   return (

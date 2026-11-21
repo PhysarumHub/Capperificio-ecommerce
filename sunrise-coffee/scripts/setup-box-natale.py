@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 Crea (o aggiorna) in Shopware i prodotti-box usati da /box-di-natale:
-  XMAS-BOX-RACALE-3   Box Natalizia (olio + vino + 3 vasetti, 25 €) → VITE_XMAS_BOX_FIXED_ID
-  XMAS-BOX-GETTONI    Cassetta in Legno (11 gettoni, 50 €)          → VITE_XMAS_BOX_TOKENS_ID
-  XMAS-BOX-RACALE-2   vecchia box da 2 vasetti: resta, ma disattivata
+  XMAS-BOX-RACALE-3   Box Racale · 3 vasetti (20 €)        → VITE_XMAS_BOX_FIXED_ID
+  XMAS-BOX-RACALE-2   Box Racale · 2 vasetti (14 €)        → VITE_XMAS_BOX_FIXED2_ID
+  XMAS-BOX-GETTONI    Cassetta in Legno (11 gettoni, 50 €) → VITE_XMAS_BOX_TOKENS_ID
 UPSERT per productNumber: rilanciarlo non crea duplicati e riallinea
 nome/prezzo/visibilità. Visibilità "solo link" (10): i prodotti non compaiono
 in listing e ricerca, si aggiungono al carrello solo dalla pagina della box.
@@ -30,15 +30,15 @@ COVER = pathlib.Path(__file__).resolve().parent.parent / 'public/images/box-nata
 
 # Prezzi lordi (confermati il 21/11/2026).
 BOXES = [
-    {'number': 'XMAS-BOX-RACALE-3', 'env': 'VITE_XMAS_BOX_FIXED_ID', 'gross': 25.00,
-     'name': 'Box Natalizia',
-     'desc': 'Olio EVO BIO 500 ml (OP ACLI Racale), vino 1 L della Cantina Torre Ospina (rosso, rosato o bianco) e 3 vasetti del Capperificio Caro a scelta. Vino e vasetti scelti sono nella riga d’ordine.'},
+    {'number': 'XMAS-BOX-RACALE-3', 'env': 'VITE_XMAS_BOX_FIXED_ID', 'gross': 20.00,
+     'name': 'Box di Natale Racale · 3 vasetti',
+     'desc': 'Confezione regalo in tela verde con finestre e fiocco: germogli di cappero, polvere di cappero e capperi Lilliput.'},
+    {'number': 'XMAS-BOX-RACALE-2', 'env': 'VITE_XMAS_BOX_FIXED2_ID', 'gross': 14.00,
+     'name': 'Box di Natale Racale · 2 vasetti',
+     'desc': 'Confezione regalo in tela verde con finestre e fiocco: capperi Lilliput e polvere di cappero.'},
     {'number': 'XMAS-BOX-GETTONI', 'env': 'VITE_XMAS_BOX_TOKENS_ID', 'gross': 50.00,
      'name': 'Cassetta in Legno',
      'desc': 'Cassetta composta dal cliente con 11 gettoni: almeno 3 vasetti del Capperificio Caro, poi olio, vino, forno di Pane è Fantasie e legumi di Terra Nera. La composizione è nella riga d’ordine.'},
-    {'number': 'XMAS-BOX-RACALE-2', 'env': 'VITE_XMAS_BOX_FIXED2_ID', 'gross': 14.00, 'active': False,
-     'name': 'Box di Natale Racale · 2 vasetti (non più in vendita)',
-     'desc': 'Formato sostituito dalla Box Natalizia.'},
 ]
 _h = {}
 

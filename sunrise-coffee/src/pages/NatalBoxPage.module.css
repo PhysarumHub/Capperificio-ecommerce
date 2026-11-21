@@ -169,7 +169,7 @@
 .groupTitle { font-family: var(--font-serif); font-weight: 400; font-size: var(--text-2xl); color: var(--color-dark); }
 .list { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
 
-/* ── Box Natalizia ────────────────────────────────────────── */
+/* ── Box Racale ────────────────────────────────────────── */
 .sizes { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 32px; }
 .size {
   display: grid;

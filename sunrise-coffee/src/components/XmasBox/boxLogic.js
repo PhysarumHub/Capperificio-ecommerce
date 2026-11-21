@@ -1,8 +1,7 @@
-/* Regole della Cassetta in Legno e della Box Natalizia, e traduzione dello
-   stato in scena 3D. Funzioni pure: la pagina tiene solo `picked`
-   ({ id: quantità }) per la cassetta e `nat` ({ wine, jars }) per la box. */
+/* Regole della Cassetta in Legno e traduzione dello stato in scena 3D.
+   Funzioni pure: la pagina tiene solo `picked` ({ id: quantità }). */
 
-import { BOXES, PRODUCTS, PRODUCT_BY_ID, TOKENS_TOTAL, MIN_SPECIALITA } from '../../data/natalBox';
+import { PRODUCTS, PRODUCT_BY_ID, TOKENS_TOTAL, MIN_SPECIALITA } from '../../data/natalBox';
 
 /* Vasetti del Capperificio: contano per il minimo di tre. */
 export const isSpec = (p) => p.sect === 'capperi' || p.sect === 'caro';
@@ -65,14 +64,6 @@ export function stepStatus(sum) {
   ];
 }
 
-/* ── Box Natalizia ────────────────────────────────────────── */
-export const natJarCount = (nat) => Object.values(nat?.jars || {}).reduce((n, q) => n + q, 0);
-
-export function natItems(nat) {
-  const jars = Object.entries(nat.jars || {}).flatMap(([id, q]) => Array(q).fill(id));
-  return [BOXES.racale.oil, nat.wine, ...jars].filter((id) => PRODUCT_BY_ID[id]);
-}
-
 /* ── Scena 3D ─────────────────────────────────────────────── */
 function to3d(p, col, row, key) {
   const m = p.m3;
@@ -83,24 +74,6 @@ const keyer = (prefix) => {
   const seen = {};
   return (id) => { const k = seen[id] || 0; seen[id] = k + 1; return `${prefix}${id}#${k}`; };
 };
-
-/* Scatola verde 3×3 (Box Natalizia): la fila davanti tiene i tre vasetti
-   (i vani con il timbro), l'olio sta dentro, il vino va nel portabottiglia. */
-function layoutGreenBox(jarIds, otherIds, prefix) {
-  const occ = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-  const keyOf = keyer(prefix);
-  const out = [];
-  for (let c = 0; c < 3; c++) {
-    occ[0][c] = 1;
-    if (jarIds[c]) out.push(to3d(PRODUCT_BY_ID[jarIds[c]], c, 0, keyOf(jarIds[c])));
-  }
-  jarIds.slice(3).concat(otherIds).forEach((id) => {
-    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
-      if (!occ[r][c]) { occ[r][c] = 1; out.push(to3d(PRODUCT_BY_ID[id], c, r, keyOf(id))); return; }
-    }
-  });
-  return out;
-}
 
 /* Cassetta di legno 6×2 (12 posti, ne servono al massimo 11): i primi tre
    vasetti vanno nei vani timbrati davanti a sinistra, il resto riempie prima
@@ -129,21 +102,11 @@ const DEMO_SPEC = ['sale-lilliput', 'aceto-lilliput', 'powder'];
 const DEMO_REST = ['olio', 'vino-rosso', 'leaves', 'pf-friselle', 'pf-tarallini-vino', 'tn-lenticchie', 'pf-cantucci'];
 
 /* view: 'intro' | 'racale' | 'tokens' | 'done'
-   step: indice 0..3 (solo per 'tokens'); added: tipo di box appena messa nel carrello */
-export function sceneFor({ view, step, picked, nat, added }) {
+   step: indice 0..3 (solo per 'tokens'); added: tipo di box appena messa nel carrello
+   giftItems: i vasetti della Box Racale (scatola in lino a 3 finestre) */
+export function sceneFor({ view, step, picked, giftItems, added }) {
   if (view === 'racale' || (view === 'done' && added === 'racale')) {
-    const jars = Object.entries(nat.jars || {}).flatMap(([id, q]) => Array(q).fill(id));
-    const closed = view === 'done';
-    const wineP = PRODUCT_BY_ID[nat.wine];
-    return {
-      mode: 'box',
-      items: layoutGreenBox(jars, [BOXES.racale.oil], 'nat-'),
-      gift: [],
-      reserved: closed ? 0 : Math.max(0, 3 - jars.length),
-      bow: closed,
-      lid: closed,
-      wine: wineP ? to3d(wineP, 0, 0, `nat-wine-${wineP.id}`) : null,
-    };
+    return { mode: 'gift', gift: giftItems.map((id, i) => to3d(PRODUCT_BY_ID[id], 0, 0, `gift-${id}-${i}`)), items: [], reserved: 0, bow: false, lid: false, wine: null };
   }
   if (view === 'intro') {
     return { mode: 'crate', items: layoutCrate(DEMO_SPEC, DEMO_REST, 'demo-'), gift: [], reserved: 0, bow: true, lid: false, wine: null };

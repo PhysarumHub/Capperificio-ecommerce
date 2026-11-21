@@ -1,8 +1,8 @@
 /* CaroStage — scena 3D premium per le Box di Natale del Capperificio Caro.
  Due confezioni nella stessa scena:
    'crate' → cassetta di legno chiaro (Cassetta in Legno, 11 gettoni), 6×2 posti
-   'box'   → scatola verde con finestra (Box Natalizia), vino nel portabottiglia
-   'gift'  → scatola verde effetto lino con 3 finestre (non più usata)
+   'box'   → scatola verde con finestra e portabottiglia (non più usata)
+   'gift'  → scatola verde effetto lino con 3 finestre (Box Racale, 3 o 2 vasetti)
  API:
    const st = new CaroStage(canvas, { logoUrl, onPick(id) })
    st.setMode('crate' | 'gift')
@@ -343,7 +343,7 @@ class CaroStage {
     this.giftJarX = xs;
   }
 
-  // ── scatola verde con coperchio a finestra (Box Natalizia) ──
+  // ── scatola verde con coperchio a finestra (non più usata) ──
   _linenMats() {
     if (this._lm) return this._lm;
     const draw = (g, w, h, bumpy) => {

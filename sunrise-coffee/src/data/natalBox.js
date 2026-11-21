@@ -2,9 +2,8 @@
  * BOX DI NATALE — catalogo e regole
  * ─────────────────────────────────────────────────────────────
  * Due confezioni:
- *   1. "Box Natalizia" (25 €) — olio EVO BIO 500 ml (OP ACLI Racale),
- *      vino 1 L della Cantina Torre Ospina (rosso, rosato o bianco, a scelta)
- *      e 3 vasetti del Capperificio scelti dal cliente.
+ *   1. "Box Racale" — confezione regalo in lino verde a finestre, contenuto
+ *      fisso: 3 vasetti (20 €) o 2 vasetti (14 €).
  *   2. "Cassetta in Legno" (50 €) — 11 gettoni da distribuire come si vuole.
  *      Unica regola fissa: almeno 3 vasetti del Capperificio. L'olio vale
  *      2 gettoni, tutto il resto 1.
@@ -18,10 +17,10 @@
 const IMG = '/images/box-natale';
 
 /* ID dei prodotti-box Shopware (admin → Cataloghi → Prodotti). Senza ID la
-   pagina funziona in anteprima: il pulsante finale non scrive nel carrello.
-   Il prodotto "racale3" (numero XMAS-BOX-RACALE-3) è la Box Natalizia. */
+   pagina funziona in anteprima: il pulsante finale non scrive nel carrello. */
 export const BOX_PRODUCT_IDS = {
   racale3: import.meta.env.VITE_XMAS_BOX_FIXED_ID || '',
+  racale2: import.meta.env.VITE_XMAS_BOX_FIXED2_ID || '',
   tokens: import.meta.env.VITE_XMAS_BOX_TOKENS_ID || '',
 };
 
@@ -32,14 +31,13 @@ export const MIN_SPECIALITA = 3;
 export const BOXES = {
   racale: {
     key: 'racale',
-    name: 'Box Natalizia',
+    name: 'Box Racale',
     kicker: 'Pronta da regalare',
-    lead: 'Un olio EVO biologico, un litro di vino salentino e tre vasetti del Capperificio scelti da te.',
-    price: 25,
-    productKey: 'racale3',
-    jars: 3,
-    oil: 'olio',
-    wines: ['vino-rosso', 'vino-rosato', 'vino-bianco'],
+    lead: 'Le specialità firmate Capperificio Caro nella confezione in lino a finestre, chiusa con il fiocco.',
+    sizes: [
+      { n: 3, label: '3 vasetti', price: 20, productKey: 'racale3', items: ['shoots', 'powder', 'sale-lilliput'] },
+      { n: 2, label: '2 vasetti', price: 14, productKey: 'racale2', items: ['sale-lilliput', 'powder'] },
+    ],
   },
   tokens: {
     key: 'tokens',
@@ -91,11 +89,11 @@ export const PRODUCTS = [
   // Olio e vino
   { id: 'olio', sect: 'olio', cost: 2, name: 'Olio EVO biologico', detail: '500 ml', producer: 'OP ACLI Racale', image: null,
     m3: ['bottle', '', 'Olio EVO BIO', 'OP ACLI Racale', '', '500ml', 0x4a5a22] },
-  { id: 'vino-rosso', sect: 'vino', cost: 1, name: 'Vino rosso', detail: '1 L', producer: 'Cantina Torre Ospina', image: null, color: 'Rosso',
+  { id: 'vino-rosso', sect: 'vino', cost: 1, name: 'Vino rosso', detail: '1 L', producer: 'Cantina Torre Ospina', image: null,
     m3: ['bottle', '', 'Vino rosso', 'Torre Ospina', '', '1L', 0x2e1014] },
-  { id: 'vino-rosato', sect: 'vino', cost: 1, name: 'Vino rosato', detail: '1 L', producer: 'Cantina Torre Ospina', image: null, color: 'Rosato',
+  { id: 'vino-rosato', sect: 'vino', cost: 1, name: 'Vino rosato', detail: '1 L', producer: 'Cantina Torre Ospina', image: null,
     m3: ['bottle', '', 'Vino rosato', 'Torre Ospina', '', '1L', 0x8e3a46] },
-  { id: 'vino-bianco', sect: 'vino', cost: 1, name: 'Vino bianco', detail: '1 L', producer: 'Cantina Torre Ospina', image: null, color: 'Bianco',
+  { id: 'vino-bianco', sect: 'vino', cost: 1, name: 'Vino bianco', detail: '1 L', producer: 'Cantina Torre Ospina', image: null,
     m3: ['bottle', '', 'Vino bianco', 'Torre Ospina', '', '1L', 0x8f9a5a] },
   // Forno — Pane è Fantasie
   { id: 'pf-purciddhuzzi', sect: 'forno', cost: 1, name: 'Purciddhuzzi', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Purciddhuzzi', PF, '', '', 0, 0x8c1c24] },
@@ -112,9 +110,6 @@ export const PRODUCTS = [
 ];
 
 export const PRODUCT_BY_ID = Object.fromEntries(PRODUCTS.map((p) => [p.id, p]));
-
-/* Vasetti che si possono scegliere nella Box Natalizia. */
-export const NATAL_JARS = PRODUCTS.filter((p) => p.sect === 'capperi' || p.sect === 'caro');
 
 /* ── Step del percorso Cassetta in Legno ───────────────────── */
 export const STEPS = [

@@ -12,7 +12,7 @@ import styles from './NatalLanding.module.css';
 const eur = (n) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
 
 export default function NatalLanding({ onTokens, onRacale }) {
-  const sampleJars = ['sale-lilliput', 'sale-occhio', 'powder'];
+  const racaleFrom = Math.min(...BOXES.racale.sizes.map((x) => x.price));
 
   return (
     <div className={styles.landing}>
@@ -86,14 +86,14 @@ export default function NatalLanding({ onTokens, onRacale }) {
               <h3 className={styles.cardName}>{BOXES.racale.name}</h3>
               <p className={styles.cardLead}>{BOXES.racale.lead}</p>
               <div className={styles.cardJars}>
-                {sampleJars.map((id) => (
+                {BOXES.racale.sizes[0].items.filter((id) => PRODUCT_BY_ID[id].image).map((id) => (
                   <img key={id} src={PRODUCT_BY_ID[id].image} alt={PRODUCT_BY_ID[id].name} width="600" height="720" loading="lazy" decoding="async" />
                 ))}
               </div>
-              <p className={styles.cardSmall}>Olio EVO BIO 500 ml · vino 1 L rosso, rosato o bianco · 3 vasetti a scelta</p>
+              <p className={styles.cardSmall}>{BOXES.racale.sizes.map((x) => x.n).sort().join(' o ')} vasetti</p>
               <div className={styles.cardFoot}>
-                <span className={styles.cardPrice}>{eur(BOXES.racale.price)}</span>
-                <button type="button" className={ui.btnOutline} onClick={onRacale}>Scegli i vasetti</button>
+                <span className={styles.cardPrice}><small>da</small> {eur(racaleFrom)}</span>
+                <button type="button" className={ui.btnOutline} onClick={onRacale}>Scegli il formato</button>
               </div>
             </article>
 
