@@ -35,8 +35,8 @@ export const BOXES = {
     kicker: 'Pronta da regalare',
     lead: 'Le specialità firmate Capperificio Caro nella confezione in lino a finestre, chiusa con il fiocco.',
     sizes: [
-      { n: 3, label: '3 vasetti', price: 20, productKey: 'racale3', items: ['shoots', 'powder', 'sale-lilliput'] },
-      { n: 2, label: '2 vasetti', price: 14, productKey: 'racale2', items: ['sale-lilliput', 'powder'] },
+      { n: 3, label: '3 vasetti', price: 20, productKey: 'racale3', photo: `${IMG}/box-racale-3-foto.webp`, items: ['shoots', 'powder', 'sale-lilliput'] },
+      { n: 2, label: '2 vasetti', price: 14, productKey: 'racale2', photo: `${IMG}/box-racale-2-foto.webp`, items: ['sale-lilliput', 'powder'] },
     ],
   },
   tokens: {

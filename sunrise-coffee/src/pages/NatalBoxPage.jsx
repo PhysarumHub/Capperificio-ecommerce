@@ -311,6 +311,7 @@ export default function NatalBoxPage() {
       ? `Anteprima 3D della ${BOXES.racale.name} da ${size.label}.`
       : 'Anteprima 3D della tua Cassetta in Legno chiusa con il nastro.';
 
+  const showRacalePhoto = giftFor === 'racale' && (view === 'racale' || view === 'gift' || added?.type === 'racale');
   const showMeter = view === 'tokens' || (view === 'gift' && giftFor === 'tokens');
   const boxTitle = view === 'racale' || (view === 'gift' && giftFor === 'racale') || added?.type === 'racale'
     ? BOXES.racale.name : BOXES.tokens.name;
@@ -366,14 +367,25 @@ export default function NatalBoxPage() {
         {/* ── la scatola ── */}
         <div className={styles.stageCol}>
           <div className={styles.kraft}>
-            <div className={styles.stageBox}>
-              <BoxStage scene={scene} giftNonce={giftNonce} onPick={pickFromStage} label={stageLabel}>
-                {view === 'tokens' && step < 3 && (
-                  <p className={styles.stageHint} data-busy={sum.items > 0}>
-                    {sum.items ? 'Tocca un prodotto nella cassetta per toglierlo' : 'Trascina per ruotare la cassetta'}
-                  </p>
-                )}
-              </BoxStage>
+            <div className={`${styles.stageBox} ${showRacalePhoto ? styles.stageBoxPhoto : ''}`}>
+              {showRacalePhoto ? (
+                // Box Racale: foto della confezione (una per formato) al posto della scena 3D
+                <img
+                  key={size.photo}
+                  className={styles.stagePhoto}
+                  src={size.photo}
+                  alt={`La Box Racale da ${size.label}: confezione in lino verde a finestre con i vasetti del Capperificio Caro, sotto l’albero di Natale`}
+                  width="896" height="1200" decoding="async"
+                />
+              ) : (
+                <BoxStage scene={scene} giftNonce={giftNonce} onPick={pickFromStage} label={stageLabel}>
+                  {view === 'tokens' && step < 3 && (
+                    <p className={styles.stageHint} data-busy={sum.items > 0}>
+                      {sum.items ? 'Tocca un prodotto nella cassetta per toglierlo' : 'Trascina per ruotare la cassetta'}
+                    </p>
+                  )}
+                </BoxStage>
+              )}
               {view === 'gift' && gift.mode === 'recipient' && (
                 <div className={styles.stageNote}><GiftNote gift={gift} /></div>
               )}
