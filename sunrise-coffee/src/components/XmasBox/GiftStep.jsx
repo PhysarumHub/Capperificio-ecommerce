@@ -1,14 +1,13 @@
 import Field from '../checkout/Field';
-import { GIFT_MESSAGE_MAX, SHIP_STATUS_NOTE } from '../../data/natalBox';
+import { GIFT_MESSAGE_MAX } from '../../data/natalBox';
 import styles from './GiftStep.module.css';
 
-/* Passo "È un regalo?": a chi spedirla, il lunedì di spedizione, il biglietto
-   e l'indirizzo di chi la riceve. Tutto finisce nel payload della riga
+/* Passo "È un regalo?": a chi spedirla, il biglietto e l'indirizzo di chi la
+   riceve. La box parte appena pronta (niente scelta della data). Tutto finisce nel payload della riga
    carrello (natalBox.ship / natalBox.gift). */
 
 export const EMPTY_GIFT = {
   mode: 'recipient',
-  week: '',
   message: '',
   to: '',
   sign: '',
@@ -18,10 +17,8 @@ export const EMPTY_GIFT = {
 };
 
 /* Errori del passo regalo; oggetto vuoto = si può aggiungere al carrello. */
-export function validateGift(gift, weeks) {
+export function validateGift(gift) {
   const e = {};
-  const week = weeks.find((w) => w.id === gift.week);
-  if (!week || week.status === 'full') e.week = 'Scegli quando spedirla';
   if (gift.mode !== 'recipient') return e;
   const r = gift.recipient;
   if (!r.name.trim()) e.name = 'Inserisci nome e cognome';
@@ -44,7 +41,7 @@ export function GiftNote({ gift }) {
   );
 }
 
-export default function GiftStep({ gift, onChange, errors, weeks }) {
+export default function GiftStep({ gift, onChange, errors }) {
   const set = (patch) => onChange({ ...gift, ...patch });
   const setR = (patch) => onChange({ ...gift, recipient: { ...gift.recipient, ...patch } });
   const isGift = gift.mode === 'recipient';
@@ -73,29 +70,6 @@ export default function GiftStep({ gift, onChange, errors, weeks }) {
         </div>
       </fieldset>
 
-      <fieldset className={styles.block}>
-        <legend className={styles.legend}>Quando la spediamo</legend>
-        <p className={styles.hint}>Paghi oggi, parte il giorno che scegli. Consegna in 24–48 ore.</p>
-        <div className={styles.weeks} role="radiogroup" aria-label="Quando la spediamo">
-          {weeks.map((w) => (
-            <button
-              key={w.id}
-              type="button"
-              role="radio"
-              aria-checked={gift.week === w.id}
-              disabled={w.status === 'full'}
-              className={`${styles.week} ${gift.week === w.id ? styles.on : ''}`}
-              data-status={w.status}
-              onClick={() => set({ week: w.id })}
-            >
-              <span className={styles.weekDay}>{w.day}</span>
-              <span className={styles.weekDate}>{w.date}</span>
-              <span className={styles.weekNote}>{w.note || SHIP_STATUS_NOTE[w.status]}</span>
-            </button>
-          ))}
-        </div>
-        {errors.week && <p className={styles.error} role="alert">{errors.week}</p>}
-      </fieldset>
 
       {isGift && (
         <>

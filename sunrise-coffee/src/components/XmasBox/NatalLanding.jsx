@@ -1,26 +1,23 @@
 import { Link } from 'react-router-dom';
 import {
   BOXES, PRODUCT_BY_ID, TOKENS_TOTAL, ORDER_DEADLINE, EGIFT_ENABLED,
-  openShipWeeks, SHIP_STATUS_NOTE,
 } from '../../data/natalBox';
 import { Coins } from './BoxItemCard';
 import ui from './xmasUi.module.css';
 import styles from './NatalLanding.module.css';
 
-/* Apertura di /box-di-natale: racconto, le box, come funzionano i gettoni,
-   le settimane di spedizione prenotabili e i servizi per chi regala. */
+/* Apertura di /box-di-natale: racconto, le box, come funzionano i gettoni
+   e i servizi per chi regala. */
 
 const eur = (n) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
 
 export default function NatalLanding({ onTokens, onRacale }) {
-  const weeks = openShipWeeks().filter((w) => w.id !== 'asap');
   const sampleJars = ['sale-lilliput', 'sale-occhio', 'powder'];
 
   return (
     <div className={styles.landing}>
       <p className={styles.deadline}>
         <span><strong>Natale da Racale</strong> · ordina entro il <strong>{ORDER_DEADLINE.label}</strong> per riceverla prima della Vigilia</span>
-        <span className={styles.deadlineSub}>Scegli tu il lunedì di spedizione</span>
       </p>
 
       {/* ── apertura ── */}
@@ -153,34 +150,6 @@ export default function NatalLanding({ onTokens, onRacale }) {
             <p className={styles.howCost}><Coins n={1} /> 1 l’uno</p>
           </li>
         </ol>
-      </section>
-
-      {/* ── calendario spedizioni ── */}
-      <section className={styles.dark}>
-        <div className={`${styles.wrap} ${styles.ship}`}>
-          <div className={styles.shipIntro}>
-            <p className={`${ui.kicker} ${styles.kickerGold}`}>Prenota la spedizione</p>
-            <h2 className={styles.h2}>Scegli tu<br /><em>quando parte</em></h2>
-            <p className={styles.bandLead}>
-              Le prepariamo a mano, quindi ogni settimana ne chiudiamo un numero limitato.
-              Prenota ora: paghi oggi, la spediamo il lunedì che scegli.
-            </p>
-          </div>
-          <ul className={styles.weeks}>
-            {weeks.map((w) => (
-              <li key={w.id} className={styles.week} data-status={w.status}>
-                <span className={styles.weekDay}>{w.day}</span>
-                <span className={styles.weekDate}>{w.date}</span>
-                <span className={styles.weekNote}>{SHIP_STATUS_NOTE[w.status]}</span>
-              </li>
-            ))}
-            <li className={`${styles.week} ${styles.weekLast}`}>
-              <span className={styles.weekDay}>Dopo il {ORDER_DEADLINE.label}</span>
-              <span className={styles.weekDate}><em>Regala i gettoni</em></span>
-              <span className={styles.weekNote}>{EGIFT_ENABLED ? 'Arrivano per email' : 'In arrivo'}</span>
-            </li>
-          </ul>
-        </div>
       </section>
 
       {/* ── per chi regala ── */}

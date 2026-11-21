@@ -4,7 +4,7 @@ import { useSEO } from '../hooks/useSEO';
 import { useCartContext } from '../context/ShopwareContext';
 import { gtmAddToCart } from '../lib/utils/gtm';
 import {
-  BOXES, BOX_PRODUCT_IDS, PRODUCTS, PRODUCT_BY_ID, STEPS, STEP_GROUPS, NATAL_JARS, openShipWeeks,
+  BOXES, BOX_PRODUCT_IDS, PRODUCTS, PRODUCT_BY_ID, STEPS, STEP_GROUPS, NATAL_JARS, SHIP_ASAP,
 } from '../data/natalBox';
 import {
   summarize, itemState, addPick, removePick, stepStatus, sceneFor, tokens, plural,
@@ -47,7 +47,6 @@ export default function NatalBoxPage() {
   const { addItem } = useCartContext();
   const [params, setParams] = useSearchParams();
   const saved = useMemo(loadSaved, []);
-  const weeks = useMemo(() => openShipWeeks(), []);
   const [picked, setPicked] = useState(() => cleanPicked(saved.picked));
   // Box Natalizia: colore del vino e tre vasetti scelti
   const [nat, setNat] = useState(() => ({
@@ -56,8 +55,7 @@ export default function NatalBoxPage() {
   }));
   const [gift, setGift] = useState(() => {
     const g = { ...EMPTY_GIFT, ...saved.gift, recipient: { ...EMPTY_GIFT.recipient, ...saved.gift?.recipient } };
-    const valid = weeks.find((w) => w.id === g.week && w.status !== 'full');
-    return valid ? g : { ...g, week: weeks.find((w) => w.status !== 'full')?.id || '' };
+    return g;
   });
   const [giftErrors, setGiftErrors] = useState({});
   const [giftNonce, setGiftNonce] = useState(0);
@@ -98,7 +96,8 @@ export default function NatalBoxPage() {
   let step = askedStep;
   while (step > 0 && !status[step].reach) step -= 1;
 
-  const week = weeks.find((w) => w.id === gift.week);
+  // nessuna scelta della data: parte appena pronta
+  const week = SHIP_ASAP;
   const scene = useMemo(
     () => sceneFor({
       view: view === 'gift' ? 'done' : view,
@@ -172,14 +171,14 @@ export default function NatalBoxPage() {
   const changeGift = (next) => {
     setGift(next);
     // gli errori si aggiornano mentre si corregge, non compaiono prima del primo invio
-    if (Object.keys(giftErrors).length) setGiftErrors(validateGift(next, weeks));
+    if (Object.keys(giftErrors).length) setGiftErrors(validateGift(next));
   };
 
   /* ── carrello ─────────────────────────────────────────── */
   async function addBoxToCart() {
     const type = giftFor;
     const isRacale = type === 'racale';
-    const errs = validateGift(gift, weeks);
+    const errs = validateGift(gift);
     setGiftErrors(errs);
     if (Object.keys(errs).length) {
       setError('Controlla i campi evidenziati.');
@@ -302,8 +301,7 @@ export default function NatalBoxPage() {
         <>
           <span className={styles.barTitle}>{giftFor === 'racale' ? BOXES.racale.name : BOXES.tokens.name}</span>
           <span className={styles.barSub}>
-            {week ? `Spedizione ${week.label}` : 'Scegli quando spedirla'}
-            {isGift ? ` · a ${toName}` : ''}
+            {isGift ? `Spedita a ${toName}` : 'Spedita a te'}
           </span>
         </>
       ),
@@ -541,7 +539,7 @@ export default function NatalBoxPage() {
                 <p className={ui.kicker}>Ultimo passo</p>
                 <h1 className={styles.title}>È un <em>regalo?</em></h1>
                 {gift.mode === 'recipient' && <div className={styles.noteInline}><GiftNote gift={gift} /></div>}
-                <GiftStep gift={gift} onChange={changeGift} errors={giftErrors} weeks={weeks} />
+                <GiftStep gift={gift} onChange={changeGift} errors={giftErrors} />
               </>
             )}
 
