@@ -1,7 +1,8 @@
 /* CaroStage — scena 3D premium per le Box di Natale del Capperificio Caro.
  Due confezioni nella stessa scena:
-   'crate' → cassetta di legno chiaro (Box a Gettoni), si riempie a scelta
-   'gift'  → scatola verde effetto lino con 3 finestre (Box Racale 20 €)
+   'crate' → cassetta di legno chiaro (Cassetta in Legno, 11 gettoni), 6×2 posti
+   'box'   → scatola verde con finestra (Box Natalizia), vino nel portabottiglia
+   'gift'  → scatola verde effetto lino con 3 finestre (non più usata)
  API:
    const st = new CaroStage(canvas, { logoUrl, onPick(id) })
    st.setMode('crate' | 'gift')
@@ -342,7 +343,7 @@ class CaroStage {
     this.giftJarX = xs;
   }
 
-  // ── scatola verde con coperchio a finestra (Box a Gettoni) ──
+  // ── scatola verde con coperchio a finestra (Box Natalizia) ──
   _linenMats() {
     if (this._lm) return this._lm;
     const draw = (g, w, h, bumpy) => {
@@ -450,10 +451,12 @@ class CaroStage {
     const C = this.carrier;
     if (!d) { this.wineOn = false; return; }
     this.wineOn = true;
+    if (this.carrierBottle && this.carrierBottle.userData.wineId !== d.id) { C.remove(this.carrierBottle); this.carrierBottle = null; }
     if (!this.carrierBottle) {
       const b = this._bottle(d), pivot = b.children[0], inner = pivot.children[0];
       pivot.rotation.z = 0; pivot.position.y = 0; inner.position.y = .02;
       b.traverse(o => { if (o.isMesh) { o.castShadow = true; } });
+      b.userData.wineId = d.id;
       C.add(b); this.carrierBottle = b;
     }
   }
@@ -533,8 +536,8 @@ class CaroStage {
     g.userData.height = H + .14;
     return g;
   }
-  _bottle(d) {
-    // bottiglia sdraiata su due vani
+  _bottle(d, stand = false) {
+    // bottiglia sdraiata su due vani; in piedi (stand) nella cassetta
     const g = new T.Group(), pivot = new T.Group();
     const prof = [[0, 0], [.25, 0], [.28, .03], [.28, .82], [.24, .95], [.13, 1.08], [.11, 1.15], [.11, 1.36], [.125, 1.38], [.125, 1.44], [0, 1.44]].map(p => new T.Vector2(p[0], p[1]));
     const col = d.glass || 0x3b4a22;
@@ -545,7 +548,40 @@ class CaroStage {
     label.position.y = .42; label.rotation.y = -Math.PI / 2; label.userData.isLabel = true;
     const inner = new T.Group(); inner.add(body, cap, label); inner.position.y = -0.72;
     pivot.add(inner); pivot.rotation.z = Math.PI / 2; pivot.position.y = .28 + .02;
-    g.add(pivot); g.userData.height = .6;
+    if (stand) { pivot.rotation.z = 0; pivot.position.y = 0; inner.position.y = .02; g.scale.setScalar(.95); }
+    g.add(pivot); g.userData.height = stand ? 1.37 : .6;
+    return g;
+  }
+  _pouch(d) {
+    // sacchetto di carta kraft in piedi, con il risvolto in alto e il cartellino davanti
+    const g = new T.Group(), w = .56, h = .86, dp = .3;
+    const geo = new T.BoxGeometry(w, h, dp, 6, 10, 4), p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i), t = (y + h / 2) / h;
+      p.setZ(i, z * (1 - t * .45) + Math.sin(x * 11 + y * 7) * .006);
+      p.setX(i, x * (1 + Math.sin(t * Math.PI) * .04));
+    }
+    geo.computeVertexNormals();
+    const kraft = new T.MeshStandardMaterial({ color: 0xc8a06a, roughness: .95 });
+    const body = new T.Mesh(geo, kraft); body.position.y = h / 2 + .01;
+    const fold = new T.Mesh(new T.BoxGeometry(w + .02, .1, dp * .6), new T.MeshStandardMaterial({ color: 0xb48c58, roughness: .95 }));
+    fold.position.y = h + .02;
+    const ink = '#' + (d.tag || 0x2c4a2c).toString(16).padStart(6, '0');
+    const card = canvasTex(512, 384, (c, cw, chh) => {
+      c.fillStyle = '#f3ead6'; c.fillRect(0, 0, cw, chh);
+      c.strokeStyle = ink; c.lineWidth = 8; c.strokeRect(14, 14, cw - 28, chh - 28);
+      c.fillStyle = ink; c.textAlign = 'center';
+      const words = (d.title || '').split(' '); const mid = Math.ceil(words.length / 2);
+      const l1 = words.slice(0, mid).join(' '), l2 = words.slice(mid).join(' ');
+      let fs = 70; c.font = `italic ${fs}px "PP Editorial Old", Georgia, serif`;
+      const mw = Math.max(c.measureText(l1).width, c.measureText(l2).width);
+      if (mw > 430) { fs = Math.floor(fs * 430 / mw); c.font = `italic ${fs}px "PP Editorial Old", Georgia, serif`; }
+      c.fillText(l1, cw / 2, l2 ? 150 : 190); if (l2) c.fillText(l2, cw / 2, 150 + fs);
+      c.font = '500 26px "Paralucent", sans-serif'; c.fillText((d.sub || '').toUpperCase(), cw / 2, 330);
+    });
+    const lab = new T.Mesh(new T.PlaneGeometry(w * .82, w * .62), new T.MeshStandardMaterial({ map: card, roughness: .9 }));
+    lab.position.set(0, h * .42, dp / 2 * .78 + .012); lab.rotation.x = -.12;
+    g.add(body, fold, lab); g.userData.height = h;
     return g;
   }
   _bag(d) {
@@ -570,7 +606,8 @@ class CaroStage {
 
   _build(d) {
     const root = new T.Group(); root.userData.itemId = d.id;
-    const body = d.kind === 'bottle' ? this._bottle(d) : d.kind === 'bag' ? this._bag(d) : d.kind === 'tin' ? this._tin(d) : this._jar(d, d.kind === 'tall' && this.mode !== 'box');
+    const stand = this.mode === 'crate';
+    const body = d.kind === 'bottle' ? this._bottle(d, stand) : d.kind === 'pouch' ? this._pouch(d) : d.kind === 'bag' ? this._bag(d) : d.kind === 'tin' ? this._tin(d) : this._jar(d, d.kind === 'tall' && this.mode !== 'box');
     root.add(body); root.userData.body = body;
     root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     return root;
@@ -585,7 +622,7 @@ class CaroStage {
       const px = this.bW / 3, pz = this.bD / 3, rr = row;
       return { x: -this.bW / 2 + px * (col + .5), z: this.bD / 2 - pz * (rr + .5) };
     }
-    const px = this.W / 5, pz = this.D / 2, c = span === 2 ? col + .5 : col;
+    const px = this.W / 6, pz = this.D / 2, c = span === 2 ? col + .5 : col;
     return { x: -this.W / 2 + px * (c + .5), z: -this.D / 2 + pz * (row + .5) };
   }
 
@@ -594,7 +631,7 @@ class CaroStage {
     this.mode = m;
     const h = m === 'box' ? this.boxG : this.crateG;
     if (h !== this.holder) { this.holder = h; h.add(this.stampG); this.items.forEach(it => h.add(it.root)); }
-    this.stampMeshes.forEach((st, j) => { const q = this.cellPos(j, m === 'box' ? 0 : 1, 1); st.position.set(q.x, m === 'box' ? .09 : .16, q.z); st.scale.setScalar(m === 'box' ? .85 : 1); });
+    this.stampMeshes.forEach((st, j) => { const q = this.cellPos(j, m === 'box' ? 0 : 1, 1); st.position.set(q.x, m === 'box' ? .09 : .16, q.z); st.scale.setScalar(m === 'box' ? .85 : .9); });
     if (m === 'gift') { const two = this.giftN === 2; this.camTarget.pos.set(0, two ? 2.3 : 2.5, two ? 4.1 : 5.0); this.camTarget.look.set(0, .78, 0); }
     else if (m === 'box') { this.camTarget.pos.set(0, 4.4, 5.6); this.camTarget.look.set(.3, .66, -.3); }
     else { this.camTarget.pos.set(0, 4.3, 7.3); this.camTarget.look.set(0, .62, .25); }
@@ -613,7 +650,7 @@ class CaroStage {
         if (d.kind === 'squat' || d.kind === 'tall') { b.rotation.x = -Math.PI / 2; b.position.set(0, .38, (b.userData.height || .68) / 2); }
         else if (d.kind === 'bottle') { b.scale.setScalar(.66); }
       }
-      const ry = this.mode === 'box' ? (rnd() - .5) * .12 : d.kind === 'bottle' || d.kind === 'bag' ? (rnd() - .5) * .08 : (rnd() - .5) * .35;
+      const ry = this.mode === 'box' ? (rnd() - .5) * .12 : d.kind === 'bottle' || d.kind === 'bag' || d.kind === 'pouch' ? (rnd() - .5) * .08 : (rnd() - .5) * .35;
       const nit = { d, root, x: p.x, z: p.z, tx: p.x, tz: p.z, y: 1.5, vy: 0, ry: ry + .5, rv: 0, tRy: ry, delay: stagger, s: ts * .92, sv: 0, ts };
       stagger += .07;
       root.position.set(p.x, nit.y, p.z); root.visible = false;

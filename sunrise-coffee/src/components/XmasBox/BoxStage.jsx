@@ -7,7 +7,7 @@ import styles from './BoxStage.module.css';
    - il render si ferma quando la scena esce dallo schermo o la tab è nascosta;
    - senza WebGL (o se il caricamento fallisce) resta il poster statico. */
 
-const POSTER = '/images/box-natale/box-poster.webp';
+const POSTER = '/images/box-natale/box-poster-cassetta.webp';
 
 function hasWebGL() {
   try {

@@ -7,14 +7,14 @@ import { Coins } from './BoxItemCard';
 import ui from './xmasUi.module.css';
 import styles from './NatalLanding.module.css';
 
-/* Apertura di /box-di-natale: racconto, le tre box, come funzionano i gettoni,
+/* Apertura di /box-di-natale: racconto, le box, come funzionano i gettoni,
    le settimane di spedizione prenotabili e i servizi per chi regala. */
 
 const eur = (n) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
 
 export default function NatalLanding({ onTokens, onRacale }) {
   const weeks = openShipWeeks().filter((w) => w.id !== 'asap');
-  const racaleFrom = Math.min(...BOXES.racale.sizes.map((s) => s.price));
+  const sampleJars = ['sale-lilliput', 'sale-occhio', 'powder'];
 
   return (
     <div className={styles.landing}>
@@ -29,11 +29,11 @@ export default function NatalLanding({ onTokens, onRacale }) {
           <p className={ui.kicker}>Natale · Racale, Salento</p>
           <h1 className={styles.heroTitle}>Il Salento,<br /><em>chiuso</em> in una scatola.</h1>
           <p className={styles.heroLead}>
-            Capperi raccolti a mano a Racale, un vino o un olio del territorio e i dolci delle pasticcerie
-            salentine. La componi tu, noi la chiudiamo con il nastro e la spediamo a chi vuoi tu.
+            Capperi raccolti a mano a Racale, olio e vino del territorio, il forno di Pane è Fantasie e i legumi
+            di Terra Nera. La componi tu, noi la chiudiamo con il nastro e la spediamo a chi vuoi tu.
           </p>
           <div className={styles.heroCtas}>
-            <button type="button" className={ui.btnPrimary} onClick={onTokens}>Componi la tua box <span aria-hidden="true">→</span></button>
+            <button type="button" className={ui.btnPrimary} onClick={onTokens}>Componi la tua cassetta <span aria-hidden="true">→</span></button>
             <button type="button" className={ui.btnOutline} onClick={onRacale}>Box pronta da regalare</button>
           </div>
           <ul className={styles.heroTrust}>
@@ -46,8 +46,8 @@ export default function NatalLanding({ onTokens, onRacale }) {
         <div className={styles.heroArt}>
           <div className={styles.heroKraft}>
             <img
-              src="/images/box-natale/box-poster.webp"
-              alt="La Box a Gettoni chiusa con il nastro rosso, con il vino nel portabottiglia di cartone"
+              src="/images/box-natale/box-poster-cassetta.webp"
+              alt="La Cassetta in Legno piena: vasetti di capperi, olio, vino e sacchetti di forno e legumi, chiusa con il nastro rosso"
               width="1200" height="900" fetchPriority="high" decoding="async"
             />
           </div>
@@ -67,7 +67,7 @@ export default function NatalLanding({ onTokens, onRacale }) {
       <section className={styles.band}>
         <div className={styles.wrap}>
           <div className={styles.bandHead}>
-            <h2 className={styles.h2}>Tre modi di regalare <em>Racale</em></h2>
+            <h2 className={styles.h2}>Due box, <em>un regalo da Racale</em></h2>
             <p className={styles.bandLead}>Tutte arrivano con il biglietto scritto a mano e senza prezzi nel pacco.</p>
           </div>
 
@@ -75,9 +75,9 @@ export default function NatalLanding({ onTokens, onRacale }) {
             <article className={`${styles.card} ${styles.cardDark}`}>
               <span className={styles.cardKicker}>La più scelta · {BOXES.tokens.kicker.toLowerCase()}</span>
               <h3 className={styles.cardName}>{BOXES.tokens.name}</h3>
-              <p className={styles.cardLead}>Dieci gettoni da spendere tra capperi e specialità, un vino o un olio, e i dolci di Natale.</p>
+              <p className={styles.cardLead}>{BOXES.tokens.lead}</p>
               <Coins n={TOKENS_TOTAL} className={styles.cardCoins} />
-              <p className={styles.cardSmall}>9 prodotti in scatola + vino nel portabottiglia</p>
+              <p className={styles.cardSmall}>Almeno 3 vasetti del Capperificio, il resto lo scegli tu</p>
               <div className={styles.cardFoot}>
                 <span className={styles.cardPrice}>{eur(BOXES.tokens.price)}</span>
                 <button type="button" className={ui.btnLight} onClick={onTokens}>Componi <span aria-hidden="true">→</span></button>
@@ -89,14 +89,14 @@ export default function NatalLanding({ onTokens, onRacale }) {
               <h3 className={styles.cardName}>{BOXES.racale.name}</h3>
               <p className={styles.cardLead}>{BOXES.racale.lead}</p>
               <div className={styles.cardJars}>
-                {BOXES.racale.sizes[0].items.map((id) => (
+                {sampleJars.map((id) => (
                   <img key={id} src={PRODUCT_BY_ID[id].image} alt={PRODUCT_BY_ID[id].name} width="600" height="720" loading="lazy" decoding="async" />
                 ))}
               </div>
-              <p className={styles.cardSmall}>{BOXES.racale.sizes.map((s) => s.n).sort().join(' o ')} vasetti</p>
+              <p className={styles.cardSmall}>Olio EVO BIO 500 ml · vino 1 L rosso, rosato o bianco · 3 vasetti a scelta</p>
               <div className={styles.cardFoot}>
-                <span className={styles.cardPrice}><small>da</small> {eur(racaleFrom)}</span>
-                <button type="button" className={ui.btnOutline} onClick={onRacale}>Scegli il formato</button>
+                <span className={styles.cardPrice}>{eur(BOXES.racale.price)}</span>
+                <button type="button" className={ui.btnOutline} onClick={onRacale}>Scegli i vasetti</button>
               </div>
             </article>
 
@@ -130,26 +130,26 @@ export default function NatalLanding({ onTokens, onRacale }) {
       <section className={`${styles.wrap} ${styles.how}`}>
         <div className={styles.howIntro}>
           <p className={ui.kicker}>Come funziona</p>
-          <h2 className={styles.h2}>Dieci gettoni,<br /><em>tre scelte</em></h2>
-          <p className={styles.bandLead}>Ogni prodotto vale uno o due gettoni. Quando li hai spesi tutti, la scatola è piena e la chiudiamo noi.</p>
+          <h2 className={styles.h2}>Undici gettoni,<br /><em>tre scelte</em></h2>
+          <p className={styles.bandLead}>Ogni prodotto vale un gettone, l’olio due. Quando li hai spesi tutti, la cassetta è piena e la chiudiamo noi.</p>
         </div>
         <ol className={styles.howSteps}>
           <li>
             <span className={styles.howNum}>1</span>
-            <h3>Almeno tre specialità</h3>
-            <p>Capperi al sale o all’aceto, cucunci, germogli, polvere e foglie.</p>
-            <p className={styles.howCost}><Coins n={1} /> 1 l’una</p>
+            <h3>Almeno tre vasetti</h3>
+            <p>Capperi al sale o all’aceto, cucunci, germogli, polvere e foglie. In più, se vuoi, i pomodori essiccati al sole.</p>
+            <p className={styles.howCost}><Coins n={1} /> 1 l’uno</p>
           </li>
           <li>
             <span className={styles.howNum}>2</span>
-            <h3>Un vino o un olio</h3>
-            <p>Il vino viaggia nel suo portabottiglia accanto alla scatola, l’olio sta dentro.</p>
+            <h3>Olio e vino</h3>
+            <p>Olio EVO biologico di OP ACLI Racale e vino da un litro della Cantina Torre Ospina: rosso, rosato o bianco.</p>
             <p className={styles.howCost}><Coins n={1} /> 1 vino · <Coins n={2} /> 2 olio</p>
           </li>
           <li>
             <span className={styles.howNum}>3</span>
-            <h3>I dolci di Natale</h3>
-            <p>Mostaccioli, fichi mandorlati, cotognata, purceddhruzzi.</p>
+            <h3>Forno e legumi</h3>
+            <p>Purciddhuzzi, mustazzere, cantucci, tarallini e friselle di Pane è Fantasie. Pisello nano, lenticchie e cicerchia di Terra Nera.</p>
             <p className={styles.howCost}><Coins n={1} /> 1 l’uno</p>
           </li>
         </ol>

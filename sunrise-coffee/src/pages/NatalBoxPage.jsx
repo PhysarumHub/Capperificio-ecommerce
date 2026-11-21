@@ -4,10 +4,11 @@ import { useSEO } from '../hooks/useSEO';
 import { useCartContext } from '../context/ShopwareContext';
 import { gtmAddToCart } from '../lib/utils/gtm';
 import {
-  BOXES, BOX_PRODUCT_IDS, PRODUCTS, PRODUCT_BY_ID, STEPS, STEP_GROUPS, openShipWeeks,
+  BOXES, BOX_PRODUCT_IDS, PRODUCTS, PRODUCT_BY_ID, STEPS, STEP_GROUPS, NATAL_JARS, openShipWeeks,
 } from '../data/natalBox';
 import {
   summarize, itemState, addPick, removePick, stepStatus, sceneFor, tokens, plural,
+  cleanPicked, natJarCount, natItems,
 } from '../components/XmasBox/boxLogic';
 import BoxStage from '../components/XmasBox/BoxStage';
 import BoxItemCard, { Coins } from '../components/XmasBox/BoxItemCard';
@@ -18,9 +19,9 @@ import ui from '../components/XmasBox/xmasUi.module.css';
 import styles from './NatalBoxPage.module.css';
 
 /* /box-di-natale — box di Natale da regalare.
-   URL:  (nessun parametro)          apertura: le tre box, come funziona, spedizioni
-         ?box=racale                 Box Racale (confezione regalo fissa, 3 o 2 vasetti)
-         ?box=gettoni&step=1..4      Box a Gettoni (specialità → vino/olio → dolci → chiudi)
+   URL:  (nessun parametro)          apertura: le box, come funziona, spedizioni
+         ?box=racale                 Box Natalizia (olio + vino a scelta + 3 vasetti a scelta)
+         ?box=gettoni&step=1..4      Cassetta in Legno (vasetti → olio e vino → forno e legumi → chiudi)
          …&regalo=1                  passo "È un regalo?": spedizione, biglietto, destinatario
    Composizione e dati del regalo restano in sessionStorage: un refresh non li perde.
    Al carrello va un prodotto-box Shopware per tipo; composizione, settimana di
@@ -47,8 +48,12 @@ export default function NatalBoxPage() {
   const [params, setParams] = useSearchParams();
   const saved = useMemo(loadSaved, []);
   const weeks = useMemo(() => openShipWeeks(), []);
-  const [picked, setPicked] = useState(saved.picked || {});
-  const [giftSize, setGiftSize] = useState(saved.giftSize === 2 ? 2 : 3);
+  const [picked, setPicked] = useState(() => cleanPicked(saved.picked));
+  // Box Natalizia: colore del vino e tre vasetti scelti
+  const [nat, setNat] = useState(() => ({
+    wine: BOXES.racale.wines.includes(saved.nat?.wine) ? saved.nat.wine : BOXES.racale.wines[0],
+    jars: Object.fromEntries(Object.entries(cleanPicked(saved.nat?.jars)).filter(([id]) => NATAL_JARS.some((p) => p.id === id))),
+  }));
   const [gift, setGift] = useState(() => {
     const g = { ...EMPTY_GIFT, ...saved.gift, recipient: { ...EMPTY_GIFT.recipient, ...saved.gift?.recipient } };
     const valid = weeks.find((w) => w.id === g.week && w.status !== 'full');
@@ -66,14 +71,14 @@ export default function NatalBoxPage() {
 
   useSEO({
     title: 'Box di Natale — il Salento a casa tua',
-    description: 'Regala il Salento: la Box a Gettoni da comporre con capperi di Racale, vino o olio e dolci salentini, o la Box Racale pronta. Scegli il lunedì di spedizione e aggiungi il biglietto scritto a mano.',
+    description: 'Regala il Salento: la Cassetta in Legno da comporre con 11 gettoni tra capperi di Racale, olio, vino, forno e legumi salentini, o la Box Natalizia con olio, vino e tre vasetti a scelta. Scegli il lunedì di spedizione e aggiungi il biglietto scritto a mano.',
     path: '/box-di-natale',
-    image: '/images/box-natale/box-poster.webp',
+    image: '/images/box-natale/box-poster-cassetta.webp',
   });
 
   useEffect(() => {
-    try { sessionStorage.setItem(STORE_KEY, JSON.stringify({ picked, giftSize, gift })); } catch { /* storage non disponibile */ }
-  }, [picked, giftSize, gift]);
+    try { sessionStorage.setItem(STORE_KEY, JSON.stringify({ picked, nat, gift })); } catch { /* storage non disponibile */ }
+  }, [picked, nat, gift]);
 
   /* ── stato derivato ───────────────────────────────────── */
   const sum = useMemo(() => summarize(picked), [picked]);
@@ -81,9 +86,11 @@ export default function NatalBoxPage() {
   const box = params.get('box');
   const wantsGift = params.get('regalo') === '1';
   const giftFor = box === 'racale' ? 'racale' : 'tokens';
-  const giftReady = box === 'racale' || (box === 'gettoni' && sum.complete);
+  const natJars = natJarCount(nat);
+  const natReady = natJars === BOXES.racale.jars;
+  const giftReady = (box === 'racale' && natReady) || (box === 'gettoni' && sum.complete);
   const view = added ? 'done'
-    : box === 'racale' ? (wantsGift ? 'gift' : 'racale')
+    : box === 'racale' ? (wantsGift && giftReady ? 'gift' : 'racale')
       : box === 'gettoni' ? (wantsGift && giftReady ? 'gift' : 'tokens')
         : 'intro';
   // uno step non ancora raggiungibile (link vecchio, refresh) ripiega sull'ultimo valido
@@ -91,17 +98,16 @@ export default function NatalBoxPage() {
   let step = askedStep;
   while (step > 0 && !status[step].reach) step -= 1;
 
-  const size = BOXES.racale.sizes.find((s) => s.n === giftSize);
   const week = weeks.find((w) => w.id === gift.week);
   const scene = useMemo(
     () => sceneFor({
       view: view === 'gift' ? 'done' : view,
       step,
       picked,
-      giftItems: size.items,
+      nat,
       added: view === 'gift' ? giftFor : added?.type,
     }),
-    [view, step, picked, size, added, giftFor],
+    [view, step, picked, nat, added, giftFor],
   );
 
   /* ── navigazione ──────────────────────────────────────── */
@@ -130,7 +136,7 @@ export default function NatalBoxPage() {
     scrollToPanel();
   }, [setParams]);
   const goStep = (i) => go({ box: 'gettoni', step: String(i + 1) });
-  const openRacale = () => { setGiftNonce((n) => n + 1); go({ box: 'racale' }); };
+  const openRacale = () => go({ box: 'racale' });
   const openTokens = () => go({ box: 'gettoni', step: '1' });
   const backToIntro = () => go({});
   const openGift = () => {
@@ -159,11 +165,9 @@ export default function NatalBoxPage() {
     showToast(`Tolto: ${p.name}`, () => setPicked(before));
   } : undefined;
 
-  const changeSize = (n) => {
-    if (n === giftSize) return;
-    setGiftSize(n);
-    setGiftNonce((x) => x + 1);
-  };
+  const pickWine = (id) => setNat((cur) => ({ ...cur, wine: id }));
+  const addJar = (p) => setNat((cur) => (natJarCount(cur) >= BOXES.racale.jars ? cur : { ...cur, jars: addPick(cur.jars, p) }));
+  const removeJar = (id) => setNat((cur) => ({ ...cur, jars: removePick(cur.jars, id) }));
 
   const changeGift = (next) => {
     setGift(next);
@@ -181,13 +185,15 @@ export default function NatalBoxPage() {
       setError('Controlla i campi evidenziati.');
       return;
     }
-    const productKey = isRacale ? size.productKey : BOXES.tokens.productKey;
-    const productId = BOX_PRODUCT_IDS[productKey];
-    const price = isRacale ? size.price : BOXES.tokens.price;
+    const boxDef = isRacale ? BOXES.racale : BOXES.tokens;
+    const productId = BOX_PRODUCT_IDS[boxDef.productKey];
+    const price = boxDef.price;
+    const line = (p, qty, extra) => ({ id: p.id, name: p.name, detail: [p.detail, p.producer].filter(Boolean).join(' · '), qty, ...extra });
     const items = isRacale
-      ? size.items.map((id) => ({ id, name: PRODUCT_BY_ID[id].name, detail: PRODUCT_BY_ID[id].detail, qty: 1 }))
-      : sum.chosen.map(({ p, qty }) => ({ id: p.id, name: p.name, detail: p.detail, qty, tokens: qty * p.cost }));
-    const name = isRacale ? `${BOXES.racale.name} · ${size.label}` : BOXES.tokens.name;
+      ? Object.entries(natItems(nat).reduce((m, id) => ({ ...m, [id]: (m[id] || 0) + 1 }), {}))
+        .map(([id, qty]) => line(PRODUCT_BY_ID[id], qty))
+      : sum.chosen.map(({ p, qty }) => line(p, qty, { tokens: qty * p.cost }));
+    const name = boxDef.name;
     const isGift = gift.mode === 'recipient';
     const r = gift.recipient;
     const giftPayload = isGift ? {
@@ -218,7 +224,7 @@ export default function NatalBoxPage() {
         id: newLineId(),
         payload: {
           natalBox: {
-            type, name, size: isRacale ? size.n : undefined, items,
+            type, name, items,
             ship: { id: week.id, label: week.label },
             gift: giftPayload,
           },
@@ -234,7 +240,11 @@ export default function NatalBoxPage() {
     }
   }
 
-  const startOver = () => { setPicked({}); setAdded(null); go({ box: 'gettoni', step: '1' }); };
+  const startOver = () => {
+    setAdded(null);
+    if (added?.type === 'racale') { setNat((cur) => ({ ...cur, jars: {} })); go({ box: 'racale' }); return; }
+    setPicked({}); go({ box: 'gettoni', step: '1' });
+  };
   const openCart = () => window.dispatchEvent(new Event('caro:open-cart'));
 
   /* ── apertura ─────────────────────────────────────────── */
@@ -251,35 +261,31 @@ export default function NatalBoxPage() {
   }
 
   /* ── barra azioni (sticky in basso) ───────────────────── */
-  const boxPrice = giftFor === 'racale' ? size.price : BOXES.tokens.price;
+  const boxPrice = giftFor === 'racale' ? BOXES.racale.price : BOXES.tokens.price;
+  const natLeft = BOXES.racale.jars - natJars;
   let bar = null;
   if (view === 'racale') {
     bar = {
-      info: <><span className={styles.barTitle}>{BOXES.racale.name}</span><span className={styles.barSub}>{size.label} · {eur(size.price)}</span></>,
-      label: <>Continua<span className={styles.hideSm}> · è un regalo?</span></>,
-      onClick: openGift,
+      info: <><span className={styles.barTitle}>{BOXES.racale.name}</span><span className={styles.barSub}>{natReady ? `Vasetti scelti · ${eur(BOXES.racale.price)}` : `${plural(natJars, 'vasetto', 'vasetti')} su ${BOXES.racale.jars}`}</span></>,
+      label: natReady ? <>Continua<span className={styles.hideSm}> · è un regalo?</span></> : `Scegli ancora ${plural(natLeft, 'vasetto', 'vasetti')}`,
+      onClick: natReady ? openGift : undefined,
+      disabled: !natReady,
       arrow: true,
     };
   } else if (view === 'tokens') {
-    const helper = step === 0
-      ? sum.missing > 0 ? `Mancano ${plural(sum.missing, 'specialità', 'specialità')} del Capperificio` : 'Specialità a posto: ora il vino o l’olio'
-      : step === 1
-        ? sum.vo ? (sum.vo.id === 't-vino' ? 'Vino nel portabottiglia: 9 posti in scatola' : 'Olio in scatola: 8 posti per il resto') : 'Il vino lascia 9 posti, l’olio 8'
-        : step === 2
-          ? sum.complete ? 'Gettoni finiti: la scatola è piena' : `Ti ${sum.left === 1 ? 'resta' : 'restano'} ${tokens(sum.left)} per i dolci`
-          : 'Biglietto, spedizione e destinatario nel prossimo passo';
+    const leftText = `Ti ${sum.left === 1 ? 'resta' : 'restano'} ${tokens(sum.left)}`;
+    const helper = step === 3
+      ? 'Biglietto, spedizione e destinatario nel prossimo passo'
+      : sum.missing > 0
+        ? `Mancano ${plural(sum.missing, 'vasetto', 'vasetti')} del Capperificio`
+        : sum.complete ? 'Gettoni finiti: la cassetta è piena' : leftText;
     let label; let onClick; let disabled = false;
-    if (step === 0) {
-      if (sum.missing > 0) { label = `Scegli ancora ${plural(sum.missing, 'specialità', 'specialità')}`; disabled = true; }
-      else { label = 'Avanti · vino o olio'; onClick = () => goStep(1); }
-    } else if (step === 1) {
-      if (!sum.vo) { label = 'Scegli vino o olio'; disabled = true; }
-      else if (sum.complete) { label = 'Chiudi la scatola'; onClick = () => goStep(3); }
-      else { label = 'Avanti · i dolci'; onClick = () => goStep(2); }
-    } else if (step === 2) {
-      if (!sum.complete) { label = `Scegli ancora ${plural(sum.left, 'dolce', 'dolci')}`; disabled = true; }
-      else { label = 'Chiudi la scatola'; onClick = () => goStep(3); }
-    } else {
+    if (step === 0 && sum.missing > 0) { label = `Scegli ancora ${plural(sum.missing, 'vasetto', 'vasetti')}`; disabled = true; }
+    else if (step < 3 && sum.complete) { label = 'Chiudi la cassetta'; onClick = () => goStep(3); }
+    else if (step === 0) { label = 'Avanti · olio e vino'; onClick = () => goStep(1); }
+    else if (step === 1) { label = 'Avanti · forno e legumi'; onClick = () => goStep(2); }
+    else if (step === 2) { label = `Usa ancora ${tokens(sum.left)}`; disabled = true; }
+    else {
       label = <>Continua<span className={styles.hideSm}> · è un regalo?</span></>;
       onClick = openGift;
     }
@@ -294,7 +300,7 @@ export default function NatalBoxPage() {
     bar = {
       info: (
         <>
-          <span className={styles.barTitle}>{giftFor === 'racale' ? `${BOXES.racale.name} · ${size.label}` : BOXES.tokens.name}</span>
+          <span className={styles.barTitle}>{giftFor === 'racale' ? BOXES.racale.name : BOXES.tokens.name}</span>
           <span className={styles.barSub}>
             {week ? `Spedizione ${week.label}` : 'Scegli quando spedirla'}
             {isGift ? ` · a ${toName}` : ''}
@@ -309,15 +315,18 @@ export default function NatalBoxPage() {
   }
 
   const stageLabel = view === 'tokens'
-    ? `Anteprima 3D della tua scatola: ${sum.items ? sum.chosen.map(({ p, qty }) => `${qty} ${p.name}`).join(', ') : 'ancora vuota'}.`
+    ? `Anteprima 3D della tua cassetta: ${sum.items ? sum.chosen.map(({ p, qty }) => `${qty} ${p.name}`).join(', ') : 'ancora vuota'}.`
     : giftFor === 'racale' && (view === 'racale' || view === 'gift' || added?.type === 'racale')
-      ? `Anteprima 3D della ${BOXES.racale.name} da ${size.label}.`
-      : 'Anteprima 3D della tua Box a Gettoni chiusa con il nastro.';
+      ? `Anteprima 3D della ${BOXES.racale.name}: olio, ${PRODUCT_BY_ID[nat.wine]?.name.toLowerCase()} e ${plural(natJars, 'vasetto', 'vasetti')}.`
+      : 'Anteprima 3D della tua Cassetta in Legno chiusa con il nastro.';
 
   const showMeter = view === 'tokens' || (view === 'gift' && giftFor === 'tokens');
   const boxTitle = view === 'racale' || (view === 'gift' && giftFor === 'racale') || added?.type === 'racale'
     ? BOXES.racale.name : BOXES.tokens.name;
-  const [boxA, boxB] = boxTitle.split(' a ');
+  // ultima parola in corsivo: "Box <em>Natalizia</em>", "Cassetta in <em>Legno</em>"
+  const cut = boxTitle.lastIndexOf(' ');
+  const boxA = boxTitle.slice(0, cut);
+  const boxB = boxTitle.slice(cut + 1);
 
   /* ═════════════════════════ render ═════════════════════════ */
   return (
@@ -331,9 +340,9 @@ export default function NatalBoxPage() {
       {/* ── testata del percorso ── */}
       <div className={styles.topbar}>
         <button type="button" className={styles.back} onClick={view === 'gift' ? leaveGift : backToIntro}>
-          <ArrowLeft /> {view === 'gift' ? 'Torna alla scatola' : 'Tutte le box'}
+          <ArrowLeft /> {view === 'gift' ? 'Torna alla box' : 'Tutte le box'}
         </button>
-        <span className={styles.topTitle}>{boxB ? <>{boxA} a <em>{boxB}</em></> : boxTitle}</span>
+        <span className={styles.topTitle}>{cut > 0 ? <>{boxA} <em>{boxB}</em></> : boxTitle}</span>
         {view === 'tokens' ? (
           <ol className={styles.stepper} aria-label="Passaggi">
             {STEPS.map((s, i) => {
@@ -370,7 +379,7 @@ export default function NatalBoxPage() {
               <BoxStage scene={scene} giftNonce={giftNonce} onPick={pickFromStage} label={stageLabel}>
                 {view === 'tokens' && step < 3 && (
                   <p className={styles.stageHint} data-busy={sum.items > 0}>
-                    {sum.items ? 'Tocca un prodotto nella scatola per toglierlo' : 'Trascina per ruotare la scatola'}
+                    {sum.items ? 'Tocca un prodotto nella cassetta per toglierlo' : 'Trascina per ruotare la cassetta'}
                   </p>
                 )}
               </BoxStage>
@@ -391,44 +400,73 @@ export default function NatalBoxPage() {
 
             {view === 'racale' && (
               <>
-                <p className={ui.kicker}>{BOXES.racale.kicker}</p>
+                <p className={ui.kicker}>{BOXES.racale.kicker} · {eur(BOXES.racale.price)}</p>
                 <h1 className={styles.title}>{BOXES.racale.name}</h1>
                 <p className={styles.lead}>{BOXES.racale.lead}</p>
 
-                <div className={styles.sizes} role="radiogroup" aria-label="Formato">
-                  {BOXES.racale.sizes.map((s) => (
-                    <button
-                      key={s.n}
-                      type="button"
-                      role="radio"
-                      aria-checked={s.n === giftSize}
-                      className={`${styles.size} ${s.n === giftSize ? styles.sizeOn : ''}`}
-                      onClick={() => changeSize(s.n)}
-                    >
-                      <span className={styles.sizeRadio} aria-hidden="true" />
-                      <span className={styles.sizeLabel}>{s.label}</span>
-                      <span className={styles.sizeItems}>{s.items.map((id) => PRODUCT_BY_ID[id].name).join(' · ')}</span>
-                      <span className={styles.sizePrice}>{eur(s.price)}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <h2 className={styles.groupTitle}>Nella confezione</h2>
+                <h2 className={styles.groupTitle}>Già nella confezione</h2>
                 <ul className={styles.contents}>
-                  {size.items.map((id) => {
-                    const p = PRODUCT_BY_ID[id];
+                  {[PRODUCT_BY_ID[BOXES.racale.oil]].map((p) => (
+                    <li key={p.id} className={styles.contentRow}>
+                      <span className={`${styles.contentThumb} ${styles.contentThumbEmpty}`}><span aria-hidden="true">{p.tile}</span></span>
+                      <div>
+                        <span className={styles.contentName}>{p.name}</span>
+                        <span className={styles.contentDetail}>{p.detail} · {p.producer}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className={styles.groupHead}>
+                  <h2 className={styles.groupTitle}>Il vino · 1 litro</h2>
+                  <span>Cantina Torre Ospina</span>
+                </div>
+                <div className={styles.sizes} role="radiogroup" aria-label="Colore del vino">
+                  {BOXES.racale.wines.map((id) => {
+                    const w = PRODUCT_BY_ID[id];
+                    const on = nat.wine === id;
                     return (
-                      <li key={id} className={styles.contentRow}>
-                        <span className={styles.contentThumb}><img src={p.image} alt="" width="600" height="720" loading="lazy" decoding="async" /></span>
-                        <div>
-                          <span className={styles.contentName}>{p.name}</span>
-                          <span className={styles.contentDetail}>{p.detail} · {p.note}</span>
-                        </div>
-                      </li>
+                      <button
+                        key={id}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        className={`${styles.size} ${on ? styles.sizeOn : ''}`}
+                        onClick={() => pickWine(id)}
+                      >
+                        <span className={styles.sizeRadio} aria-hidden="true" />
+                        <span className={styles.sizeLabel}>{w.color}</span>
+                        <span className={styles.sizeItems}>{w.detail} · {w.producer}</span>
+                      </button>
                     );
                   })}
-                </ul>
-                <p className={styles.small}>Confezione in tela verde con finestre e fiocco di raso, pronta da mettere sotto l’albero.</p>
+                </div>
+
+                <div className={styles.groupHead}>
+                  <h2 className={styles.groupTitle}>I tuoi tre vasetti</h2>
+                  <span aria-live="polite">{natJars} di {BOXES.racale.jars}</span>
+                </div>
+                {STEP_GROUPS.caro.filter((g) => NATAL_JARS.some(g.filter)).map((g) => (
+                  <div key={g.title} className={styles.group}>
+                    <div className={styles.groupHead}>
+                      <h3 className={styles.groupTitle}>{g.title}</h3>
+                      <span>{g.sub}</span>
+                    </div>
+                    <ul className={styles.list} aria-label={g.title}>
+                      {NATAL_JARS.filter(g.filter).map((p) => (
+                        <BoxItemCard
+                          key={p.id}
+                          product={p}
+                          showCost={false}
+                          state={{ qty: nat.jars[p.id] || 0, canAdd: natLeft > 0, reason: natLeft > 0 ? '' : 'Hai già scelto tre vasetti' }}
+                          onAdd={() => addJar(p)}
+                          onRemove={() => removeJar(p.id)}
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                <p className={styles.small}>Puoi prendere anche due o tre vasetti uguali.</p>
               </>
             )}
 
@@ -446,13 +484,12 @@ export default function NatalBoxPage() {
                         <span>{g.sub}</span>
                       </div>
                     )}
-                    <ul className={styles.list} role={step === 1 ? 'radiogroup' : 'list'} aria-label={step === 1 ? 'Vino o olio' : g.title || undefined}>
+                    <ul className={styles.list} aria-label={g.title || undefined}>
                       {PRODUCTS.filter(g.filter).map((p) => (
                         <BoxItemCard
                           key={p.id}
                           product={p}
                           state={itemState(p, picked, sum)}
-                          variant={p.sect === 'vo' ? 'radio' : 'qty'}
                           onAdd={() => add(p)}
                           onRemove={() => remove(p.id)}
                         />
@@ -464,9 +501,9 @@ export default function NatalBoxPage() {
                 {step === 3 && (
                   <div className={styles.review}>
                     {[
-                      ['Specialità del Capperificio', 0, (p) => p.sect === 'capperi' || p.sect === 'caro'],
-                      ['Vino o olio', 1, (p) => p.sect === 'vo'],
-                      ['Dolci', 2, (p) => p.sect === 'dolci'],
+                      ['Dal Capperificio', 0, (p) => p.sect === 'capperi' || p.sect === 'caro' || p.sect === 'orto'],
+                      ['Olio e vino', 1, (p) => p.sect === 'olio' || p.sect === 'vino'],
+                      ['Forno e legumi', 2, (p) => p.sect === 'forno' || p.sect === 'legumi'],
                     ].map(([title, si, f]) => {
                       const rows = sum.chosen.filter(({ p }) => f(p));
                       return (
@@ -479,7 +516,9 @@ export default function NatalBoxPage() {
                           <ul className={styles.contents}>
                             {rows.map(({ p, qty }) => (
                               <li key={p.id} className={styles.contentRow}>
-                                <span className={styles.contentThumb}><img src={p.image} alt="" width="600" height="720" loading="lazy" decoding="async" /></span>
+                                {p.image
+                                  ? <span className={styles.contentThumb}><img src={p.image} alt="" width="600" height="720" loading="lazy" decoding="async" /></span>
+                                  : <span className={`${styles.contentThumb} ${styles.contentThumbEmpty}`}><span aria-hidden="true">{p.tile}</span></span>}
                                 <div>
                                   <span className={styles.contentName}>{qty > 1 ? `${qty} × ` : ''}{p.name}</span>
                                   <span className={styles.contentDetail}>{p.detail}{p.producer ? ` · ${p.producer}` : ''}</span>
@@ -492,7 +531,7 @@ export default function NatalBoxPage() {
                       );
                     })}
                     <div className={styles.totalRow}>
-                      <span>{sum.vo?.id === 't-vino' ? `${sum.items - 1} prodotti in scatola + vino nel portabottiglia` : `${sum.items} prodotti in scatola, olio compreso`}</span>
+                      <span>{plural(sum.items, 'prodotto', 'prodotti')} nella cassetta</span>
                       <strong>{eur(BOXES.tokens.price)}</strong>
                     </div>
                   </div>
@@ -516,7 +555,7 @@ export default function NatalBoxPage() {
                 <span className={styles.doneSeal} aria-hidden="true">
                   <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
                 </span>
-                <p className={ui.kicker}>{added.type === 'racale' ? `${BOXES.racale.name} · ${size.label}` : BOXES.tokens.name}</p>
+                <p className={ui.kicker}>{added.type === 'racale' ? BOXES.racale.name : BOXES.tokens.name}</p>
                 <h1 className={styles.title} role="status">
                   {added.preview ? <>Box pronta <em>(anteprima)</em></> : <>È nel tuo <em>carrello</em></>}
                 </h1>
@@ -528,7 +567,7 @@ export default function NatalBoxPage() {
                 {added.preview && (
                   <p className={styles.previewNote}>
                     Modalità anteprima: manca l’ID del prodotto-box Shopware
-                    ({added.type === 'racale' ? (size.n === 2 ? 'VITE_XMAS_BOX_FIXED2_ID' : 'VITE_XMAS_BOX_FIXED_ID') : 'VITE_XMAS_BOX_TOKENS_ID'}),
+                    ({added.type === 'racale' ? 'VITE_XMAS_BOX_FIXED_ID' : 'VITE_XMAS_BOX_TOKENS_ID'}),
                     quindi il carrello non è stato toccato.
                   </p>
                 )}

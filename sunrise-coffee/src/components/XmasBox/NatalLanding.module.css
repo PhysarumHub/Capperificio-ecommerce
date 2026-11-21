@@ -131,7 +131,7 @@
 .cardName { font-family: var(--font-serif); font-weight: 400; font-size: 38px; line-height: 1.05; }
 .cardLead { font-size: var(--text-lg); line-height: 1.55; }
 .cardDark .cardLead { color: #E3DAC2; }
-.cardCoins > span { margin-left: 0 !important; } /* dieci gettoni affiancati, non sovrapposti */
+.cardCoins > span { margin-left: 0 !important; } /* undici gettoni affiancati, non sovrapposti */
 .cardCoins { gap: 5px; }
 .cardSmall { font-size: var(--text-base); color: var(--ink-soft); }
 .cardDark .cardSmall { color: #D9C9A3; }

@@ -2,16 +2,15 @@
  * BOX DI NATALE — catalogo e regole
  * ─────────────────────────────────────────────────────────────
  * Due confezioni:
- *   1. "Box Racale" — confezione regalo in lino verde a finestre, contenuto
- *      fisso. Formato da 3 vasetti (20 €) o da 2 vasetti.
- *   2. "Box a Gettoni" — scatola verde con finestra, 10 gettoni:
- *        step 1  almeno 3 specialità del Capperificio (1 gettone l'una)
- *        step 2  vino (1 gettone, nel portabottiglia accanto) OPPURE
- *                olio (2 gettoni, occupa un posto nella scatola) — obbligatorio
- *        step 3  dolci del Salento fino a esaurire i gettoni
- *      La scatola è una griglia 3×3: col vino ci stanno 9 prodotti, con
- *      l'olio 8 + la bottiglia.
+ *   1. "Box Natalizia" (25 €) — olio EVO BIO 500 ml (OP ACLI Racale),
+ *      vino 1 L della Cantina Torre Ospina (rosso, rosato o bianco, a scelta)
+ *      e 3 vasetti del Capperificio scelti dal cliente.
+ *   2. "Cassetta in Legno" (50 €) — 11 gettoni da distribuire come si vuole.
+ *      Unica regola fissa: almeno 3 vasetti del Capperificio. L'olio vale
+ *      2 gettoni, tutto il resto 1.
  *
+ * Le foto ci sono solo per i vasetti del Capperificio: gli altri prodotti
+ * (e per ora cucunci, germogli e pomodori) compaiono senza immagine.
  * I prezzi mostrati sono informativi: il totale vero lo calcola Shopware dal
  * prodotto-box nel carrello.
  */
@@ -19,43 +18,49 @@
 const IMG = '/images/box-natale';
 
 /* ID dei prodotti-box Shopware (admin → Cataloghi → Prodotti). Senza ID la
-   pagina funziona in anteprima: il pulsante finale non scrive nel carrello. */
+   pagina funziona in anteprima: il pulsante finale non scrive nel carrello.
+   Il prodotto "racale3" (numero XMAS-BOX-RACALE-3) è la Box Natalizia. */
 export const BOX_PRODUCT_IDS = {
   racale3: import.meta.env.VITE_XMAS_BOX_FIXED_ID || '',
-  racale2: import.meta.env.VITE_XMAS_BOX_FIXED2_ID || '',
   tokens: import.meta.env.VITE_XMAS_BOX_TOKENS_ID || '',
 };
 
-export const TOKENS_TOTAL = 10;
+export const TOKENS_TOTAL = 11;
 export const MIN_SPECIALITA = 3;
 
 /* ── Le due confezioni ─────────────────────────────────────── */
 export const BOXES = {
   racale: {
     key: 'racale',
-    name: 'Box Racale',
+    name: 'Box Natalizia',
     kicker: 'Pronta da regalare',
-    lead: 'Le specialità firmate Capperificio Caro nella confezione in lino a finestre, chiusa con il fiocco.',
-    sizes: [
-      { n: 3, label: '3 vasetti', price: 20, productKey: 'racale3', items: ['shoots', 'powder', 'sale-lilliput'] },
-      { n: 2, label: '2 vasetti', price: 14, productKey: 'racale2', items: ['sale-lilliput', 'powder'] },
-    ],
+    lead: 'Un olio EVO biologico, un litro di vino salentino e tre vasetti del Capperificio scelti da te.',
+    price: 25,
+    productKey: 'racale3',
+    jars: 3,
+    oil: 'olio',
+    wines: ['vino-rosso', 'vino-rosato', 'vino-bianco'],
   },
   tokens: {
     key: 'tokens',
-    name: 'Box a Gettoni',
+    name: 'Cassetta in Legno',
     kicker: 'Componila tu',
-    lead: 'Dieci gettoni da spendere tra le nostre specialità, un vino o un olio e i dolci delle pasticcerie salentine.',
-    price: 45, // informativo: vale quello del prodotto Shopware
+    lead: 'Undici gettoni da distribuire come preferisci tra capperi, olio, vino, forno e legumi del Salento.',
+    price: 50,
     productKey: 'tokens',
   },
 };
 
 /* ── Prodotti ──────────────────────────────────────────────────
-   sect:   'capperi' | 'caro' (= specialità del Capperificio) | 'vo' | 'dolci'
+   sect:   'capperi' | 'caro' (vasetti del Capperificio, contano per il minimo)
+           'orto' (Capperificio, non è un vasetto) | 'olio' | 'vino' | 'forno' | 'legumi'
    cost:   gettoni per unità
-   max:    pezzi massimi per scatola (assente = nessun limite oltre ai gettoni)
-   m3:     aspetto nella scena 3D [forma, contenuto, titolo, sottotitolo, piede, peso, vetro, latta] */
+   image:  solo per i vasetti del Capperificio con foto; null = card senza foto
+   tile:   parola nella tessera quando manca la foto
+   m3:     aspetto nella scena 3D [forma, contenuto, titolo, sottotitolo, piede, peso, vetro, colore etichetta] */
+const PF = 'Pane è Fantasie';
+const TN = 'Terra Nera';
+
 export const PRODUCTS = [
   // Capperi di Racale — sotto sale
   { id: 'sale-lilliput', sect: 'capperi', cost: 1, name: 'Capperi Lilliput', detail: 'Al sale marino · 75 g', note: 'Ø 4–6 mm, il calibro più pregiato', image: `${IMG}/sale-lilliput.webp`,
@@ -75,39 +80,52 @@ export const PRODUCTS = [
     m3: ['tall', 'capers', 'Cappero di Racale', 'All’aceto di vino', 'Calibro: Lacrimella', '250g'] },
   { id: 'aceto-capperone', sect: 'capperi', cost: 1, name: 'Capperone', detail: 'All’aceto di vino · 250 g', note: 'Carnoso e croccante', image: `${IMG}/aceto.webp`,
     m3: ['tall', 'capers', 'Cappero di Racale', 'All’aceto di vino', 'Calibro: Capperone', '250g'] },
-  // Altre specialità
-  { id: 'cuc-aceto', sect: 'caro', cost: 1, name: 'Cucunci', detail: 'All’aceto di vino · 200 g', note: 'Il frutto del cappero', image: `${IMG}/cucunci.webp`,
+  // Altre specialità (cucunci e germogli: foto in arrivo)
+  { id: 'cuc-aceto', sect: 'caro', cost: 1, name: 'Cucunci', detail: 'All’aceto di vino · 200 g', note: 'Il frutto del cappero', image: null, tile: 'Cucunci',
     m3: ['tall', 'cucunci', 'Cucunci di Racale', 'All’aceto di vino', '', '200g'] },
-  { id: 'shoots', sect: 'caro', cost: 1, name: 'Germogli di cappero', detail: 'All’aceto di vino bianco', note: 'Croccanti ed erbacei', image: `${IMG}/germogli.webp`,
+  { id: 'shoots', sect: 'caro', cost: 1, name: 'Germogli di cappero', detail: 'All’aceto di vino bianco', note: 'Croccanti ed erbacei', image: null, tile: 'Germogli',
     m3: ['squat', 'leaves', 'Germogli di cappero', 'All’aceto', '', ''] },
   { id: 'powder', sect: 'caro', cost: 1, name: 'Polvere di cappero', detail: 'Extrafine · 50 g', note: 'Un cucchiaino su salse e crudi', image: `${IMG}/powder.webp`,
     m3: ['squat', 'powder', 'Polvere di cappero', 'di Racale', 'Extrafine', '50g'] },
   { id: 'leaves', sect: 'caro', cost: 1, name: 'Foglie di cappero', detail: 'Al sale marino · 50 g', note: 'Fresche e minerali', image: `${IMG}/leaves.webp`,
     m3: ['squat', 'leaves', 'Foglie di cappero', 'Al sale marino', '', '50g'] },
-  // Vino o olio (uno dei due, obbligatorio)
-  { id: 't-vino', sect: 'vo', cost: 1, max: 1, name: 'Vino rosso del Salento', detail: '75 cl · nel portabottiglia', producer: 'Cantina salentina', note: 'Viaggia accanto alla scatola: lascia 9 posti liberi', image: `${IMG}/vino.webp`,
-    m3: ['bottle', '', 'Vino rosso', 'Salento', 'Cantina', '75cl', 0x2e1014] },
-  { id: 't-olio', sect: 'vo', cost: 2, max: 1, name: 'Olio extravergine', detail: '500 ml', producer: 'Frantoio salentino', note: 'Sta nella scatola: lascia 8 posti liberi', image: `${IMG}/olio.webp`,
-    m3: ['bottle', '', 'Olio extravergine', 'Salento', 'Frantoio', '500ml', 0x4a5a22] },
-  // Dolci del Salento
-  { id: 'd-most', sect: 'dolci', cost: 1, name: 'Mostaccioli', detail: '200 g', producer: 'Pasticceria salentina', note: 'Mandorle, cacao e vincotto', image: `${IMG}/mostaccioli.webp`,
-    m3: ['tin', '', 'Mostaccioli salentini', '', '', '', 0, 0x6b2a1c] },
-  { id: 'd-fichi', sect: 'dolci', cost: 1, name: 'Fichi mandorlati', detail: '200 g', producer: 'Azienda agricola salentina', note: 'Fichi secchi al forno con mandorla', image: `${IMG}/fichi.webp`,
-    m3: ['tin', '', 'Fichi mandorlati', '', '', '', 0, 0x2f5a3e] },
-  { id: 'd-coto', sect: 'dolci', cost: 1, name: 'Cotognata leccese', detail: '150 g', producer: 'Pasticceria salentina', note: 'Mela cotogna, ricetta di famiglia', image: `${IMG}/cotognata.webp`,
-    m3: ['tin', '', 'Cotognata leccese', '', '', '', 0, 0xb8892e] },
-  { id: 'd-purc', sect: 'dolci', cost: 1, name: 'Purceddhruzzi', detail: '200 g', producer: 'Pasticceria salentina', note: 'Fritti, al miele e confettini', image: `${IMG}/purceddhruzzi.webp`,
-    m3: ['tin', '', 'Purceddhruzzi al miele', '', '', '', 0, 0x8c1c24] },
+  // Dall'orto del Capperificio (non è un vasetto: non conta per il minimo)
+  { id: 'pomodori', sect: 'orto', cost: 1, name: 'Pomodori essiccati al sole', detail: '500 g', producer: 'Capperificio Caro', image: null, tile: 'Orto',
+    m3: ['pouch', '', 'Pomodori secchi', 'Capperificio Caro', '', '', 0, 0x8c1c24] },
+  // Olio e vino
+  { id: 'olio', sect: 'olio', cost: 2, name: 'Olio EVO biologico', detail: '500 ml', producer: 'OP ACLI Racale', image: null, tile: 'Olio',
+    m3: ['bottle', '', 'Olio EVO BIO', 'OP ACLI Racale', '', '500ml', 0x4a5a22] },
+  { id: 'vino-rosso', sect: 'vino', cost: 1, name: 'Vino rosso', detail: '1 L', producer: 'Cantina Torre Ospina', image: null, tile: 'Rosso', color: 'Rosso',
+    m3: ['bottle', '', 'Vino rosso', 'Torre Ospina', '', '1L', 0x2e1014] },
+  { id: 'vino-rosato', sect: 'vino', cost: 1, name: 'Vino rosato', detail: '1 L', producer: 'Cantina Torre Ospina', image: null, tile: 'Rosato', color: 'Rosato',
+    m3: ['bottle', '', 'Vino rosato', 'Torre Ospina', '', '1L', 0x8e3a46] },
+  { id: 'vino-bianco', sect: 'vino', cost: 1, name: 'Vino bianco', detail: '1 L', producer: 'Cantina Torre Ospina', image: null, tile: 'Bianco', color: 'Bianco',
+    m3: ['bottle', '', 'Vino bianco', 'Torre Ospina', '', '1L', 0x8f9a5a] },
+  // Forno — Pane è Fantasie
+  { id: 'pf-purciddhuzzi', sect: 'forno', cost: 1, name: 'Purciddhuzzi', detail: '250 g', producer: PF, image: null, tile: 'Forno', m3: ['pouch', '', 'Purciddhuzzi', PF, '', '', 0, 0x8c1c24] },
+  { id: 'pf-pitteddhe', sect: 'forno', cost: 1, name: 'Pitteddhe', detail: '250 g', producer: PF, image: null, tile: 'Forno', m3: ['pouch', '', 'Pitteddhe', PF, '', '', 0, 0x8c1c24] },
+  { id: 'pf-mustazzere', sect: 'forno', cost: 1, name: 'Mustazzere', detail: '250 g', producer: PF, image: null, tile: 'Forno', m3: ['pouch', '', 'Mustazzere', PF, '', '', 0, 0x8c1c24] },
+  { id: 'pf-cantucci', sect: 'forno', cost: 1, name: 'Cantucci', detail: '250 g', producer: PF, image: null, tile: 'Forno', m3: ['pouch', '', 'Cantucci', PF, '', '', 0, 0x8c1c24] },
+  { id: 'pf-tarallini-vino', sect: 'forno', cost: 1, name: 'Tarallini al vino', detail: '250 g', producer: PF, image: null, tile: 'Forno', m3: ['pouch', '', 'Tarallini al vino', PF, '', '', 0, 0x8c1c24] },
+  { id: 'pf-tarallini-zucchero', sect: 'forno', cost: 1, name: 'Tarallini zuccherati', detail: '250 g', producer: PF, image: null, tile: 'Forno', m3: ['pouch', '', 'Tarallini zuccherati', PF, '', '', 0, 0x8c1c24] },
+  { id: 'pf-friselle', sect: 'forno', cost: 1, name: 'Friselle', detail: '250 g', producer: PF, image: null, tile: 'Forno', m3: ['pouch', '', 'Friselle', PF, '', '', 0, 0x8c1c24] },
+  // Legumi — Terra Nera
+  { id: 'tn-pisello', sect: 'legumi', cost: 1, name: 'Pisello nano di Zollino', detail: '500 g', producer: TN, image: null, tile: 'Legumi', m3: ['pouch', '', 'Pisello nano', TN, '', '', 0, 0x2c4a2c] },
+  { id: 'tn-lenticchie', sect: 'legumi', cost: 1, name: 'Lenticchie multicolore di Zollino', detail: '500 g', producer: TN, image: null, tile: 'Legumi', m3: ['pouch', '', 'Lenticchie', TN, '', '', 0, 0x2c4a2c] },
+  { id: 'tn-cicerchia', sect: 'legumi', cost: 1, name: 'Cicerchia di Uggiano', detail: '500 g', producer: TN, image: null, tile: 'Legumi', m3: ['pouch', '', 'Cicerchia', TN, '', '', 0, 0x2c4a2c] },
 ];
 
 export const PRODUCT_BY_ID = Object.fromEntries(PRODUCTS.map((p) => [p.id, p]));
 
-/* ── Step del percorso Box a Gettoni ───────────────────────── */
+/* Vasetti che si possono scegliere nella Box Natalizia. */
+export const NATAL_JARS = PRODUCTS.filter((p) => p.sect === 'capperi' || p.sect === 'caro');
+
+/* ── Step del percorso Cassetta in Legno ───────────────────── */
 export const STEPS = [
-  { key: 'caro',  short: 'Capperificio', title: 'Le specialità del Capperificio', lead: 'Almeno tre, raccolte e lavorate a mano a Racale. Ogni vasetto vale un gettone.' },
-  { key: 'vo',    short: 'Vino o olio',  title: 'Un vino o un olio del Salento', lead: 'Scegline uno: il vino viaggia nel suo portabottiglia accanto alla scatola, l’olio sta dentro e vale due gettoni.' },
-  { key: 'dolci', short: 'Dolci',        title: 'I dolci di Natale', lead: 'Spendi i gettoni rimasti tra i dolci delle pasticcerie salentine.' },
-  { key: 'chiudi', short: 'Chiudi',      title: 'La tua scatola è pronta', lead: 'Controlla il contenuto: la chiudiamo con il nastro e la spediamo da Racale.' },
+  { key: 'caro',     short: 'Capperificio',   title: 'I vasetti del Capperificio', lead: 'Almeno tre, raccolti e lavorati a mano a Racale. Ogni vasetto vale un gettone.' },
+  { key: 'vo',       short: 'Olio e vino',    title: 'Olio e vino del Salento', lead: 'Facoltativi. L’olio EVO biologico vale due gettoni, il vino da un litro uno.' },
+  { key: 'dispensa', short: 'Forno e legumi', title: 'Forno e legumi salentini', lead: 'Spendi i gettoni rimasti tra il forno di Pane è Fantasie e i legumi di Terra Nera.' },
+  { key: 'chiudi',   short: 'Chiudi',         title: 'La tua cassetta è pronta', lead: 'Controlla il contenuto: la chiudiamo con il nastro e la spediamo da Racale.' },
 ];
 
 export const STEP_GROUPS = {
@@ -115,9 +133,16 @@ export const STEP_GROUPS = {
     { title: 'Capperi al sale marino', sub: 'Da sciacquare prima dell’uso', filter: (p) => p.sect === 'capperi' && p.id.startsWith('sale-') },
     { title: 'Capperi all’aceto di vino', sub: 'Pronti da usare', filter: (p) => p.sect === 'capperi' && p.id.startsWith('aceto-') },
     { title: 'Altre specialità', sub: 'Cucunci, germogli, polvere e foglie', filter: (p) => p.sect === 'caro' },
+    { title: 'Dall’orto', sub: 'Non conta tra i tre vasetti', filter: (p) => p.sect === 'orto' },
   ],
-  vo: [{ title: null, sub: null, filter: (p) => p.sect === 'vo' }],
-  dolci: [{ title: null, sub: null, filter: (p) => p.sect === 'dolci' }],
+  vo: [
+    { title: 'Olio', sub: 'OP ACLI Racale · 2 gettoni', filter: (p) => p.sect === 'olio' },
+    { title: 'Vino', sub: 'Cantina Torre Ospina · 1 gettone', filter: (p) => p.sect === 'vino' },
+  ],
+  dispensa: [
+    { title: 'Forno', sub: 'Pane è Fantasie', filter: (p) => p.sect === 'forno' },
+    { title: 'Legumi', sub: 'Terra Nera', filter: (p) => p.sect === 'legumi' },
+  ],
 };
 
 /* ── Prenotazione regalo ───────────────────────────────────────
