@@ -66,7 +66,7 @@ export default function NatalBoxPage() {
     title: 'Box di Natale — il Salento a casa tua',
     description: 'Regala il Salento: la Cassetta in Legno da comporre con 11 gettoni tra capperi di Racale, olio, vino, forno e legumi salentini, o la Box Racale pronta da regalare. Aggiungi il biglietto scritto a mano.',
     path: '/box-di-natale',
-    image: '/images/box-natale/box-poster-cassetta.webp',
+    image: '/images/box-natale/box-natale-og.jpg',
   });
 
   useEffect(() => {
