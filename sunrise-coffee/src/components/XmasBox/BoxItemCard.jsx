@@ -5,7 +5,7 @@ import styles from './BoxItemCard.module.css';
    gettoni e comandi − n + a destra. In griglia a due colonne su desktop,
    una sotto l'altra su mobile.
    variant 'radio' → scelta esclusiva (il vino della Box Natalizia).
-   Senza foto (image: null) la tessera mostra solo una parola (p.tile).
+   Senza foto (image: null) la card è solo testo, senza riquadro.
    showCost=false nasconde i gettoni (Box Natalizia, dove non contano). */
 
 export function Coins({ n, className = '' }) {
@@ -86,11 +86,11 @@ export default function BoxItemCard({ product: p, state, onAdd, onRemove, varian
       className={[styles.card, selected && styles.selected, locked && styles.locked].filter(Boolean).join(' ')}
       onClick={tapCard}
     >
-      <span className={`${styles.thumb} ${p.image ? '' : styles.thumbEmpty}`}>
-        {p.image
-          ? <img src={p.image} alt="" width="600" height="720" loading="lazy" decoding="async" />
-          : <span className={styles.tile} aria-hidden="true">{p.tile || p.name}</span>}
-      </span>
+      {p.image && (
+        <span className={styles.thumb}>
+          <img src={p.image} alt="" width="600" height="720" loading="lazy" decoding="async" />
+        </span>
+      )}
       <span className={styles.info}>
         <span className={styles.name}>{p.name}</span>
         <span className={styles.detail}>{p.detail}</span>

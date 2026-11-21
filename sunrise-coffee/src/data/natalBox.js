@@ -10,7 +10,7 @@
  *      2 gettoni, tutto il resto 1.
  *
  * Le foto ci sono solo per i vasetti del Capperificio: gli altri prodotti
- * (e per ora cucunci, germogli e pomodori) compaiono senza immagine.
+ * (e per ora cucunci e germogli) compaiono senza immagine, solo testo.
  * I prezzi mostrati sono informativi: il totale vero lo calcola Shopware dal
  * prodotto-box nel carrello.
  */
@@ -53,10 +53,9 @@ export const BOXES = {
 
 /* ── Prodotti ──────────────────────────────────────────────────
    sect:   'capperi' | 'caro' (vasetti del Capperificio, contano per il minimo)
-           'orto' (Capperificio, non è un vasetto) | 'olio' | 'vino' | 'forno' | 'legumi'
+           'olio' | 'vino' | 'forno' | 'legumi'
    cost:   gettoni per unità
-   image:  solo per i vasetti del Capperificio con foto; null = card senza foto
-   tile:   parola nella tessera quando manca la foto
+   image:  solo per i vasetti del Capperificio con foto; null = card solo testo
    m3:     aspetto nella scena 3D [forma, contenuto, titolo, sottotitolo, piede, peso, vetro, colore etichetta] */
 const PF = 'Pane è Fantasie';
 const TN = 'Terra Nera';
@@ -81,38 +80,35 @@ export const PRODUCTS = [
   { id: 'aceto-capperone', sect: 'capperi', cost: 1, name: 'Capperone', detail: 'All’aceto di vino · 250 g', note: 'Carnoso e croccante', image: `${IMG}/aceto.webp`,
     m3: ['tall', 'capers', 'Cappero di Racale', 'All’aceto di vino', 'Calibro: Capperone', '250g'] },
   // Altre specialità (cucunci e germogli: foto in arrivo)
-  { id: 'cuc-aceto', sect: 'caro', cost: 1, name: 'Cucunci', detail: 'All’aceto di vino · 200 g', note: 'Il frutto del cappero', image: null, tile: 'Cucunci',
+  { id: 'cuc-aceto', sect: 'caro', cost: 1, name: 'Cucunci', detail: 'All’aceto di vino · 200 g', note: 'Il frutto del cappero', image: null,
     m3: ['tall', 'cucunci', 'Cucunci di Racale', 'All’aceto di vino', '', '200g'] },
-  { id: 'shoots', sect: 'caro', cost: 1, name: 'Germogli di cappero', detail: 'All’aceto di vino bianco', note: 'Croccanti ed erbacei', image: null, tile: 'Germogli',
+  { id: 'shoots', sect: 'caro', cost: 1, name: 'Germogli di cappero', detail: 'All’aceto di vino bianco', note: 'Croccanti ed erbacei', image: null,
     m3: ['squat', 'leaves', 'Germogli di cappero', 'All’aceto', '', ''] },
   { id: 'powder', sect: 'caro', cost: 1, name: 'Polvere di cappero', detail: 'Extrafine · 50 g', note: 'Un cucchiaino su salse e crudi', image: `${IMG}/powder.webp`,
     m3: ['squat', 'powder', 'Polvere di cappero', 'di Racale', 'Extrafine', '50g'] },
   { id: 'leaves', sect: 'caro', cost: 1, name: 'Foglie di cappero', detail: 'Al sale marino · 50 g', note: 'Fresche e minerali', image: `${IMG}/leaves.webp`,
     m3: ['squat', 'leaves', 'Foglie di cappero', 'Al sale marino', '', '50g'] },
-  // Dall'orto del Capperificio (non è un vasetto: non conta per il minimo)
-  { id: 'pomodori', sect: 'orto', cost: 1, name: 'Pomodori essiccati al sole', detail: '500 g', producer: 'Capperificio Caro', image: null, tile: 'Orto',
-    m3: ['pouch', '', 'Pomodori secchi', 'Capperificio Caro', '', '', 0, 0x8c1c24] },
   // Olio e vino
-  { id: 'olio', sect: 'olio', cost: 2, name: 'Olio EVO biologico', detail: '500 ml', producer: 'OP ACLI Racale', image: null, tile: 'Olio',
+  { id: 'olio', sect: 'olio', cost: 2, name: 'Olio EVO biologico', detail: '500 ml', producer: 'OP ACLI Racale', image: null,
     m3: ['bottle', '', 'Olio EVO BIO', 'OP ACLI Racale', '', '500ml', 0x4a5a22] },
-  { id: 'vino-rosso', sect: 'vino', cost: 1, name: 'Vino rosso', detail: '1 L', producer: 'Cantina Torre Ospina', image: null, tile: 'Rosso', color: 'Rosso',
+  { id: 'vino-rosso', sect: 'vino', cost: 1, name: 'Vino rosso', detail: '1 L', producer: 'Cantina Torre Ospina', image: null, color: 'Rosso',
     m3: ['bottle', '', 'Vino rosso', 'Torre Ospina', '', '1L', 0x2e1014] },
-  { id: 'vino-rosato', sect: 'vino', cost: 1, name: 'Vino rosato', detail: '1 L', producer: 'Cantina Torre Ospina', image: null, tile: 'Rosato', color: 'Rosato',
+  { id: 'vino-rosato', sect: 'vino', cost: 1, name: 'Vino rosato', detail: '1 L', producer: 'Cantina Torre Ospina', image: null, color: 'Rosato',
     m3: ['bottle', '', 'Vino rosato', 'Torre Ospina', '', '1L', 0x8e3a46] },
-  { id: 'vino-bianco', sect: 'vino', cost: 1, name: 'Vino bianco', detail: '1 L', producer: 'Cantina Torre Ospina', image: null, tile: 'Bianco', color: 'Bianco',
+  { id: 'vino-bianco', sect: 'vino', cost: 1, name: 'Vino bianco', detail: '1 L', producer: 'Cantina Torre Ospina', image: null, color: 'Bianco',
     m3: ['bottle', '', 'Vino bianco', 'Torre Ospina', '', '1L', 0x8f9a5a] },
   // Forno — Pane è Fantasie
-  { id: 'pf-purciddhuzzi', sect: 'forno', cost: 1, name: 'Purciddhuzzi', detail: '250 g', producer: PF, image: null, tile: 'Forno', m3: ['pouch', '', 'Purciddhuzzi', PF, '', '', 0, 0x8c1c24] },
-  { id: 'pf-pitteddhe', sect: 'forno', cost: 1, name: 'Pitteddhe', detail: '250 g', producer: PF, image: null, tile: 'Forno', m3: ['pouch', '', 'Pitteddhe', PF, '', '', 0, 0x8c1c24] },
-  { id: 'pf-mustazzere', sect: 'forno', cost: 1, name: 'Mustazzere', detail: '250 g', producer: PF, image: null, tile: 'Forno', m3: ['pouch', '', 'Mustazzere', PF, '', '', 0, 0x8c1c24] },
-  { id: 'pf-cantucci', sect: 'forno', cost: 1, name: 'Cantucci', detail: '250 g', producer: PF, image: null, tile: 'Forno', m3: ['pouch', '', 'Cantucci', PF, '', '', 0, 0x8c1c24] },
-  { id: 'pf-tarallini-vino', sect: 'forno', cost: 1, name: 'Tarallini al vino', detail: '250 g', producer: PF, image: null, tile: 'Forno', m3: ['pouch', '', 'Tarallini al vino', PF, '', '', 0, 0x8c1c24] },
-  { id: 'pf-tarallini-zucchero', sect: 'forno', cost: 1, name: 'Tarallini zuccherati', detail: '250 g', producer: PF, image: null, tile: 'Forno', m3: ['pouch', '', 'Tarallini zuccherati', PF, '', '', 0, 0x8c1c24] },
-  { id: 'pf-friselle', sect: 'forno', cost: 1, name: 'Friselle', detail: '250 g', producer: PF, image: null, tile: 'Forno', m3: ['pouch', '', 'Friselle', PF, '', '', 0, 0x8c1c24] },
+  { id: 'pf-purciddhuzzi', sect: 'forno', cost: 1, name: 'Purciddhuzzi', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Purciddhuzzi', PF, '', '', 0, 0x8c1c24] },
+  { id: 'pf-pitteddhe', sect: 'forno', cost: 1, name: 'Pitteddhe', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Pitteddhe', PF, '', '', 0, 0x8c1c24] },
+  { id: 'pf-mustazzere', sect: 'forno', cost: 1, name: 'Mustazzere', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Mustazzere', PF, '', '', 0, 0x8c1c24] },
+  { id: 'pf-cantucci', sect: 'forno', cost: 1, name: 'Cantucci', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Cantucci', PF, '', '', 0, 0x8c1c24] },
+  { id: 'pf-tarallini-vino', sect: 'forno', cost: 1, name: 'Tarallini al vino', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Tarallini al vino', PF, '', '', 0, 0x8c1c24] },
+  { id: 'pf-tarallini-zucchero', sect: 'forno', cost: 1, name: 'Tarallini zuccherati', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Tarallini zuccherati', PF, '', '', 0, 0x8c1c24] },
+  { id: 'pf-friselle', sect: 'forno', cost: 1, name: 'Friselle', detail: '250 g', producer: PF, image: null, m3: ['pouch', '', 'Friselle', PF, '', '', 0, 0x8c1c24] },
   // Legumi — Terra Nera
-  { id: 'tn-pisello', sect: 'legumi', cost: 1, name: 'Pisello nano di Zollino', detail: '500 g', producer: TN, image: null, tile: 'Legumi', m3: ['pouch', '', 'Pisello nano', TN, '', '', 0, 0x2c4a2c] },
-  { id: 'tn-lenticchie', sect: 'legumi', cost: 1, name: 'Lenticchie multicolore di Zollino', detail: '500 g', producer: TN, image: null, tile: 'Legumi', m3: ['pouch', '', 'Lenticchie', TN, '', '', 0, 0x2c4a2c] },
-  { id: 'tn-cicerchia', sect: 'legumi', cost: 1, name: 'Cicerchia di Uggiano', detail: '500 g', producer: TN, image: null, tile: 'Legumi', m3: ['pouch', '', 'Cicerchia', TN, '', '', 0, 0x2c4a2c] },
+  { id: 'tn-pisello', sect: 'legumi', cost: 1, name: 'Pisello nano di Zollino', detail: '500 g', producer: TN, image: null, m3: ['pouch', '', 'Pisello nano', TN, '', '', 0, 0x2c4a2c] },
+  { id: 'tn-lenticchie', sect: 'legumi', cost: 1, name: 'Lenticchie multicolore di Zollino', detail: '500 g', producer: TN, image: null, m3: ['pouch', '', 'Lenticchie', TN, '', '', 0, 0x2c4a2c] },
+  { id: 'tn-cicerchia', sect: 'legumi', cost: 1, name: 'Cicerchia di Uggiano', detail: '500 g', producer: TN, image: null, m3: ['pouch', '', 'Cicerchia', TN, '', '', 0, 0x2c4a2c] },
 ];
 
 export const PRODUCT_BY_ID = Object.fromEntries(PRODUCTS.map((p) => [p.id, p]));
@@ -133,7 +129,6 @@ export const STEP_GROUPS = {
     { title: 'Capperi al sale marino', sub: 'Da sciacquare prima dell’uso', filter: (p) => p.sect === 'capperi' && p.id.startsWith('sale-') },
     { title: 'Capperi all’aceto di vino', sub: 'Pronti da usare', filter: (p) => p.sect === 'capperi' && p.id.startsWith('aceto-') },
     { title: 'Altre specialità', sub: 'Cucunci, germogli, polvere e foglie', filter: (p) => p.sect === 'caro' },
-    { title: 'Dall’orto', sub: 'Non conta tra i tre vasetti', filter: (p) => p.sect === 'orto' },
   ],
   vo: [
     { title: 'Olio', sub: 'OP ACLI Racale · 2 gettoni', filter: (p) => p.sect === 'olio' },

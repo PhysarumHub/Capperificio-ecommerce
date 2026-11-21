@@ -408,7 +408,6 @@ export default function NatalBoxPage() {
                 <ul className={styles.contents}>
                   {[PRODUCT_BY_ID[BOXES.racale.oil]].map((p) => (
                     <li key={p.id} className={styles.contentRow}>
-                      <span className={`${styles.contentThumb} ${styles.contentThumbEmpty}`}><span aria-hidden="true">{p.tile}</span></span>
                       <div>
                         <span className={styles.contentName}>{p.name}</span>
                         <span className={styles.contentDetail}>{p.detail} · {p.producer}</span>
@@ -501,7 +500,7 @@ export default function NatalBoxPage() {
                 {step === 3 && (
                   <div className={styles.review}>
                     {[
-                      ['Dal Capperificio', 0, (p) => p.sect === 'capperi' || p.sect === 'caro' || p.sect === 'orto'],
+                      ['Dal Capperificio', 0, (p) => p.sect === 'capperi' || p.sect === 'caro'],
                       ['Olio e vino', 1, (p) => p.sect === 'olio' || p.sect === 'vino'],
                       ['Forno e legumi', 2, (p) => p.sect === 'forno' || p.sect === 'legumi'],
                     ].map(([title, si, f]) => {
@@ -516,9 +515,7 @@ export default function NatalBoxPage() {
                           <ul className={styles.contents}>
                             {rows.map(({ p, qty }) => (
                               <li key={p.id} className={styles.contentRow}>
-                                {p.image
-                                  ? <span className={styles.contentThumb}><img src={p.image} alt="" width="600" height="720" loading="lazy" decoding="async" /></span>
-                                  : <span className={`${styles.contentThumb} ${styles.contentThumbEmpty}`}><span aria-hidden="true">{p.tile}</span></span>}
+                                {p.image && <span className={styles.contentThumb}><img src={p.image} alt="" width="600" height="720" loading="lazy" decoding="async" /></span>}
                                 <div>
                                   <span className={styles.contentName}>{qty > 1 ? `${qty} × ` : ''}{p.name}</span>
                                   <span className={styles.contentDetail}>{p.detail}{p.producer ? ` · ${p.producer}` : ''}</span>

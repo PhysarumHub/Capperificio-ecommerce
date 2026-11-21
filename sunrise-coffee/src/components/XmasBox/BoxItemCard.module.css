@@ -29,17 +29,6 @@
   display: grid;
   place-items: center;
 }
-.thumbEmpty { background: transparent; border: 1px dashed var(--color-border); }
-.tile {
-  padding: 0 6px;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 15px;
-  line-height: 1.1;
-  text-align: center;
-  color: var(--color-mid);
-  overflow-wrap: anywhere;
-}
 .thumb img {
   width: 64px;
   height: 74px;
@@ -114,7 +103,6 @@
 @media (max-width: 480px) {
   .card { gap: 12px; padding: 8px 10px 8px 8px; }
   .thumb { width: 56px; height: 62px; }
-  .tile { font-size: 13px; }
   .thumb img { width: 50px; height: 58px; }
   .qty { gap: 4px; }
   .pick { padding: 0 12px; }

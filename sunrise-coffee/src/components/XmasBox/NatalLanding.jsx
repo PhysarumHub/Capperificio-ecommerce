@@ -137,7 +137,7 @@ export default function NatalLanding({ onTokens, onRacale }) {
           <li>
             <span className={styles.howNum}>1</span>
             <h3>Almeno tre vasetti</h3>
-            <p>Capperi al sale o all’aceto, cucunci, germogli, polvere e foglie. In più, se vuoi, i pomodori essiccati al sole.</p>
+            <p>Capperi al sale o all’aceto, cucunci, germogli, polvere e foglie.</p>
             <p className={styles.howCost}><Coins n={1} /> 1 l’uno</p>
           </li>
           <li>
